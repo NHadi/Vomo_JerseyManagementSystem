@@ -1,0 +1,48 @@
+<!-- Sidenav component -->
+<nav class="sidenav navbar navbar-vertical fixed-left navbar-expand-xs navbar-light bg-white" id="sidenav-main">
+  <div class="scrollbar-inner">
+    <!-- Brand -->
+    <div class="sidenav-header">
+      <a class="navbar-brand" href="javascript:void(0)">
+        <img src="assets/img/brand/blue.png" class="navbar-brand-img" alt="...">
+      </a>
+    </div>
+    <div class="navbar-inner">
+      <!-- Collapse -->
+      <div class="collapse navbar-collapse" id="sidenav-collapse-main">
+        <!-- Nav items -->
+        <ul class="navbar-nav" id="menu-container">
+          <!-- Menu items will be dynamically inserted here -->
+        </ul>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script>
+  $(document).ready(function() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const menus = JSON.parse(localStorage.getItem('menus'));
+    
+    if (user && menus) {
+      renderMenus(menus);
+    }
+  });
+
+  function renderMenus(menus) {
+    const menuContainer = $('#menu-container');
+    menuContainer.empty();
+
+    menus.forEach(menu => {
+      const menuItem = `
+        <li class="nav-item">
+          <a class="nav-link" href="${menu.url}">
+            <i class="ni ni-${menu.icon} text-primary"></i>
+            <span class="nav-link-text">${menu.name}</span>
+          </a>
+        </li>
+      `;
+      menuContainer.append(menuItem);
+    });
+  }
+</script>

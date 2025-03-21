@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: vomo_production_managament
+      POSTGRES_USER: vomo_admin
+      POSTGRES_PASSWORD: vomo_admin_123@#$
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backup:/app/backup  # Backup inside the project root folder
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@vomo.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    depends_on:
+      - postgres
+
+  backup:
+    image: postgres:15
+    container_name: postgres_backup
+    restart: always
+    volumes:
+      - ./backup:/app/backup  # Backup stored inside project root
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: vomo_production_managament
+      POSTGRES_USER: vomo_admin
+      POSTGRES_PASSWORD: vomo_admin_123@#$
+    entrypoint: ["/bin/sh", "-c", "while true; do sleep 86400; pg_dump -h $POSTGRES_HOST -U $POSTGRES_USER -F c -b -v -f /app/backup/db_backup_$(date +%F).dump $POSTGRES_DB; done"]
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+    driver: local

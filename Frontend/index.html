@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Start your development with a Dashboard for Bootstrap 4.">
+  <meta name="author" content="Creative Tim">
+  <title>Vomo Dashboard</title>
+  <!-- Favicon -->
+  <link rel="icon" href="assets/img/brand/favicon.png" type="image/png">
+  <!-- Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700">
+  <!-- Icons -->
+  <link rel="stylesheet" href="assets/vendor/nucleo/css/nucleo.css" type="text/css">
+  <link rel="stylesheet" href="assets/vendor/@fortawesome/fontawesome-free/css/all.min.css" type="text/css">
+  <!-- Argon CSS -->
+  <link rel="stylesheet" href="assets/css/argon.css?v=1.2.0" type="text/css">
+</head>
+
+<body class="g-sidenav-show">
+  <!-- Sidenav -->
+  <div id="sidenav-placeholder"></div>
+
+  <!-- Main content -->
+  <div class="main-content" id="panel">
+    <!-- Topnav -->
+    <div id="topnav-placeholder"></div>
+    
+    <!-- Header -->
+    <div id="header-placeholder"></div>
+    
+    <!-- Page content -->
+    <div class="container-fluid mt--6">
+      <div id="content-container">
+        <!-- Dynamic content will be loaded here -->
+      </div>
+      
+      <!-- Footer -->
+      <div id="footer-placeholder"></div>
+    </div>
+  </div>
+
+  <!-- Core scripts -->
+  <script src="assets/vendor/jquery/dist/jquery.min.js"></script>
+  <script src="assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/vendor/js-cookie/js.cookie.js"></script>
+  <script src="assets/vendor/jquery.scrollbar/jquery.scrollbar.min.js"></script>
+  <script src="assets/vendor/jquery-scroll-lock/dist/jquery-scrollLock.min.js"></script>
+  <!-- Argon JS -->
+  <script src="assets/js/argon.js?v=1.2.0"></script>
+  <!-- Chart JS -->
+  <script src="assets/vendor/chart.js/dist/Chart.min.js"></script>
+  <script src="assets/vendor/chart.js/dist/Chart.extension.js"></script>
+  <!-- API JS -->
+  <script src="assets/js/api.js"></script>
+  <!-- Menu JS -->
+  <script src="assets/js/menu.js"></script>
+
+  <script>
+    $(document).ready(function() {
+      // Check authentication
+      const userStr = localStorage.getItem('user');
+      const menusStr = localStorage.getItem('menus');
+      const token = localStorage.getItem('token');
+      
+      if (!userStr || !token) {
+        localStorage.clear();
+        window.location.href = 'login.html';
+        return;
+      }
+
+      try {
+        const user = JSON.parse(userStr);
+        const menus = menusStr ? JSON.parse(menusStr) : [];
+        
+        // Load components
+        $('#sidenav-placeholder').load('components/sidenav.html');
+        $('#topnav-placeholder').load('components/topnav.html', function() {
+          $('#user-name').text(user.username);
+        });
+        $('#header-placeholder').load('components/header.html');
+        $('#footer-placeholder').load('components/footer.html');
+        
+        // Load initial content
+        loadDashboard();
+      } catch (error) {
+        console.error('Session error:', error);
+        localStorage.clear();
+        window.location.href = 'login.html';
+      }
+    });
+
+    function loadDashboard() {
+      $('#content-container').load('components/dashboard.html');
+    }
+    
+    // Handle logout
+    $(document).on('click', '#logout-btn', function(e) {
+      e.preventDefault();
+      localStorage.clear();
+      window.location.href = 'login.html';
+    });
+  </script>
+</body>
+</html>
