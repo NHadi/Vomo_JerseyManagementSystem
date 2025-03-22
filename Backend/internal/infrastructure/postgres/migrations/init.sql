@@ -65,8 +65,6 @@ ALTER TABLE IF EXISTS public.master_employee
 
 -- DROP TABLE IF EXISTS public.master_menu;
 
--- Table: public.master_menu
-
 CREATE TABLE IF NOT EXISTS public.master_menu
 (
     id integer NOT NULL DEFAULT nextval('master_menu_id_seq'::regclass),
@@ -75,11 +73,16 @@ CREATE TABLE IF NOT EXISTS public.master_menu
     icon character varying(50) COLLATE pg_catalog."default",
     parent_id integer,
     sort integer DEFAULT 0,
+    tenant_id integer NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT master_menu_pkey PRIMARY KEY (id),
     CONSTRAINT master_menu_parent_id_fkey FOREIGN KEY (parent_id)
         REFERENCES public.master_menu (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT master_menu_tenant_id_fkey FOREIGN KEY (tenant_id)
+        REFERENCES public.master_tenant (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )
@@ -88,6 +91,9 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.master_menu
     OWNER to vomo_admin;
+
+-- Set sequence owner
+ALTER SEQUENCE master_menu_id_seq OWNED BY public.master_menu.id;
 
 -- Table: public.master_permission
 
