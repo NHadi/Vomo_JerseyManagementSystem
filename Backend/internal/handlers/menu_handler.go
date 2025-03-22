@@ -50,6 +50,19 @@ type UpdateMenuRequest struct {
 	Sort     int    `json:"sort"`
 }
 
+// @Summary Create a new menu
+// @Description Create a new menu item
+// @Tags Menu
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param menu body CreateMenuRequest true "Menu Data"
+// @Success 201 {object} MenuResponse
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /menus [post]
 func CreateMenu(service *application.MenuService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tenantID, err := strconv.Atoi(c.GetHeader("X-Tenant-ID"))
@@ -82,6 +95,20 @@ func CreateMenu(service *application.MenuService) gin.HandlerFunc {
 	}
 }
 
+// @Summary Update a menu
+// @Description Update an existing menu item
+// @Tags Menu
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param id path int true "Menu ID"
+// @Param menu body UpdateMenuRequest true "Menu Data"
+// @Success 200 {object} MenuResponse
+// @Failure 400,404 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /menus/{id} [put]
 func UpdateMenu(service *application.MenuService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tenantID, err := strconv.Atoi(c.GetHeader("X-Tenant-ID"))
@@ -123,6 +150,18 @@ func UpdateMenu(service *application.MenuService) gin.HandlerFunc {
 	}
 }
 
+// @Summary Delete a menu
+// @Description Delete an existing menu item
+// @Tags Menu
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param id path int true "Menu ID"
+// @Success 200 {object} gin.H
+// @Failure 400,404 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /menus/{id} [delete]
 func DeleteMenu(service *application.MenuService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tenantID, err := strconv.Atoi(c.GetHeader("X-Tenant-ID"))
@@ -146,6 +185,18 @@ func DeleteMenu(service *application.MenuService) gin.HandlerFunc {
 	}
 }
 
+// @Summary Get a menu by ID
+// @Description Get menu details by ID
+// @Tags Menu
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param id path int true "Menu ID"
+// @Success 200 {object} MenuResponse
+// @Failure 400,404 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /menus/{id} [get]
 func GetMenu(service *application.MenuService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tenantID, err := strconv.Atoi(c.GetHeader("X-Tenant-ID"))
@@ -170,6 +221,17 @@ func GetMenu(service *application.MenuService) gin.HandlerFunc {
 	}
 }
 
+// @Summary Get all menus
+// @Description Get all menu items
+// @Tags Menu
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Success 200 {array} MenuResponse
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /menus [get]
 func GetAllMenus(service *application.MenuService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tenantID, err := strconv.Atoi(c.GetHeader("X-Tenant-ID"))
@@ -193,6 +255,18 @@ func GetAllMenus(service *application.MenuService) gin.HandlerFunc {
 	}
 }
 
+// @Summary Get menus by role
+// @Description Get menu items by role ID
+// @Tags Menu
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param role_id query int true "Role ID"
+// @Success 200 {array} MenuResponse
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /menus/by-role [get]
 func GetMenusByRole(service *application.MenuService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tenantID, err := strconv.Atoi(c.GetHeader("X-Tenant-ID"))
@@ -223,6 +297,18 @@ func GetMenusByRole(service *application.MenuService) gin.HandlerFunc {
 	}
 }
 
+// @Summary Get menus by user
+// @Description Get menu items by user ID
+// @Tags Menu
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param user_id path string true "User ID"
+// @Success 200 {array} MenuResponse
+// @Failure 400 {object} gin.H
+// @Failure 401 {object} gin.H
+// @Failure 500 {object} gin.H
+// @Router /menus/by-user/{user_id} [get]
 func GetMenusByUser(service *application.MenuService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tenantID, err := strconv.Atoi(c.GetHeader("X-Tenant-ID"))

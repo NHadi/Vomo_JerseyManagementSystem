@@ -3,6 +3,10 @@
 // @description Vomo API Documentation
 // @host localhost:8080
 // @BasePath /api
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
 package main
 
 import (
@@ -92,17 +96,22 @@ func main() {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", handlers.Login(userService, menuService))
-			auth.POST("/refresh", handlers.RefreshToken(userService)) // Add refresh token endpoint
+			auth.POST("/refresh", handlers.RefreshToken(userService))
 		}
 
 		// Protected routes with tenant
 		protected := api.Group("")
-		protected.Use(middleware.AuthMiddleware()) // JWT authentication
+		protected.Use(middleware.AuthMiddleware())
 		protected.Use(middleware.TenantMiddleware())
 		{
 			// Menu routes
 			menus := protected.Group("/menus")
 			{
+				menus.POST("", handlers.CreateMenu(menuService))
+				menus.PUT("/:id", handlers.UpdateMenu(menuService))
+				menus.DELETE("/:id", handlers.DeleteMenu(menuService))
+				menus.GET("/:id", handlers.GetMenu(menuService))
+				menus.GET("", handlers.GetAllMenus(menuService))
 				menus.GET("/by-role", handlers.GetMenusByRole(menuService))
 				menus.GET("/by-user/:user_id", handlers.GetMenusByUser(menuService))
 			}
