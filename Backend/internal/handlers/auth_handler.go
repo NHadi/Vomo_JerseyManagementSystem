@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 	"vomo/internal/application"
 	"vomo/internal/infrastructure/jwt"
 
@@ -43,7 +44,7 @@ func Login(userService *application.UserService, menuService *application.MenuSe
 		}
 
 		// Generate JWT token
-		token, err := jwt.GenerateToken(user.ID.String(), user.TenantID, user.Email)
+		token, err := jwt.GenerateAccessToken(user)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to generate token"})
 			return
@@ -63,24 +64,20 @@ func Login(userService *application.UserService, menuService *application.MenuSe
 		// First pass: create all menu responses and store in map
 		for _, m := range menus {
 			menuResp := toMenuResponse(m)
-			menuResp.Children = []MenuResponse{}
+			// menuResp.Children = make([]MenuResponse, 0) // Initialize empty children slice
 			menuMap[m.ID] = menuResp
 		}
 
 		// Second pass: organize children
-		for _, menu := range menuMap {
+		for id, menu := range menuMap {
 			if menu.ParentID != nil {
 				if parent, exists := menuMap[*menu.ParentID]; exists {
-					parent.Children = append(parent.Children, menu)
+					childCopy := menu // Create a copy of the child menu
+					parent.Children = append(parent.Children, childCopy)
 					menuMap[*menu.ParentID] = parent
 				}
-			}
-		}
-
-		// Final pass: collect only root menus
-		for _, menu := range menuMap {
-			if menu.ParentID == nil {
-				rootMenus = append(rootMenus, menu)
+			} else {
+				rootMenus = append(rootMenus, menuMap[id])
 			}
 		}
 
@@ -88,6 +85,52 @@ func Login(userService *application.UserService, menuService *application.MenuSe
 			Token: token,
 			User:  ToUserResponse(user),
 			Menus: rootMenus,
+		})
+	}
+}
+
+func RefreshToken(userService *application.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		refreshToken := c.GetHeader("Authorization")
+		if refreshToken == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token is required"})
+			return
+		}
+
+		refreshToken = strings.TrimPrefix(refreshToken, "Bearer ")
+
+		// Validate refresh token and get user data
+		tokenUser, err := jwt.ValidateRefreshToken(refreshToken)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
+			return
+		}
+
+		// Get user from database to verify existence
+		user, err := userService.GetUserByID(tokenUser.ID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+			return
+		}
+
+		// Generate new access token
+		accessToken, err := jwt.GenerateAccessToken(user)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to generate token"})
+			return
+		}
+
+		// Generate new refresh token
+		newRefreshToken, err := jwt.GenerateRefreshToken(user)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"access_token":  accessToken,
+			"refresh_token": newRefreshToken,
+			"token_type":    "Bearer",
 		})
 	}
 }

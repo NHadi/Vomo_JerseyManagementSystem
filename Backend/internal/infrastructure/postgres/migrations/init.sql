@@ -1,3 +1,20 @@
+-- Create sequences first
+CREATE SEQUENCE IF NOT EXISTS master_division_id_seq;
+CREATE SEQUENCE IF NOT EXISTS master_employee_id_seq;
+CREATE SEQUENCE IF NOT EXISTS master_menu_id_seq;
+CREATE SEQUENCE IF NOT EXISTS master_permission_id_seq;
+CREATE SEQUENCE IF NOT EXISTS master_product_id_seq;
+CREATE SEQUENCE IF NOT EXISTS master_product_category_id_seq;
+CREATE SEQUENCE IF NOT EXISTS master_region_id_seq;
+CREATE SEQUENCE IF NOT EXISTS master_role_id_seq;
+CREATE SEQUENCE IF NOT EXISTS master_user_menu_id_seq;
+CREATE SEQUENCE IF NOT EXISTS master_zone_id_seq;
+CREATE SEQUENCE IF NOT EXISTS role_menus_id_seq;
+CREATE SEQUENCE IF NOT EXISTS role_permissions_id_seq;
+
+-- Enable UUID extension if not already enabled
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Table: public.master_division
 
 -- DROP TABLE IF EXISTS public.master_division;
@@ -48,6 +65,8 @@ ALTER TABLE IF EXISTS public.master_employee
 
 -- DROP TABLE IF EXISTS public.master_menu;
 
+-- Table: public.master_menu
+
 CREATE TABLE IF NOT EXISTS public.master_menu
 (
     id integer NOT NULL DEFAULT nextval('master_menu_id_seq'::regclass),
@@ -55,6 +74,7 @@ CREATE TABLE IF NOT EXISTS public.master_menu
     url character varying(255) COLLATE pg_catalog."default",
     icon character varying(50) COLLATE pg_catalog."default",
     parent_id integer,
+    sort integer DEFAULT 0,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT master_menu_pkey PRIMARY KEY (id),

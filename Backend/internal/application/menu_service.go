@@ -111,3 +111,27 @@ func (s *MenuService) buildMenuTree(menus []menu.Menu) []menu.Menu {
 func (s *MenuService) DeleteMenu(id int, tenantID int) error {
 	return s.repo.Delete(id, tenantID)
 }
+
+func (s *MenuService) Create(menu *menu.Menu) error {
+    return s.repo.Create(menu)
+}
+
+func (s *MenuService) Update(menu *menu.Menu) error {
+    return s.repo.Update(menu)
+}
+
+func (s *MenuService) GetByID(id, tenantID int) (*menu.Menu, error) {
+    return s.repo.FindByID(id, tenantID)
+}
+
+func (s *MenuService) GetAll(tenantID int) ([]menu.Menu, error) {
+    menus, err := s.repo.FindAll(tenantID)
+    if err != nil {
+        return nil, err
+    }
+    return s.buildMenuTree(menus), nil
+}
+
+func (s *MenuService) Delete(id, tenantID int) error {
+    return s.repo.Delete(id, tenantID)
+}

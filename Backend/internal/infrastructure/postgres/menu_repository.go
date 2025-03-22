@@ -1,8 +1,9 @@
 package postgres
 
 import (
-    "vomo/internal/domain/menu"
-    "gorm.io/gorm"
+	"vomo/internal/domain/menu"
+
+	"gorm.io/gorm"
 )
 
 type MenuRepository struct {
@@ -15,7 +16,27 @@ func NewMenuRepository(db *gorm.DB) *MenuRepository {
 
 func (r *MenuRepository) FindAll(tenantID int) ([]menu.Menu, error) {
 	var menus []menu.Menu
-	err := r.db.Where("tenant_id = ?", tenantID).Find(&menus).Error
+	err := r.db.Where("tenant_id = ?", tenantID).
+		Order("sort ASC, id ASC").
+		Find(&menus).Error
+	return menus, err
+}
+
+func (r *MenuRepository) FindByRoleID(roleID int, tenantID int) ([]menu.Menu, error) {
+	var menus []menu.Menu
+	err := r.db.Joins("JOIN role_menus ON role_menus.menu_id = master_menu.id").
+		Where("role_menus.role_id = ? AND master_menu.tenant_id = ?", roleID, tenantID).
+		Order("master_menu.sort ASC, master_menu.id ASC").
+		Find(&menus).Error
+	return menus, err
+}
+
+func (r *MenuRepository) FindByUserID(userID string, tenantID int) ([]menu.Menu, error) {
+	var menus []menu.Menu
+	err := r.db.Joins("JOIN user_menus ON user_menus.menu_id = master_menu.id").
+		Where("user_menus.user_id = ? AND master_menu.tenant_id = ?", userID, tenantID).
+		Order("master_menu.sort ASC, master_menu.id ASC").
+		Find(&menus).Error
 	return menus, err
 }
 
@@ -26,22 +47,6 @@ func (r *MenuRepository) FindByID(id int, tenantID int) (*menu.Menu, error) {
 		return nil, err
 	}
 	return &menu, nil
-}
-
-func (r *MenuRepository) FindByRoleID(roleID int, tenantID int) ([]menu.Menu, error) {
-	var menus []menu.Menu
-	err := r.db.Joins("JOIN role_menus ON role_menus.menu_id = master_menu.id").
-		Where("role_menus.role_id = ? AND master_menu.tenant_id = ?", roleID, tenantID).
-		Find(&menus).Error
-	return menus, err
-}
-
-func (r *MenuRepository) FindByUserID(userID string, tenantID int) ([]menu.Menu, error) {
-	var menus []menu.Menu
-	err := r.db.Joins("JOIN user_menus ON user_menus.menu_id = master_menu.id").
-		Where("user_menus.user_id = ? AND master_menu.tenant_id = ?", userID, tenantID).
-		Find(&menus).Error
-	return menus, err
 }
 
 func (r *MenuRepository) Create(menu *menu.Menu) error {

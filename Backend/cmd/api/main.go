@@ -7,10 +7,13 @@ package main
 
 import (
 	"log"
+	"os"
 	_ "vomo/docs"
 	"vomo/internal/application"
 	"vomo/internal/config"
 	"vomo/internal/handlers"
+	"vomo/internal/infrastructure/jwt" // Add JWT package
+	"vomo/internal/infrastructure/logging"
 	"vomo/internal/infrastructure/postgres"
 	"vomo/internal/middleware"
 
@@ -20,10 +23,26 @@ import (
 )
 
 func main() {
+	// Initialize logger
+	logger, err := logging.NewLogger(
+		[]string{"http://localhost:9200"},
+		"", // No username needed with anonymous access
+		"", // No password needed with anonymous access
+		"vomo-logs",
+	)
+	if err != nil {
+		log.Fatal("Failed to initialize logger:", err)
+	}
+
+	// Load config
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal("Failed to load config:", err)
+		logger.Error("Failed to load config", nil, err)
+		os.Exit(1)
 	}
+
+	// Initialize JWT secrets
+	jwt.SetSecrets(cfg.JWTSecret, cfg.JWTRefreshSecret)
 
 	db, err := postgres.NewConnection(
 		cfg.DBHost,
@@ -45,13 +64,17 @@ func main() {
 	menuService := application.NewMenuService(menuRepo)
 	userService := application.NewUserService(userRepo)
 
-	r := gin.Default()
+	r := gin.New() // Use gin.New() instead of gin.Default() to avoid default logger
+	r.Use(gin.Recovery())
+	r.Use(middleware.LoggingMiddleware(logger))
 
 	// Setup CORS middleware
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Tenant-ID, X-CSRF-Token")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Expose-Headers", "Authorization")
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
@@ -69,11 +92,12 @@ func main() {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", handlers.Login(userService, menuService))
+			auth.POST("/refresh", handlers.RefreshToken(userService)) // Add refresh token endpoint
 		}
 
 		// Protected routes with tenant
 		protected := api.Group("")
-		protected.Use(middleware.AuthMiddleware())
+		protected.Use(middleware.AuthMiddleware()) // JWT authentication
 		protected.Use(middleware.TenantMiddleware())
 		{
 			// Menu routes
@@ -97,8 +121,11 @@ func main() {
 
 	// Start server
 	port := cfg.GetServerPort()
-	log.Printf("Server starting on port %s", port)
+	logger.Info("Server starting", map[string]interface{}{
+		"port": port,
+	})
 	if err := r.Run(port); err != nil {
-		log.Fatal("Failed to start server:", err)
+		logger.Error("Server failed to start", nil, err)
+		os.Exit(1)
 	}
 }

@@ -10,6 +10,7 @@ type Menu struct {
 	URL      string  `gorm:"type:varchar(255)" json:"url"`
 	Icon     string  `gorm:"type:varchar(50)" json:"icon"`
 	ParentID *int    `gorm:"index" json:"parent_id"`
+	Sort     int     `gorm:"default:0" json:"sort"`
 	Children []*Menu `gorm:"-" json:"children,omitempty"`
 	common.TenantModel
 }
