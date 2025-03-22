@@ -1,70 +1,245 @@
-$(function() {
+// Create a self-executing function to avoid global scope pollution
+(function() {
+    // Store loaded scripts to prevent duplicate loading
+    const loadedScripts = new Set();
+    const loadedStyles = new Set();
+    
     window.contentLoader = {
-        loadContent: function(path) {
-            // Remove hash and clean path
-            path = path.split('#')[0];
-            path = path.replace(/^\/+|\/+$/g, '');
+        currentPath: null,
+        isLoading: false,
+        
+        clearContent: function() {
+            // Clear all dynamic content areas
+            $('#main-content').empty();
+            $('#stats-container').hide();
+            $('#page-actions').empty();
+            // Reset page header to prevent stale data
+            $('#page-title').text('');
+            $('#breadcrumb-parent').text('');
+            $('#breadcrumb-current').text('');
+        },
+
+        showError: function(message, path) {
+            // Clear existing content first
+            this.clearContent();
             
-            const token = localStorage.getItem('token');
-            const tenantId = localStorage.getItem('tenant_id');
-            const menus = JSON.parse(localStorage.getItem('menus') || '[]');
-
-            // Find current menu item
-            const currentMenu = this.findMenuByPath(menus, path);
+            // Update header with error state
+            $('#page-title').text('Not Found');
+            $('#breadcrumb-parent').text('Error');
+            $('#breadcrumb-current').text('Page Not Found');
             
-            if (currentMenu) {
+            // Show error message with more details
+            $('#main-content').html(`
+                <div class="container-fluid mt-4">
+                    <div class="alert alert-danger" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-circle fa-2x mr-3"></i>
+                            <div>
+                                <h4 class="alert-heading mb-2">Component Not Found</h4>
+                                <p class="mb-1">${message}</p>
+                                <hr>
+                                <div class="mt-3">
+                                    <p class="mb-1"><strong>Possible solutions:</strong></p>
+                                    <ul class="mb-0">
+                                        <li>Check if the component file exists in the correct location</li>
+                                        <li>Verify the path in your menu configuration</li>
+                                        <li>Ensure the component name matches exactly</li>
+                                    </ul>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="/" class="btn btn-outline-primary">
+                                        <i class="fas fa-home mr-1"></i> Return to Dashboard
+                                    </a>
+                                    <button onclick="window.history.back()" class="btn btn-outline-secondary ml-2">
+                                        <i class="fas fa-arrow-left mr-1"></i> Go Back
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        },
 
-                console.log('Current Menu:', currentMenu); // Add this line to log the current menu inf
-
-                this.updatePageHeader(currentMenu);
-                
-                switch (path) {
-                    case '':
-                    case '/':
-                        this.loadDashboard();
-                        break;
-                    case 'menu':
-                        this.loadMenuGrid();
-                        break;
-                    default:
-                        this.loadDefaultContent('/' + path);
+        loadContent: async function(path) {
+            // If already loading, prevent duplicate load
+            if (this.isLoading) {
+                console.log('Already loading content, skipping');
+                return;
+            }
+            
+            // Set loading state
+            this.isLoading = true;
+            
+            try {
+                // Clean path and handle special cases
+                path = (path || '').split('#')[0].replace(/^\/+|\/+$/g, '');
+                if (path === 'index.html') {
+                    path = '';
                 }
-            } else {
-                console.error('Menu not found for path:', path);
-                this.loadDefaultContent('/' + path);
+                
+                // Check authentication
+                const token = localStorage.getItem('token');
+                if (!token && path !== 'login') {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                // Clear existing content before any loading attempt
+                this.clearContent();
+
+                // Find current menu and update header
+                const menus = JSON.parse(localStorage.getItem('menus') || '[]');
+                const currentMenu = path === '' ? { name: 'Dashboard', url: '/' } : this.findMenuByPath(menus, path);
+
+                // Handle content loading based on path
+                if (path === '' || path === '/') {
+                    // Load dashboard
+                    await this.loadDashboard();
+                    this.updatePageHeader({ name: 'Dashboard', url: '/' });
+                } else if (currentMenu) {
+                    // Update header before loading content
+                    this.updatePageHeader(currentMenu);
+                    
+                    // Load appropriate content
+                    switch (path) {
+                        case 'menu':
+                            await this.loadMenuGrid();
+                            break;
+                        default:
+                            try {
+                                await this.loadDefaultContent('/' + path);
+                            } catch (error) {
+                                console.error('Content loading error:', error.message);
+                                this.showError(`The page "${path}" could not be loaded: ${error.message}`, path);
+                                return;
+                            }
+                    }
+                } else {
+                    // Show error for non-existent pages and return early
+                    this.showError(`The page "${path}" is not available in your menu.`, path);
+                    return;
+                }
+                
+                // Only update current path if content was loaded successfully
+                this.currentPath = path;
+            } catch (error) {
+                console.error('Error loading content:', error);
+                this.showError('An error occurred while loading the page.', path);
+            } finally {
+                this.isLoading = false;
             }
         },
 
-        loadMenuGrid: function() {
-            // Clean up previous instance if exists
-            if (window.menuPageInstance) {
-                if (window.menuPageInstance.grid) {
-                    window.menuPageInstance.grid.dispose();
+        loadScript: function(src) {
+            return new Promise((resolve, reject) => {
+                if (loadedScripts.has(src)) {
+                    resolve();
+                    return;
                 }
-                window.menuPageInstance = null;
-            }
 
-            $('#main-content').load('components/menu.html', () => {
-                // Remove any existing menu.js script tags
-                $('script[src="assets/js/pages/menu.js"]').remove();
-                
-                // Create and append new script tag
+                const existingScript = document.querySelector(`script[src="${src}"]`);
+                if (existingScript) {
+                    loadedScripts.add(src);
+                    resolve();
+                    return;
+                }
+
                 const script = document.createElement('script');
-                script.src = 'assets/js/pages/menu.js';
-                script.onerror = () => {
-                    console.error('Failed to load menu.js');
-                    $('#main-content').html('<div class="alert alert-danger">Failed to load menu component</div>');
+                script.src = src;
+                script.onload = () => {
+                    loadedScripts.add(src);
+                    resolve();
                 };
+                script.onerror = reject;
                 document.body.appendChild(script);
             });
         },
 
-        loadDefaultContent: function(path) {
-            const componentPath = `components${path}.html`;
-            $('#main-content').load(componentPath, function(response, status, xhr) {
-                if (status === 'error') {
-                    $('#main-content').html('<div class="alert alert-danger">Content not found</div>');
+        loadStyle: function(href) {
+            return new Promise((resolve, reject) => {
+                if (loadedStyles.has(href)) {
+                    resolve();
+                    return;
                 }
+
+                const existingLink = document.querySelector(`link[href="${href}"]`);
+                if (existingLink) {
+                    loadedStyles.add(href);
+                    resolve();
+                    return;
+                }
+
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = href;
+                link.onload = () => {
+                    loadedStyles.add(href);
+                    resolve();
+                };
+                link.onerror = reject;
+                document.head.appendChild(link);
+            });
+        },
+
+        loadMenuGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.menuPageInstance) {
+                window.menuPageInstance.dispose();
+                window.menuPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/menu.html', async () => {
+                    try {
+                        // Load menu.js if not already loaded
+                        if (!window.MenuPage) {
+                            await this.loadScript('assets/js/pages/menu.js');
+                        }
+                        
+                        // Initialize MenuPage
+                        if (!window.menuPageInstance && window.MenuPage) {
+                            window.menuPageInstance = new window.MenuPage();
+                        }
+                        resolve();
+                    } catch (error) {
+                        console.error('Failed to load menu component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load menu component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadDefaultContent: function(path) {
+            return new Promise((resolve, reject) => {
+                const componentPath = `components${path}.html`;
+                console.log('Loading component:', componentPath);
+                
+                fetch(componentPath)
+                    .then(response => {
+                        if (!response.ok) {
+                            if (response.status === 404) {
+                                throw new Error(`The component "${path}" could not be found. Please check the file path: ${componentPath}`);
+                            }
+                            throw new Error(`Failed to load component (${response.status}): ${componentPath}`);
+                        }
+                        return response.text();
+                    })
+                    .then(content => {
+                        // Check if content is empty or just whitespace
+                        if (!content || !content.trim()) {
+                            throw new Error(`The component file "${componentPath}" exists but appears to be empty.`);
+                        }
+
+                        // Content looks valid, load it into the DOM
+                        $('#main-content').html(content);
+                        resolve();
+                    })
+                    .catch(error => {
+                        console.error('Failed to load component:', error);
+                        reject(error);
+                    });
             });
         },
 
@@ -108,8 +283,15 @@ $(function() {
         },
 
         loadDashboard: function() {
-            $('#stats-container').show();
-            $('#main-content').load('components/dashboard.html');
+            return new Promise((resolve) => {
+                // Show stats container first to prevent flashing
+                $('#stats-container').show();
+                
+                // Load dashboard content
+                $('#main-content').load('components/dashboard.html', () => {
+                    resolve();
+                });
+            });
         }
     };
-});
+})();

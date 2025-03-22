@@ -1,9 +1,12 @@
-// Check if MenuPage already exists
+// Define MenuPage only if it hasn't been defined yet
 if (typeof window.MenuPage === 'undefined') {
     window.MenuPage = class {
         constructor() {
             this.grid = null;
-            this.initializeDevExtreme();
+            // Check if DevExtreme is already loaded
+            if (typeof DevExpress !== 'undefined') {
+                this.initialize();
+            }
         }
 
         dispose() {
@@ -31,12 +34,6 @@ if (typeof window.MenuPage === 'undefined') {
         }
 
         initialize() {
-            // Wait for DevExtreme to be available
-            if (typeof DevExpress === 'undefined') {
-                setTimeout(() => this.initialize(), 100);
-                return;
-            }
-
             // Ensure the grid element exists
             const gridElement = $('#menuGrid');
             if (!gridElement.length) {
@@ -284,8 +281,7 @@ if (typeof window.MenuPage === 'undefined') {
     }
 }
 
-// Initialize when document is ready
-$(function() {
-    // Always create a new instance when the script loads
+// Initialize only if DevExtreme is loaded
+if (typeof DevExpress !== 'undefined' && !window.menuPageInstance) {
     window.menuPageInstance = new window.MenuPage();
-});
+}

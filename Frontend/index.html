@@ -406,9 +406,14 @@
   <script src="assets/vendor/jquery.scrollbar/jquery.scrollbar.min.js"></script>
   <script src="assets/vendor/jquery-scroll-lock/dist/jquery-scrollLock.min.js"></script>
   
-  <!-- DevExtreme -->
-  <script src="https://cdn3.devexpress.com/jslib/23.1.3/js/dx.all.js"></script>
-  
+  <!-- Global configuration -->
+  <script>
+    // Initialize state flags
+    window.isAppInitialized = window.isAppInitialized || false;
+    window.isSidenavLoaded = window.isSidenavLoaded || false;
+    window.menusRendered = window.menusRendered || false;
+  </script>
+
   <!-- Application scripts -->
   <script src="assets/js/api.js"></script>
   <script src="assets/js/content-loader.js"></script>
@@ -417,10 +422,36 @@
 
   <!-- Single initialization script -->
   <script>
-    $(document).ready(function() {
+    function loadSidenav() {
+      return new Promise((resolve, reject) => {
+        if (window.isSidenavLoaded) {
+          resolve();
+          return;
+        }
+
+        $('#sidenav-placeholder').empty().load('components/sidenav.html', function(response, status, xhr) {
+          if (status === 'error') {
+            reject(new Error('Failed to load sidenav'));
+            return;
+          }
+
+          // Initialize scrollbar
+          if ($('.scrollbar-inner').length) {
+            $('.scrollbar-inner').scrollbar();
+          }
+
+          window.isSidenavLoaded = true;
+          resolve();
+        });
+      });
+    }
+
+    async function initializeApp() {
+      if (window.isAppInitialized) {
+        return;
+      }
+
       const userStr = localStorage.getItem('user');
-      const menusStr = localStorage.getItem('menus');
-      
       if (!userStr) {
         window.location.href = 'login.html';
         return;
@@ -428,47 +459,43 @@
 
       try {
         const user = JSON.parse(userStr);
-        const menus = menusStr ? JSON.parse(menusStr) : [];
-        
-        // Update username
         $('#username').text(user.username);
 
-        // Load sidenav and initialize routes
-        $('#sidenav-placeholder').load('components/sidenav.html', function() {
-          if ($('.scrollbar-inner').length) {
-            $('.scrollbar-inner').scrollbar();
-          }
-          initializeRoutes(menus);
-          handleRoute(window.location.pathname);
-        });
+        // Load sidenav first
+        await loadSidenav();
         
+        // Initialize routes after sidenav is loaded
+        const menus = JSON.parse(localStorage.getItem('menus') || '[]');
+        if (typeof initializeRoutes === 'function' && menus) {
+          initializeRoutes(menus);
+        }
+
+        // Handle logout
+        $(document).off('click', '#logout-btn').on('click', '#logout-btn', function(e) {
+          e.preventDefault();
+          localStorage.removeItem('user');
+          localStorage.removeItem('menus');
+          window.location.href = 'login.html';
+        });
+
+        window.isAppInitialized = true;
       } catch (error) {
-        console.error('Failed to parse user data:', error);
+        console.error('Failed to initialize app:', error);
         window.location.href = 'login.html';
       }
+    }
 
-
-
-    // Handle logout
-    $('#logout-btn').click(function(e) {
-      e.preventDefault();
-      // Clear user data and menus from localStorage
-      localStorage.removeItem('user');
-      localStorage.removeItem('menus');
-      // Redirect to login page
-      window.location.href = 'login.html';
-    });
-
-    });
-
-    
-    
-    // Handle logout
-    $(document).on('click', '#logout-btn', function(e) {
-      e.preventDefault();
-      localStorage.removeItem('user');
-      localStorage.removeItem('menus'); // Also remove menus on logout
-      window.location.href = 'login.html';
+    // Initialize when document is ready
+    $(document).ready(function() {
+      if (typeof DevExpress !== 'undefined') {
+        initializeApp();
+      } else {
+        // Load DevExtreme if not available
+        const script = document.createElement('script');
+        script.src = 'https://cdn3.devexpress.com/jslib/23.1.3/js/dx.all.js';
+        script.onload = initializeApp;
+        document.head.appendChild(script);
+      }
     });
   </script>
 
@@ -499,52 +526,3 @@
   </style>
 </body>
 </html>
-
-<!-- Add these new script files -->
-<script src="assets/js/content-loader.js"></script>
-<script src="assets/js/route-handler.js"></script>
-
-<script>
-$(document).ready(function() {
-    // Check authentication
-    const userStr = localStorage.getItem('user');
-    const menusStr = localStorage.getItem('menus');
-    
-    if (!userStr) {
-        window.location.href = 'login.html';
-        return;
-    }
-
-    try {
-        const user = JSON.parse(userStr);
-        const menus = menusStr ? JSON.parse(menusStr) : [];
-        
-        // Update username in navbar
-        $('#username').text(user.username);
-
-        // Load sidenav
-        $('#sidenav-placeholder').load('components/sidenav.html', function() {
-            if ($('.scrollbar-inner').length) {
-                $('.scrollbar-inner').scrollbar();
-            }
-            // Initialize route handling after sidenav is loaded
-            initializeRoutes(menus);
-        });
-
-        // Handle initial route
-        handleRoute(window.location.pathname);
-        
-    } catch (error) {
-        console.error('Failed to parse user data:', error);
-        window.location.href = 'login.html';
-    }
-
-    // Handle logout
-    $('#logout-btn').click(function(e) {
-        e.preventDefault();
-        localStorage.removeItem('user');
-        localStorage.removeItem('menus');
-        window.location.href = 'login.html';
-    });
-});
-</script>
