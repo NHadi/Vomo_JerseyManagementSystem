@@ -4,7 +4,7 @@
     <!-- Brand -->
     <div class="sidenav-header">
       <a class="navbar-brand" href="javascript:void(0)">
-        <img src="assets/img/brand/blue.png" class="navbar-brand-img" alt="...">
+        <img src="assets/img/brand/vomo.png" class="navbar-brand-img" alt="...">
       </a>
     </div>
     <div class="navbar-inner">
@@ -36,8 +36,8 @@
     menus.forEach(menu => {
       const menuItem = `
         <li class="nav-item">
-          <a class="nav-link" href="${menu.url}">
-            <i class="ni ni-${menu.icon} text-primary"></i>
+          <a href="#${menu.route}" class="nav-link" data-menu-id="${menu.id}">
+            <i class="${menu.icon}"></i>
             <span class="nav-link-text">${menu.name}</span>
           </a>
         </li>

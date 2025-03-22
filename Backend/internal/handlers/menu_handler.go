@@ -14,53 +14,47 @@ type MenuResponse struct {
 	Name     string         `json:"name"`
 	URL      string         `json:"url"`
 	Icon     string         `json:"icon"`
-	ParentID *int           `json:"parent_id"`
+	ParentID *int          `json:"parent_id"`
 	Children []MenuResponse `json:"children,omitempty"`
 }
 
-func toMenuResponse(m menu.Menu) MenuResponse {
-	resp := MenuResponse{
-		ID:       m.ID,
-		Name:     m.Name,
-		URL:      m.URL,
-		Icon:     m.Icon,
-		ParentID: m.ParentID,
+func toMenuResponse(menu menu.Menu) MenuResponse {
+	children := make([]MenuResponse, 0)
+	for _, child := range menu.Children {
+		children = append(children, toMenuResponse(*child))
 	}
 
-	if len(m.Children) > 0 {
-		resp.Children = make([]MenuResponse, len(m.Children))
-		for i, child := range m.Children {
-			resp.Children[i] = toMenuResponse(child)
-		}
+	return MenuResponse{
+		ID:       menu.ID,
+		Name:     menu.Name,
+		URL:      menu.URL,
+		Icon:     menu.Icon,
+		ParentID: menu.ParentID,
+		Children: children,
 	}
-
-	return resp
 }
 
-// @Summary Get menus by role
-// @Description Get menus accessible by a specific role
-// @Tags menus
-// @Produce json
-// @Param role_id query int true "Role ID"
-// @Success 200 {array} MenuResponse
-// @Failure 400 {object} ErrorResponse
-// @Router /menus/by-role [get]
 func GetMenusByRole(service *application.MenuService) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		tenantID, err := strconv.Atoi(c.GetHeader("X-Tenant-ID"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid tenant ID"})
+			return
+		}
+
 		roleIDStr := c.Query("role_id")
 		roleID, err := strconv.Atoi(roleIDStr)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid role ID"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
 			return
 		}
 
-		menus, err := service.GetMenusByRoleID(roleID)
+		menus, err := service.GetMenusByRoleID(roleID, tenantID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		// Convert to response format
 		response := make([]MenuResponse, len(menus))
 		for i, m := range menus {
 			response[i] = toMenuResponse(m)
@@ -70,29 +64,26 @@ func GetMenusByRole(service *application.MenuService) gin.HandlerFunc {
 	}
 }
 
-// @Summary Get menus by user
-// @Description Get menus accessible by a specific user
-// @Tags menus
-// @Produce json
-// @Param user_id path string true "User ID"
-// @Success 200 {array} MenuResponse
-// @Failure 400 {object} ErrorResponse
-// @Router /menus/by-user/{user_id} [get]
 func GetMenusByUser(service *application.MenuService) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		tenantID, err := strconv.Atoi(c.GetHeader("X-Tenant-ID"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid tenant ID"})
+			return
+		}
+
 		userID := c.Param("user_id")
 		if userID == "" {
-			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "User ID is required"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User ID is required"})
 			return
 		}
 
-		menus, err := service.GetMenusByUserID(userID)
+		menus, err := service.GetMenusByUserID(userID, tenantID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		// Convert to response format
 		response := make([]MenuResponse, len(menus))
 		for i, m := range menus {
 			response[i] = toMenuResponse(m)

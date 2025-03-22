@@ -12,6 +12,7 @@ import (
 	"vomo/internal/config"
 	"vomo/internal/handlers"
 	"vomo/internal/infrastructure/postgres"
+	"vomo/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -35,11 +36,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	userRepo := postgres.NewUserRepository(db)
-	userService := application.NewUserService(userRepo)
+	// Initialize repositories
 
 	menuRepo := postgres.NewMenuRepository(db)
+	userRepo := postgres.NewUserRepository(db)
+
+	// Initialize services
 	menuService := application.NewMenuService(menuRepo)
+	userService := application.NewUserService(userRepo)
 
 	r := gin.Default()
 
@@ -61,27 +65,33 @@ func main() {
 	// API routes group
 	api := r.Group("/api")
 	{
-		// Auth routes
+		// Public routes (no tenant required)
 		auth := api.Group("/auth")
 		{
 			auth.POST("/login", handlers.Login(userService, menuService))
 		}
 
-		// Menu routes
-		menus := api.Group("/menus")
+		// Protected routes with tenant
+		protected := api.Group("")
+		protected.Use(middleware.AuthMiddleware())
+		protected.Use(middleware.TenantMiddleware())
 		{
-			menus.GET("/by-role", handlers.GetMenusByRole(menuService))
-			menus.GET("/by-user/:user_id", handlers.GetMenusByUser(menuService))
-		}
-		
-		// User routes
-		users := api.Group("/users")
-		{
-			users.GET("", handlers.GetUsers(userService))
-			users.POST("", handlers.CreateUser(userService))
-			users.GET("/:id", handlers.GetUser(userService))
-			users.PUT("/:id", handlers.UpdateUser(userService))
-			users.DELETE("/:id", handlers.DeleteUser(userService))
+			// Menu routes
+			menus := protected.Group("/menus")
+			{
+				menus.GET("/by-role", handlers.GetMenusByRole(menuService))
+				menus.GET("/by-user/:user_id", handlers.GetMenusByUser(menuService))
+			}
+
+			// Move user routes inside protected group
+			users := protected.Group("/users")
+			{
+				users.GET("", handlers.GetUsers(userService))
+				users.POST("", handlers.CreateUser(userService))
+				users.GET("/:id", handlers.GetUser(userService))
+				users.PUT("/:id", handlers.UpdateUser(userService))
+				users.DELETE("/:id", handlers.DeleteUser(userService))
+			}
 		}
 	}
 
