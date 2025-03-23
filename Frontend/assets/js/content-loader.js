@@ -207,13 +207,26 @@
                             checkDevExtreme();
                         });
 
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="menu"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
                         // Create a script element with type="module" to load the menu.js module
                         const script = document.createElement('script');
                         script.type = 'module';
                         script.src = './assets/js/pages/menu.js';
+                        script.setAttribute('data-page', 'menu');
                         
                         // Handle script load/error
-                        script.onload = () => resolve();
+                        script.onload = () => {
+                            // Initialize the menu page instance
+                            if (!window.menuPageInstance) {
+                                window.menuPageInstance = new window.MenuPage();
+                            }
+                            resolve();
+                        };
                         script.onerror = (error) => {
                             console.error('Failed to load menu module:', error);
                             reject(error);
@@ -251,13 +264,26 @@
                             checkDevExtreme();
                         });
 
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="audit"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
                         // Create a script element with type="module" to load the audit.js module
                         const script = document.createElement('script');
                         script.type = 'module';
                         script.src = './assets/js/pages/audit.js';
+                        script.setAttribute('data-page', 'audit');
                         
                         // Handle script load/error
-                        script.onload = () => resolve();
+                        script.onload = () => {
+                            // Initialize the audit page instance
+                            if (!window.auditPageInstance) {
+                                window.auditPageInstance = new window.AuditPage();
+                            }
+                            resolve();
+                        };
                         script.onerror = (error) => {
                             console.error('Failed to load audit module:', error);
                             reject(error);
