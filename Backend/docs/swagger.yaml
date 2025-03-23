@@ -1,5 +1,7 @@
 basePath: /api
 definitions:
+  handlers.AssignMenusRequest:
+    type: object
   handlers.AuditResponse:
     description: Audit trail entry response model
     properties:
@@ -45,6 +47,26 @@ definitions:
       url:
         example: /dashboard
         type: string
+    required:
+    - name
+    type: object
+  handlers.CreateRoleRequest:
+    description: Create role request model
+    properties:
+      description:
+        example: Administrator role with full access
+        type: string
+      name:
+        example: Admin
+        type: string
+      permissions:
+        example:
+        - '[''read'''
+        - ' ''write'''
+        - ' ''delete'']'
+        items:
+          type: string
+        type: array
     required:
     - name
     type: object
@@ -128,6 +150,46 @@ definitions:
         example: /dashboard
         type: string
     type: object
+  handlers.RoleResponse:
+    description: Role response model
+    properties:
+      created_at:
+        example: "2024-01-01T12:00:00Z"
+        type: string
+      created_by:
+        example: john.doe@example.com
+        type: string
+      description:
+        example: Administrator role with full access
+        type: string
+      id:
+        example: 1
+        type: integer
+      menus:
+        items:
+          $ref: '#/definitions/handlers.MenuResponse'
+        type: array
+      name:
+        example: Admin
+        type: string
+      permissions:
+        example:
+        - '[''read'''
+        - ' ''write'''
+        - ' ''delete'']'
+        items:
+          type: string
+        type: array
+      tenant_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-01-01T12:00:00Z"
+        type: string
+      updated_by:
+        example: john.doe@example.com
+        type: string
+    type: object
   handlers.SuccessResponse:
     description: Standard success response model
     properties:
@@ -153,6 +215,26 @@ definitions:
       url:
         example: /dashboard
         type: string
+    required:
+    - name
+    type: object
+  handlers.UpdateRoleRequest:
+    description: Update role request model
+    properties:
+      description:
+        example: Administrator role with full access
+        type: string
+      name:
+        example: Admin
+        type: string
+      permissions:
+        example:
+        - '[''read'''
+        - ' ''write'''
+        - ' ''delete'']'
+        items:
+          type: string
+        type: array
     required:
     - name
     type: object
@@ -688,6 +770,249 @@ paths:
       summary: Get menus by user
       tags:
       - Menu
+  /roles:
+    post:
+      consumes:
+      - application/json
+      description: Create a new role with specified permissions
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Role Data
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.RoleResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new role
+      tags:
+      - Role
+  /roles/{id}:
+    delete:
+      description: Delete an existing role
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Role not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a role
+      tags:
+      - Role
+    get:
+      description: Get role details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.RoleResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Role not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a role by ID
+      tags:
+      - Role
+    put:
+      consumes:
+      - application/json
+      description: Update an existing role
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Role Data
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.RoleResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Role not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a role
+      tags:
+      - Role
+  /roles/{id}/menus:
+    post:
+      consumes:
+      - application/json
+      description: Assign multiple menus to a role
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Menu IDs to assign
+        in: body
+        name: menus
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AssignMenusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Role not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Assign menus to a role
+      tags:
+      - Role
   /users:
     get:
       description: Get paginated list of users

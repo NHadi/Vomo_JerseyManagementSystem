@@ -1,0 +1,60 @@
+package application
+
+import (
+	"vomo/internal/domain/menu"
+	"vomo/internal/domain/role"
+)
+
+type RoleService struct {
+	repository role.Repository
+}
+
+func NewRoleService(repo role.Repository) *RoleService {
+	return &RoleService{
+		repository: repo,
+	}
+}
+
+func (s *RoleService) Create(role *role.Role) error {
+	return s.repository.Create(role)
+}
+
+func (s *RoleService) FindByID(id int) (*role.Role, error) {
+	return s.repository.FindByID(id)
+}
+
+func (s *RoleService) FindByName(name string) (*role.Role, error) {
+	return s.repository.FindByName(name)
+}
+
+func (s *RoleService) Update(role *role.Role) error {
+	return s.repository.Update(role)
+}
+
+func (s *RoleService) Delete(id int) error {
+	return s.repository.Delete(id)
+}
+
+func (s *RoleService) AssignMenus(roleID int, menuIDs []int) error {
+	return s.repository.AssignMenus(roleID, menuIDs)
+}
+
+func (s *RoleService) RemoveMenus(roleID int, menuIDs []int) error {
+	return s.repository.RemoveMenus(roleID, menuIDs)
+}
+
+func (s *RoleService) GetRoleMenus(roleID int) ([]menu.Menu, error) {
+	return s.repository.GetRoleMenus(roleID)
+}
+
+func (s *RoleService) AssignPermissions(roleID int, permissions []int) error {
+	return s.repository.AssignPermissions(roleID, permissions)
+}
+
+func (s *RoleService) RemovePermissions(roleID int, permissions []int) error {
+	return s.repository.RemovePermissions(roleID, permissions)
+}
+
+func (s *RoleService) GetRolePermissions(roleID int) ([]int, error) {
+	return s.repository.GetRolePermissions(roleID)
+}

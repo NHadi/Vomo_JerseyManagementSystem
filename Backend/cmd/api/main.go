@@ -79,11 +79,13 @@ func main() {
 	menuRepo := postgres.NewMenuRepository(db)
 	userRepo := postgres.NewUserRepository(db)
 	auditRepo := postgres.NewAuditRepository(db)
+	roleRepo := postgres.NewRoleRepository(db)
 
 	// Initialize services
 	auditService := audit.NewService(auditRepo)
 	menuService := application.NewMenuService(menuRepo, auditService)
 	userService := application.NewUserService(userRepo)
+	roleService := application.NewRoleService(roleRepo)
 
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -140,6 +142,16 @@ func main() {
 				users.GET("/:id", handlers.GetUser(userService))
 				users.PUT("/:id", handlers.UpdateUser(userService))
 				users.DELETE("/:id", handlers.DeleteUser(userService))
+			}
+
+			// Role routes
+			roles := protected.Group("/roles")
+			{
+				roles.POST("", handlers.CreateRole(roleService))
+				roles.GET("/:id", handlers.GetRole(roleService))
+				roles.PUT("/:id", handlers.UpdateRole(roleService))
+				roles.DELETE("/:id", handlers.DeleteRole(roleService))
+				roles.POST("/:id/menus", handlers.AssignMenusToRole(roleService))
 			}
 
 			// Audit routes

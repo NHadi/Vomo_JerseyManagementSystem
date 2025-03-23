@@ -47,6 +47,20 @@ window.MenuPage = class {
             this.grid.dispose();
         }
 
+        const iconLookup = [
+            { id: 'ni ni-settings', text: 'Settings' },
+            { id: 'ni ni-archive-2', text: 'Archive' },
+            { id: 'ni ni-cart', text: 'Cart' },
+            { id: 'ni ni-box-2', text: 'Box' },
+            { id: 'ni ni-money-coins', text: 'Money' },
+            { id: 'ni ni-tag', text: 'Tag' },
+            { id: 'ni ni-collection', text: 'Collection' },
+            { id: 'ni ni-world-2', text: 'World' },
+            { id: 'ni ni-building', text: 'Building' },
+            { id: 'ni ni-map-big', text: 'Map' },
+            { id: 'ni ni-circle-08', text: 'User' }
+        ];
+
         this.grid = $('#menuGrid').dxDataGrid({
             dataSource: {
                 store: {
@@ -70,21 +84,25 @@ window.MenuPage = class {
                     dataField: 'icon',
                     caption: 'Icon',
                     lookup: {
-                        dataSource: [
-                            { id: 'ni ni-settings', text: 'Settings' },
-                            { id: 'ni ni-archive-2', text: 'Archive' },
-                            { id: 'ni ni-cart', text: 'Cart' },
-                            { id: 'ni ni-box-2', text: 'Box' },
-                            { id: 'ni ni-money-coins', text: 'Money' },
-                            { id: 'ni ni-tag', text: 'Tag' },
-                            { id: 'ni ni-collection', text: 'Collection' },
-                            { id: 'ni ni-world-2', text: 'World' },
-                            { id: 'ni ni-building', text: 'Building' },
-                            { id: 'ni ni-map-big', text: 'Map' },
-                            { id: 'ni ni-circle-08', text: 'User' }
-                        ],
+                        dataSource: iconLookup,
                         valueExpr: 'id',
                         displayExpr: 'text'
+                    },
+                    cellTemplate: (container, options) => {
+                        if (!options.value) return;
+                        $('<div>')
+                            .addClass('d-flex align-items-center')
+                            .append(
+                                $('<i>')
+                                    .addClass(options.value)
+                                    .css({ 'font-size': '1.2em', 'margin-right': '8px' })
+                            )
+                            .append(
+                                $('<span>').text(
+                                    iconLookup.find(item => item.id === options.value)?.text || options.value
+                                )
+                            )
+                            .appendTo(container);
                     }
                 },
                 {
@@ -125,21 +143,25 @@ window.MenuPage = class {
                                     dataField: 'icon',
                                     caption: 'Icon',
                                     lookup: {
-                                        dataSource: [
-                                            { id: 'ni ni-settings', text: 'Settings' },
-                                            { id: 'ni ni-archive-2', text: 'Archive' },
-                                            { id: 'ni ni-cart', text: 'Cart' },
-                                            { id: 'ni ni-box-2', text: 'Box' },
-                                            { id: 'ni ni-money-coins', text: 'Money' },
-                                            { id: 'ni ni-tag', text: 'Tag' },
-                                            { id: 'ni ni-collection', text: 'Collection' },
-                                            { id: 'ni ni-world-2', text: 'World' },
-                                            { id: 'ni ni-building', text: 'Building' },
-                                            { id: 'ni ni-map-big', text: 'Map' },
-                                            { id: 'ni ni-circle-08', text: 'User' }
-                                        ],
+                                        dataSource: iconLookup,
                                         valueExpr: 'id',
                                         displayExpr: 'text'
+                                    },
+                                    cellTemplate: (container, options) => {
+                                        if (!options.value) return;
+                                        $('<div>')
+                                            .addClass('d-flex align-items-center')
+                                            .append(
+                                                $('<i>')
+                                                    .addClass(options.value)
+                                                    .css({ 'font-size': '1.2em', 'margin-right': '8px' })
+                                            )
+                                            .append(
+                                                $('<span>').text(
+                                                    iconLookup.find(item => item.id === options.value)?.text || options.value
+                                                )
+                                            )
+                                            .appendTo(container);
                                     }
                                 },
                                 {
