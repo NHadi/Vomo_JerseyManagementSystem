@@ -12,32 +12,32 @@ import (
 // RoleResponse represents the role response structure
 // @Description Role response model
 type RoleResponse struct {
-	ID          int            `json:"id" example:"1"`
-	Name        string         `json:"name" example:"Admin"`
-	Description string         `json:"description" example:"Administrator role with full access"`
-	Permissions []int          `json:"permissions,omitempty" example:"[1, 2, 3]"`
-	Menus       []MenuResponse `json:"menus,omitempty"`
-	CreatedAt   string         `json:"created_at" example:"2024-01-01T12:00:00Z"`
-	CreatedBy   string         `json:"created_by" example:"john.doe@example.com"`
-	UpdatedAt   string         `json:"updated_at" example:"2024-01-01T12:00:00Z"`
-	UpdatedBy   string         `json:"updated_by" example:"john.doe@example.com"`
-	TenantID    int            `json:"tenant_id" example:"1"`
+	ID          int                  `json:"id" example:"1"`
+	Name        string               `json:"name" example:"Admin"`
+	Description string               `json:"description" example:"Administrator role with full access"`
+	Permissions []PermissionResponse `json:"permissions,omitempty"`
+	Menus       []MenuResponse       `json:"menus,omitempty"`
+	CreatedAt   string               `json:"created_at" example:"2024-01-01T12:00:00Z"`
+	CreatedBy   string               `json:"created_by" example:"john.doe@example.com"`
+	UpdatedAt   string               `json:"updated_at" example:"2024-01-01T12:00:00Z"`
+	UpdatedBy   string               `json:"updated_by" example:"john.doe@example.com"`
+	TenantID    int                  `json:"tenant_id" example:"1"`
 }
 
 // CreateRoleRequest represents the request structure for creating a role
 // @Description Create role request model
 type CreateRoleRequest struct {
-	Name        string `json:"name" binding:"required" example:"Admin"`
-	Description string `json:"description" example:"Administrator role with full access"`
-	Permissions []int  `json:"permissions" example:"[1, 2, 3]"`
+	Name          string `json:"name" binding:"required" example:"Admin"`
+	Description   string `json:"description" example:"Administrator role with full access"`
+	PermissionIDs []int  `json:"permission_ids" example:"1,2,3"`
 }
 
 // UpdateRoleRequest represents the request structure for updating a role
 // @Description Update role request model
 type UpdateRoleRequest struct {
-	Name        string `json:"name" binding:"required" example:"Admin"`
-	Description string `json:"description" example:"Administrator role with full access"`
-	Permissions []int  `json:"permissions" example:"[1, 2, 3]"`
+	Name          string `json:"name" binding:"required" example:"Admin"`
+	Description   string `json:"description" example:"Administrator role with full access"`
+	PermissionIDs []int  `json:"permission_ids" example:"1,2,3"`
 }
 
 // AssignMenusRequest represents the request structure for assigning menus to a role
@@ -54,11 +54,18 @@ func toRoleResponse(role *role.Role) RoleResponse {
 		}
 	}
 
+	permissionResponses := make([]PermissionResponse, 0)
+	if role.Permissions != nil {
+		for _, p := range role.Permissions {
+			permissionResponses = append(permissionResponses, toPermissionResponse(&p))
+		}
+	}
+
 	return RoleResponse{
 		ID:          role.ID,
 		Name:        role.Name,
 		Description: role.Description,
-		Permissions: role.Permissions,
+		Permissions: permissionResponses,
 		Menus:       menuResponses,
 		CreatedAt:   role.CreatedAt.String(),
 		CreatedBy:   role.CreatedBy,
@@ -93,7 +100,6 @@ func CreateRole(service *application.RoleService) gin.HandlerFunc {
 		newRole := &role.Role{
 			Name:        req.Name,
 			Description: req.Description,
-			Permissions: req.Permissions,
 		}
 
 		if err := service.Create(newRole); err != nil {
@@ -101,7 +107,29 @@ func CreateRole(service *application.RoleService) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, toRoleResponse(newRole))
+		// Assign permissions if provided
+		if len(req.PermissionIDs) > 0 {
+			if err := service.AssignPermissions(newRole.ID, req.PermissionIDs); err != nil {
+				c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to assign permissions"})
+				return
+			}
+		}
+
+		// Fetch the complete role with permissions
+		role, err := service.FindByID(newRole.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch created role"})
+			return
+		}
+
+		permissions, err := service.GetRolePermissions(role.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch role permissions"})
+			return
+		}
+		role.Permissions = permissions
+
+		c.JSON(http.StatusCreated, toRoleResponse(role))
 	}
 }
 
@@ -132,6 +160,14 @@ func GetRole(service *application.RoleService) gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, ErrorResponse{Error: "Role not found"})
 			return
 		}
+
+		// Fetch permissions for the role
+		permissions, err := service.GetRolePermissions(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch role permissions"})
+			return
+		}
+		role.Permissions = permissions
 
 		c.JSON(http.StatusOK, toRoleResponse(role))
 	}
@@ -175,12 +211,25 @@ func UpdateRole(service *application.RoleService) gin.HandlerFunc {
 
 		existingRole.Name = req.Name
 		existingRole.Description = req.Description
-		existingRole.Permissions = req.Permissions
 
 		if err := service.Update(existingRole); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
+
+		// Update permissions
+		if err := service.AssignPermissions(id, req.PermissionIDs); err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to update permissions"})
+			return
+		}
+
+		// Fetch updated permissions
+		permissions, err := service.GetRolePermissions(id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch role permissions"})
+			return
+		}
+		existingRole.Permissions = permissions
 
 		c.JSON(http.StatusOK, toRoleResponse(existingRole))
 	}

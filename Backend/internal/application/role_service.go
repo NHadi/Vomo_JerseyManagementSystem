@@ -2,16 +2,19 @@ package application
 
 import (
 	"vomo/internal/domain/menu"
+	"vomo/internal/domain/permission"
 	"vomo/internal/domain/role"
 )
 
 type RoleService struct {
-	repository role.Repository
+	repository     role.Repository
+	permissionRepo permission.Repository
 }
 
-func NewRoleService(repo role.Repository) *RoleService {
+func NewRoleService(repo role.Repository, permRepo permission.Repository) *RoleService {
 	return &RoleService{
-		repository: repo,
+		repository:     repo,
+		permissionRepo: permRepo,
 	}
 }
 
@@ -47,14 +50,14 @@ func (s *RoleService) GetRoleMenus(roleID int) ([]menu.Menu, error) {
 	return s.repository.GetRoleMenus(roleID)
 }
 
-func (s *RoleService) AssignPermissions(roleID int, permissions []int) error {
-	return s.repository.AssignPermissions(roleID, permissions)
+func (s *RoleService) AssignPermissions(roleID int, permissionIDs []int) error {
+	return s.repository.AssignPermissions(roleID, permissionIDs)
 }
 
-func (s *RoleService) RemovePermissions(roleID int, permissions []int) error {
-	return s.repository.RemovePermissions(roleID, permissions)
+func (s *RoleService) RemovePermissions(roleID int, permissionIDs []int) error {
+	return s.repository.RemovePermissions(roleID, permissionIDs)
 }
 
-func (s *RoleService) GetRolePermissions(roleID int) ([]int, error) {
+func (s *RoleService) GetRolePermissions(roleID int) ([]permission.Permission, error) {
 	return s.repository.GetRolePermissions(roleID)
 }

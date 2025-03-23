@@ -6,101 +6,56 @@ import (
 	"vomo/internal/config"
 	"vomo/internal/domain/common"
 	"vomo/internal/domain/user"
+	jwtpkg "vomo/internal/infrastructure/jwt"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )
 
 func GenerateAccessToken(user *user.User) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id":   user.ID,
-		"tenant_id": user.TenantModel.TenantID,
-		"username":  user.Username,
-		"exp":       time.Now().Add(time.Hour * 1).Unix(), // 1 hour expiry
+	claims := &jwtpkg.Claims{
+		UserID:   user.ID.String(),
+		TenantID: user.TenantModel.TenantID,
+		Username: user.Username,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 3).Unix(), // 3 hour expiry
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.GetConfig().JWTSecret))
+	return token.SignedString(config.GetConfig().JWTSecret)
 }
 
 func GenerateRefreshToken(user *user.User) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id":   user.ID,
-		"tenant_id": user.TenantModel.TenantID,
-		"username":  user.Username,
-		"exp":       time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days expiry
+	claims := &jwtpkg.Claims{
+		UserID:   user.ID.String(),
+		TenantID: user.TenantModel.TenantID,
+		Username: user.Username,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days expiry
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.GetConfig().JWTRefreshSecret))
+	return token.SignedString(config.GetConfig().JWTRefreshSecret)
 }
 
-func ValidateToken(tokenString string) (jwt.MapClaims, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(config.GetConfig().JWTSecret), nil
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("invalid token: %v", err)
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
-		return nil, fmt.Errorf("invalid token claims")
-	}
-
-	return claims, nil
+func ValidateToken(tokenString string) (*jwtpkg.Claims, error) {
+	return jwtpkg.ValidateToken(tokenString)
 }
 
-func ValidateRefreshToken(tokenString string) (jwt.MapClaims, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(config.GetConfig().JWTRefreshSecret), nil
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("invalid refresh token: %v", err)
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
-		return nil, fmt.Errorf("invalid refresh token claims")
-	}
-
-	return claims, nil
+func ValidateRefreshToken(tokenString string) (*jwtpkg.Claims, error) {
+	return jwtpkg.ValidateToken(tokenString)
 }
 
-func ExtractTokenMetadata(claims jwt.MapClaims) (*user.User, error) {
-	userIDStr, ok := claims["user_id"].(string)
-	if !ok {
-		return nil, fmt.Errorf("user_id not found in token")
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user_id format")
-	}
-
-	tenantID, ok := claims["tenant_id"].(float64)
-	if !ok {
-		return nil, fmt.Errorf("tenant_id not found in token")
-	}
-
-	username, ok := claims["username"].(string)
-	if !ok {
-		return nil, fmt.Errorf("username not found in token")
-	}
+func ExtractTokenMetadata(claims *jwtpkg.Claims) (*user.User, error) {
+	userID := uuid.Must(uuid.Parse(fmt.Sprint(claims.UserID)))
 
 	return &user.User{
 		ID:       userID,
-		Username: username,
+		Username: claims.Username,
 		TenantModel: common.TenantModel{
-			TenantID: int(tenantID),
+			TenantID: claims.TenantID,
 		},
 	}, nil
 }

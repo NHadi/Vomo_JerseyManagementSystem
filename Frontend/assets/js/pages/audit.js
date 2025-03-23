@@ -8,6 +8,10 @@ window.AuditPage = class {
         this.endDatePicker = null;
         this.entityTypeFilter = null;
         this.actionFilter = null;
+        this.isInitialLoad = true;
+        
+        // Add debounce mechanism
+        this.debouncedLoadData = this.debounce(this.loadData.bind(this), 300);
         
         // Check if DevExtreme is already loaded
         if (typeof DevExpress !== 'undefined') {
@@ -44,9 +48,14 @@ window.AuditPage = class {
         this.initializeFilters();
         this.initializeGrid();
         this.initializeRefreshButton();
+        
+        // Update filter options and load data only once
         this.updateFilterOptions().then(() => {
             console.log('Filter options updated');
-            this.loadData();
+            if (this.isInitialLoad) {
+                this.loadData();
+                this.isInitialLoad = false;
+            }
         }).catch(error => {
             console.error('Error updating filter options:', error);
         });
@@ -64,7 +73,7 @@ window.AuditPage = class {
             value: thirtyDaysAgo,
             displayFormat: 'yyyy-MM-dd',
             stylingMode: 'filled',
-            onValueChanged: () => this.loadData()
+            onValueChanged: this.debouncedLoadData.bind(this)
         }).dxDateBox('instance');
 
         this.endDatePicker = $('#endDatePicker').dxDateBox({
@@ -72,7 +81,7 @@ window.AuditPage = class {
             value: today,
             displayFormat: 'yyyy-MM-dd',
             stylingMode: 'filled',
-            onValueChanged: () => this.loadData()
+            onValueChanged: this.debouncedLoadData.bind(this)
         }).dxDateBox('instance');
 
         console.log('Date pickers initialized');
@@ -84,7 +93,7 @@ window.AuditPage = class {
             items: ['All'],
             value: 'All',
             stylingMode: 'filled',
-            onValueChanged: () => this.loadData(),
+            onValueChanged: this.debouncedLoadData.bind(this),
             displayExpr: (item) => item ? item.charAt(0).toUpperCase() + item.slice(1) : '',
             searchEnabled: true
         }).dxSelectBox('instance');
@@ -93,7 +102,7 @@ window.AuditPage = class {
             items: ['All'],
             value: 'All',
             stylingMode: 'filled',
-            onValueChanged: () => this.loadData(),
+            onValueChanged: this.debouncedLoadData.bind(this),
             displayExpr: (item) => item ? item.charAt(0).toUpperCase() + item.slice(1) : '',
             searchEnabled: true
         }).dxSelectBox('instance');
@@ -307,8 +316,7 @@ window.AuditPage = class {
                 showPageSizeSelector: true,
                 allowedPageSizes: [10, 20, 50, 100],
                 showInfo: true
-            },
-            onInitialized: () => this.loadData()
+            }
         }).dxDataGrid('instance');
 
         // Add CSS for JSON formatting
@@ -380,6 +388,19 @@ window.AuditPage = class {
             console.error('Error loading audit data:', error);
             DevExpress.ui.notify('Failed to load audit data: ' + error.message, 'error', 3000);
         }
+    }
+
+    // Add debounce utility function
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 };
 

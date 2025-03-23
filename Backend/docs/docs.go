@@ -1448,15 +1448,15 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Admin"
                 },
-                "permissions": {
+                "permission_ids": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "example": [
-                        "['read'",
-                        " 'write'",
-                        " 'delete']"
+                        1,
+                        2,
+                        3
                     ]
                 }
             }
@@ -1575,6 +1575,35 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.PermissionResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tenant_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.RoleResponse": {
             "description": "Role response model",
             "type": "object",
@@ -1608,13 +1637,8 @@ const docTemplate = `{
                 "permissions": {
                     "type": "array",
                     "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "['read'",
-                        " 'write'",
-                        " 'delete']"
-                    ]
+                        "$ref": "#/definitions/handlers.PermissionResponse"
+                    }
                 },
                 "tenant_id": {
                     "type": "integer",
@@ -1684,15 +1708,15 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Admin"
                 },
-                "permissions": {
+                "permission_ids": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "example": [
-                        "['read'",
-                        " 'write'",
-                        " 'delete']"
+                        1,
+                        2,
+                        3
                     ]
                 }
             }

@@ -25,11 +25,11 @@ func AuditContext() gin.HandlerFunc {
 			tokenString = tokenString[7:]
 		}
 
-		user, err := jwt.ValidateToken(tokenString)
+		claims, err := jwt.ValidateToken(tokenString)
 		if err == nil {
 			userContext := &appcontext.UserContext{
-				Username: user.Username,
-				TenantID: user.TenantModel.TenantID,
+				Username: claims.Username,
+				TenantID: claims.TenantID,
 			}
 			c.Set(appcontext.UserContextKey, userContext)
 		}

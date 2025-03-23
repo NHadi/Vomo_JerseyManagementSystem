@@ -59,13 +59,13 @@ definitions:
       name:
         example: Admin
         type: string
-      permissions:
+      permission_ids:
         example:
-        - '[''read'''
-        - ' ''write'''
-        - ' ''delete'']'
+        - 1
+        - 2
+        - 3
         items:
-          type: string
+          type: integer
         type: array
     required:
     - name
@@ -150,6 +150,25 @@ definitions:
         example: /dashboard
         type: string
     type: object
+  handlers.PermissionResponse:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      tenant_id:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
   handlers.RoleResponse:
     description: Role response model
     properties:
@@ -173,12 +192,8 @@ definitions:
         example: Admin
         type: string
       permissions:
-        example:
-        - '[''read'''
-        - ' ''write'''
-        - ' ''delete'']'
         items:
-          type: string
+          $ref: '#/definitions/handlers.PermissionResponse'
         type: array
       tenant_id:
         example: 1
@@ -227,13 +242,13 @@ definitions:
       name:
         example: Admin
         type: string
-      permissions:
+      permission_ids:
         example:
-        - '[''read'''
-        - ' ''write'''
-        - ' ''delete'']'
+        - 1
+        - 2
+        - 3
         items:
-          type: string
+          type: integer
         type: array
     required:
     - name

@@ -9,6 +9,7 @@ import (
 	"vomo/internal/infrastructure/jwt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type LoginRequest struct {
@@ -150,7 +151,7 @@ func RefreshToken(userService *application.UserService) gin.HandlerFunc {
 		}
 
 		// Get user from database to verify existence
-		user, err := userService.GetUserByID(tokenUser.ID)
+		user, err := userService.GetUserByID(uuid.Must(uuid.Parse(tokenUser.UserID)))
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 			return

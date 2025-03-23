@@ -15,18 +15,28 @@ var (
 	jwtRefreshSecret []byte
 )
 
-// SetSecrets initializes the JWT secrets
+// Claims represents the JWT claims structure
+type Claims struct {
+	UserID   string `json:"user_id"`
+	TenantID int    `json:"tenant_id"`
+	Username string `json:"username"`
+	jwt.StandardClaims
+}
+
+// SetSecrets sets the JWT secrets for token signing and validation
 func SetSecrets(secret, refreshSecret string) {
 	jwtSecret = []byte(secret)
 	jwtRefreshSecret = []byte(refreshSecret)
 }
 
 func GenerateAccessToken(user *user.User) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id":   user.ID.String(),
-		"tenant_id": user.TenantModel.TenantID,
-		"username":  user.Username,
-		"exp":       time.Now().Add(time.Hour * 1).Unix(),
+	claims := &Claims{
+		UserID:   user.ID.String(),
+		TenantID: user.TenantModel.TenantID,
+		Username: user.Username,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -34,57 +44,51 @@ func GenerateAccessToken(user *user.User) (string, error) {
 }
 
 func GenerateRefreshToken(user *user.User) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id":   user.ID.String(),
-		"tenant_id": user.TenantModel.TenantID,
-		"username":  user.Username,
-		"exp":       time.Now().Add(time.Hour * 24 * 7).Unix(),
+	claims := &Claims{
+		UserID:   user.ID.String(),
+		TenantID: user.TenantModel.TenantID,
+		Username: user.Username,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 24 * 7).Unix(),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtRefreshSecret)
 }
 
-// Update ValidateToken to use the package-level secret
-func ValidateToken(tokenString string) (*user.User, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+// ValidateToken validates a JWT token and returns the claims
+func ValidateToken(tokenString string) (*Claims, error) {
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return jwtSecret, nil
 	})
 
-	if err != nil {
+	if err != nil || !token.Valid {
 		return nil, fmt.Errorf("invalid token: %v", err)
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
-		return nil, fmt.Errorf("invalid token claims")
-	}
-
-	return extractUserFromClaims(claims)
+	return claims, nil
 }
 
-// Update ValidateRefreshToken to use the package-level refresh secret
-func ValidateRefreshToken(tokenString string) (*user.User, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+// ValidateRefreshToken validates a refresh token
+func ValidateRefreshToken(tokenString string) (*Claims, error) {
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return jwtRefreshSecret, nil
 	})
 
-	if err != nil {
+	if err != nil || !token.Valid {
 		return nil, fmt.Errorf("invalid refresh token: %v", err)
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
-		return nil, fmt.Errorf("invalid refresh token claims")
-	}
-
-	return extractUserFromClaims(claims)
+	return claims, nil
 }
 
 func extractUserFromClaims(claims jwt.MapClaims) (*user.User, error) {
