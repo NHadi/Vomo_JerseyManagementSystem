@@ -14,7 +14,8 @@ type MenuResponse struct {
 	Name     string         `json:"name"`
 	URL      string         `json:"url"`
 	Icon     string         `json:"icon"`
-	ParentID *int          `json:"parent_id"`
+	ParentID *int           `json:"parent_id"`
+	Sort     int            `json:"sort"`
 	Children []MenuResponse `json:"children,omitempty"`
 }
 
@@ -30,6 +31,7 @@ func toMenuResponse(menu menu.Menu) MenuResponse {
 		URL:      menu.URL,
 		Icon:     menu.Icon,
 		ParentID: menu.ParentID,
+		Sort:     menu.Sort,
 		Children: children,
 	}
 }

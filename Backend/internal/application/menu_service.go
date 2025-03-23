@@ -75,10 +75,10 @@ func (s *MenuService) UpdateMenu(id int, name, url, icon string, parentID *int, 
 	return m, nil
 }
 
-// Update buildMenuTree to preserve tenant ID
+// Update buildMenuTree to preserve tenant ID and sorting
 func (s *MenuService) buildMenuTree(menus []menu.Menu) []menu.Menu {
 	menuMap := make(map[int]*menu.Menu)
-	var rootMenus []menu.Menu
+	var rootMenus []*menu.Menu
 
 	// First pass: create all menu items in a map
 	for i := range menus {
@@ -87,25 +87,26 @@ func (s *MenuService) buildMenuTree(menus []menu.Menu) []menu.Menu {
 		menuMap[menu.ID] = &menu
 	}
 
-	// Second pass: build the tree
-	for _, menuPtr := range menuMap {
-		if menuPtr.ParentID != nil {
-			if parent, exists := menuMap[*menuPtr.ParentID]; exists {
-				childCopy := *menuPtr
+	// Second pass: build the tree while preserving order
+	for _, m := range menus { // Iterate through original sorted slice
+		if m.ParentID != nil {
+			if parent, exists := menuMap[*m.ParentID]; exists {
+				childCopy := *menuMap[m.ID]
 				childCopy.Children = nil
 				parent.Children = append(parent.Children, &childCopy)
 			}
+		} else {
+			rootMenus = append(rootMenus, menuMap[m.ID])
 		}
 	}
 
-	// Final pass: collect root menus
-	for _, menuPtr := range menuMap {
-		if menuPtr.ParentID == nil {
-			rootMenus = append(rootMenus, *menuPtr)
-		}
+	// Convert back to []menu.Menu while preserving order
+	result := make([]menu.Menu, len(rootMenus))
+	for i, menuPtr := range rootMenus {
+		result[i] = *menuPtr
 	}
 
-	return rootMenus
+	return result
 }
 
 func (s *MenuService) DeleteMenu(id int, tenantID int) error {
@@ -113,25 +114,25 @@ func (s *MenuService) DeleteMenu(id int, tenantID int) error {
 }
 
 func (s *MenuService) Create(menu *menu.Menu) error {
-    return s.repo.Create(menu)
+	return s.repo.Create(menu)
 }
 
 func (s *MenuService) Update(menu *menu.Menu) error {
-    return s.repo.Update(menu)
+	return s.repo.Update(menu)
 }
 
 func (s *MenuService) GetByID(id, tenantID int) (*menu.Menu, error) {
-    return s.repo.FindByID(id, tenantID)
+	return s.repo.FindByID(id, tenantID)
 }
 
 func (s *MenuService) GetAll(tenantID int) ([]menu.Menu, error) {
-    menus, err := s.repo.FindAll(tenantID)
-    if err != nil {
-        return nil, err
-    }
-    return s.buildMenuTree(menus), nil
+	menus, err := s.repo.FindAll(tenantID)
+	if err != nil {
+		return nil, err
+	}
+	return s.buildMenuTree(menus), nil
 }
 
 func (s *MenuService) Delete(id, tenantID int) error {
-    return s.repo.Delete(id, tenantID)
+	return s.repo.Delete(id, tenantID)
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"sort"
 	"strings"
 	"vomo/internal/application"
 	"vomo/internal/infrastructure/jwt"
@@ -64,21 +65,55 @@ func Login(userService *application.UserService, menuService *application.MenuSe
 		// First pass: create all menu responses and store in map
 		for _, m := range menus {
 			menuResp := toMenuResponse(m)
-			// menuResp.Children = make([]MenuResponse, 0) // Initialize empty children slice
 			menuMap[m.ID] = menuResp
 		}
 
-		// Second pass: organize children
-		for id, menu := range menuMap {
-			if menu.ParentID != nil {
-				if parent, exists := menuMap[*menu.ParentID]; exists {
-					childCopy := menu // Create a copy of the child menu
-					parent.Children = append(parent.Children, childCopy)
-					menuMap[*menu.ParentID] = parent
+		// Second pass: organize children and preserve sorting
+		type menuWithSort struct {
+			menu MenuResponse
+			sort int
+		}
+
+		// Collect and sort root menus
+		var rootMenuItems []menuWithSort
+		for _, m := range menus {
+			if m.ParentID == nil {
+				if menuResp, exists := menuMap[m.ID]; exists {
+					rootMenuItems = append(rootMenuItems, menuWithSort{menu: menuResp, sort: m.Sort})
 				}
-			} else {
-				rootMenus = append(rootMenus, menuMap[id])
 			}
+		}
+
+		// Sort root menus by Sort field
+		sort.SliceStable(rootMenuItems, func(i, j int) bool {
+			if rootMenuItems[i].sort == rootMenuItems[j].sort {
+				return rootMenuItems[i].menu.ID < rootMenuItems[j].menu.ID
+			}
+			return rootMenuItems[i].sort < rootMenuItems[j].sort
+		})
+
+		// Build children for each menu while preserving sort order
+		for _, m := range menus {
+			if m.ParentID != nil {
+				if parent, exists := menuMap[*m.ParentID]; exists {
+					childCopy := menuMap[m.ID]
+					parent.Children = append(parent.Children, childCopy)
+					// Sort children by Sort field
+					sort.SliceStable(parent.Children, func(i, j int) bool {
+						if parent.Children[i].Sort == parent.Children[j].Sort {
+							return parent.Children[i].ID < parent.Children[j].ID
+						}
+						return parent.Children[i].Sort < parent.Children[j].Sort
+					})
+					menuMap[*m.ParentID] = parent
+				}
+			}
+		}
+
+		// Build final root menus array in sorted order
+		rootMenus = make([]MenuResponse, len(rootMenuItems))
+		for i, item := range rootMenuItems {
+			rootMenus[i] = item.menu
 		}
 
 		c.JSON(http.StatusOK, LoginResponse{
