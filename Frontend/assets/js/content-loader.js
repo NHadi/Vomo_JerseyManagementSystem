@@ -106,6 +106,9 @@
                         case 'menu':
                             await this.loadMenuGrid();
                             break;
+                        case 'audit':
+                            await this.loadAuditGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -205,6 +208,35 @@
                     } catch (error) {
                         console.error('Failed to load menu component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load menu component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadAuditGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.auditPageInstance) {
+                window.auditPageInstance.dispose();
+                window.auditPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/audit.html', async () => {
+                    try {
+                        // Load audit.js if not already loaded
+                        if (!window.AuditPage) {
+                            await this.loadScript('assets/js/pages/audit.js');
+                        }
+                        
+                        // Initialize AuditPage
+                        if (!window.auditPageInstance && window.AuditPage) {
+                            window.auditPageInstance = new window.AuditPage();
+                        }
+                        resolve();
+                    } catch (error) {
+                        console.error('Failed to load audit component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load audit component</div>');
                         reject(error);
                     }
                 });

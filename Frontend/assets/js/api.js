@@ -109,6 +109,61 @@
         }
     }
 
+    // Audits
+    async function getAuditsByDateRange(startDate, endDate) {
+        try {
+            const response = await fetch(`${getApiUrl()}/audits/date-range?start_date=${startDate}&end_date=${endDate}`, {
+                headers: getHeaders()
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to fetch audit data');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Get audit data error:', error);
+            throw error;
+        }
+    }
+
+    async function getAuditsByEntity(entityType, entityId) {
+        try {
+            const response = await fetch(`${getApiUrl()}/audits/entity/${entityType}/${entityId}`, {
+                headers: getHeaders()
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to fetch entity audit data');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Get entity audit data error:', error);
+            throw error;
+        }
+    }
+
+    async function getAuditsByTenant(tenantId) {
+        try {
+            const response = await fetch(`${getApiUrl()}/audits/tenant/${tenantId}`, {
+                headers: getHeaders()
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to fetch tenant audit data');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Get tenant audit data error:', error);
+            throw error;
+        }
+    }
+
     // Logout function
     function logout() {
         localStorage.removeItem('token');
@@ -120,10 +175,14 @@
 
     // Export the API functions
     window.vomoAPI = {
+        getApiUrl,
         login,
         getUsers,
         createUser,
         getMenusByRole,
+        getAuditsByDateRange,
+        getAuditsByEntity,
+        getAuditsByTenant,
         logout
     };
 })();

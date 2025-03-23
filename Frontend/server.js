@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const config = require('./config');
 const app = express();
-const port = process.env.PORT || 8090;
+const port = process.env.PORT || 8080;
 
 // Function to inject configuration into HTML
 function injectConfig(html) {
