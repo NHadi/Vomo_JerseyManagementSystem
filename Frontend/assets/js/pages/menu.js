@@ -189,9 +189,6 @@ if (typeof window.MenuPage === 'undefined') {
                 onRowRemoving: (e) => this.handleRowRemoving(e),
                 onInitialized: () => this.loadData()
             }).dxDataGrid('instance');
-
-            // Load data after grid is initialized
-            this.loadData();
         }
 
         async loadData() {
