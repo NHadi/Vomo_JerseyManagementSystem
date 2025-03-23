@@ -1,54 +1,36 @@
 <div class="row">
     <div class="col">
-        <div class="card shadow">
-            <!-- Card Header -->
-            <div class="card-header bg-white border-0">
+        <div class="card">
+            <div class="card-header border-0">
                 <div class="row align-items-center">
-                    <div class="col-8">
-                        <h3 class="mb-0">Audit Trail</h3>
-                        <p class="text-sm text-muted mb-0">Track all system changes and activities</p>
-                    </div>
-                    <div class="col-4 text-right">
-                        <button class="btn btn-sm btn-primary" id="refreshButton">
-                            <i class="fas fa-sync-alt"></i> Refresh
-                        </button>
+                    <div class="col">
+                        <h3 class="mb-0">Audit Log</h3>
                     </div>
                 </div>
             </div>
-
-            <!-- Filters Section -->
-            <div class="card-header bg-light border-0 py-3">
-                <div class="row align-items-center">
+            <div class="card-body">
+                <div class="row mb-4">
                     <div class="col-md-3">
-                        <label class="form-control-label text-sm">Start Date</label>
-                        <div id="startDatePicker" class="date-picker-container"></div>
+                        <div id="startDatePicker"></div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-control-label text-sm">End Date</label>
-                        <div id="endDatePicker" class="date-picker-container"></div>
+                        <div id="endDatePicker"></div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-control-label text-sm">Entity Type</label>
-                        <div id="entityTypeFilter" class="filter-container"></div>
+                        <div id="entityTypeFilter"></div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-control-label text-sm">Action</label>
-                        <div id="actionFilter" class="filter-container"></div>
+                        <div id="actionFilter"></div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Grid Section -->
-            <div class="card-body px-0 py-0">
-                <div id="auditGrid" class="audit-grid"></div>
+                <div id="auditGrid"></div>
             </div>
         </div>
     </div>
 </div>
 
+
 <style>
-
-
 .json-value {
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
     font-size: 0.8125rem;

@@ -195,16 +195,31 @@
             return new Promise((resolve, reject) => {
                 $('#main-content').load('components/menu.html', async () => {
                     try {
-                        // Load menu.js if not already loaded
-                        if (!window.MenuPage) {
-                            await this.loadScript('assets/js/pages/menu.js');
-                        }
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Create a script element with type="module" to load the menu.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/menu.js';
                         
-                        // Initialize MenuPage
-                        if (!window.menuPageInstance && window.MenuPage) {
-                            window.menuPageInstance = new window.MenuPage();
-                        }
-                        resolve();
+                        // Handle script load/error
+                        script.onload = () => resolve();
+                        script.onerror = (error) => {
+                            console.error('Failed to load menu module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
                     } catch (error) {
                         console.error('Failed to load menu component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load menu component</div>');
@@ -224,16 +239,31 @@
             return new Promise((resolve, reject) => {
                 $('#main-content').load('components/audit.html', async () => {
                     try {
-                        // Load audit.js if not already loaded
-                        if (!window.AuditPage) {
-                            await this.loadScript('assets/js/pages/audit.js');
-                        }
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Create a script element with type="module" to load the audit.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/audit.js';
                         
-                        // Initialize AuditPage
-                        if (!window.auditPageInstance && window.AuditPage) {
-                            window.auditPageInstance = new window.AuditPage();
-                        }
-                        resolve();
+                        // Handle script load/error
+                        script.onload = () => resolve();
+                        script.onerror = (error) => {
+                            console.error('Failed to load audit module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
                     } catch (error) {
                         console.error('Failed to load audit component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load audit component</div>');
