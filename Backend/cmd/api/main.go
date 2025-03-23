@@ -1,12 +1,27 @@
-// @title Vomo API
-// @version 1.0
-// @description Vomo API Documentation
-// @host localhost:8080
-// @BasePath /api
+// @title           Vomo API
+// @version         1.0
+// @description     Vomo backend API documentation
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+// @BasePath  /api
+
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
 // @description Type "Bearer" followed by a space and JWT token.
+
+// @schemes http https
+// @produce application/json
+// @consumes application/json
+
 package main
 
 import (
@@ -15,8 +30,9 @@ import (
 	_ "vomo/docs"
 	"vomo/internal/application"
 	"vomo/internal/config"
+	"vomo/internal/domain/audit"
 	"vomo/internal/handlers"
-	"vomo/internal/infrastructure/jwt" // Add JWT package
+	"vomo/internal/infrastructure/jwt"
 	"vomo/internal/infrastructure/logging"
 	"vomo/internal/infrastructure/postgres"
 	"vomo/internal/middleware"
@@ -30,8 +46,8 @@ func main() {
 	// Initialize logger
 	logger, err := logging.NewLogger(
 		[]string{"http://localhost:9200"},
-		"", // No username needed with anonymous access
-		"", // No password needed with anonymous access
+		"",
+		"",
 		"vomo-logs",
 	)
 	if err != nil {
@@ -60,15 +76,16 @@ func main() {
 	}
 
 	// Initialize repositories
-
 	menuRepo := postgres.NewMenuRepository(db)
 	userRepo := postgres.NewUserRepository(db)
+	auditRepo := postgres.NewAuditRepository(db)
 
 	// Initialize services
-	menuService := application.NewMenuService(menuRepo)
+	auditService := audit.NewService(auditRepo)
+	menuService := application.NewMenuService(menuRepo, auditService)
 	userService := application.NewUserService(userRepo)
 
-	r := gin.New() // Use gin.New() instead of gin.Default() to avoid default logger
+	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.LoggingMiddleware(logger))
 
@@ -76,9 +93,7 @@ func main() {
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Tenant-ID, X-CSRF-Token")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Expose-Headers", "Authorization")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Tenant-ID")
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
@@ -103,6 +118,7 @@ func main() {
 		protected := api.Group("")
 		protected.Use(middleware.AuthMiddleware())
 		protected.Use(middleware.TenantMiddleware())
+		protected.Use(middleware.AuditContext())
 		{
 			// Menu routes
 			menus := protected.Group("/menus")
@@ -116,7 +132,7 @@ func main() {
 				menus.GET("/by-user/:user_id", handlers.GetMenusByUser(menuService))
 			}
 
-			// Move user routes inside protected group
+			// User routes
 			users := protected.Group("/users")
 			{
 				users.GET("", handlers.GetUsers(userService))
@@ -124,6 +140,14 @@ func main() {
 				users.GET("/:id", handlers.GetUser(userService))
 				users.PUT("/:id", handlers.UpdateUser(userService))
 				users.DELETE("/:id", handlers.DeleteUser(userService))
+			}
+
+			// Audit routes
+			audits := protected.Group("/audits")
+			{
+				audits.GET("/entity/:type/:id", handlers.GetEntityAuditHistory(auditService))
+				audits.GET("/tenant/:id", handlers.GetTenantAuditHistory(auditService))
+				audits.GET("/date-range", handlers.GetAuditHistoryByDateRange(auditService))
 			}
 		}
 	}

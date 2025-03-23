@@ -10,10 +10,9 @@ import (
 
 func GetMenusByRole(menuService *application.MenuService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tenantID, _ := strconv.Atoi(c.GetString("tenant_id"))
 		roleID, _ := strconv.Atoi(c.Query("role_id"))
 
-		menus, err := menuService.GetMenusByRoleID(roleID, tenantID)
+		menus, err := menuService.GetMenusByRoleID(roleID, c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

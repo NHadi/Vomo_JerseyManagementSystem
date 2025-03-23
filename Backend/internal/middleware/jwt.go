@@ -14,7 +14,7 @@ import (
 func GenerateAccessToken(user *user.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id":   user.ID,
-		"tenant_id": user.TenantID,
+		"tenant_id": user.TenantModel.TenantID,
 		"username":  user.Username,
 		"exp":       time.Now().Add(time.Hour * 1).Unix(), // 1 hour expiry
 	}
@@ -26,7 +26,7 @@ func GenerateAccessToken(user *user.User) (string, error) {
 func GenerateRefreshToken(user *user.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id":   user.ID,
-		"tenant_id": user.TenantID,
+		"tenant_id": user.TenantModel.TenantID,
 		"username":  user.Username,
 		"exp":       time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days expiry
 	}

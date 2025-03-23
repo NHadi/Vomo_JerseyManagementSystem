@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	jwtSecret       []byte
+	jwtSecret        []byte
 	jwtRefreshSecret []byte
 )
 
@@ -24,7 +24,7 @@ func SetSecrets(secret, refreshSecret string) {
 func GenerateAccessToken(user *user.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id":   user.ID.String(),
-		"tenant_id": user.TenantID,
+		"tenant_id": user.TenantModel.TenantID,
 		"username":  user.Username,
 		"exp":       time.Now().Add(time.Hour * 1).Unix(),
 	}
@@ -36,7 +36,7 @@ func GenerateAccessToken(user *user.User) (string, error) {
 func GenerateRefreshToken(user *user.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id":   user.ID.String(),
-		"tenant_id": user.TenantID,
+		"tenant_id": user.TenantModel.TenantID,
 		"username":  user.Username,
 		"exp":       time.Now().Add(time.Hour * 24 * 7).Unix(),
 	}

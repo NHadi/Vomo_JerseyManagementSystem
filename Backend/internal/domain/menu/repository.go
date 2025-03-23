@@ -1,11 +1,13 @@
 package menu
 
+import "context"
+
 type Repository interface {
-	FindAll(tenantID int) ([]Menu, error)
-	FindByID(id, tenantID int) (*Menu, error)
-	FindByRoleID(roleID, tenantID int) ([]Menu, error)
-	FindByUserID(userID string, tenantID int) ([]Menu, error)
-	Create(menu *Menu) error
-	Update(menu *Menu) error
-	Delete(id, tenantID int) error
+	FindAll(ctx context.Context) ([]Menu, error)
+	FindByID(id int, ctx context.Context) (*Menu, error)
+	FindByRoleID(roleID int, ctx context.Context) ([]Menu, error)
+	FindByUserID(userID string, ctx context.Context) ([]Menu, error)
+	Create(menu *Menu, ctx context.Context) error
+	Update(menu *Menu, ctx context.Context) error
+	Delete(id int, ctx context.Context) error
 }

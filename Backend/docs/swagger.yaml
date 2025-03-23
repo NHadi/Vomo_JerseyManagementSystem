@@ -1,24 +1,54 @@
 basePath: /api
 definitions:
-  gin.H:
-    additionalProperties: {}
+  handlers.AuditResponse:
+    description: Audit trail entry response model
+    properties:
+      action:
+        example: create
+        type: string
+      created_at:
+        example: "2024-01-01 12:00:00"
+        type: string
+      created_by:
+        example: john.doe@example.com
+        type: string
+      entity_id:
+        example: 123
+        type: integer
+      entity_type:
+        example: user
+        type: string
+      id:
+        example: 1
+        type: integer
+      new_values: {}
+      old_values: {}
+      tenant_id:
+        example: 1
+        type: integer
     type: object
-  internal_handlers.CreateMenuRequest:
+  handlers.CreateMenuRequest:
+    description: Create menu request model
     properties:
       icon:
+        example: ni ni-chart-bar-32
         type: string
       name:
+        example: Dashboard
         type: string
       parent_id:
+        example: 0
         type: integer
       sort:
+        example: 1
         type: integer
       url:
+        example: /dashboard
         type: string
     required:
     - name
     type: object
-  internal_handlers.CreateUserRequest:
+  handlers.CreateUserRequest:
     properties:
       email:
         type: string
@@ -35,12 +65,14 @@ definitions:
     - role_id
     - username
     type: object
-  internal_handlers.ErrorResponse:
+  handlers.ErrorResponse:
+    description: Standard error response model
     properties:
       error:
+        example: Invalid request parameters
         type: string
     type: object
-  internal_handlers.LoginRequest:
+  handlers.LoginRequest:
     properties:
       email:
         type: string
@@ -50,50 +82,81 @@ definitions:
     - email
     - password
     type: object
-  internal_handlers.LoginResponse:
+  handlers.LoginResponse:
     properties:
       menus:
         items:
-          $ref: '#/definitions/internal_handlers.MenuResponse'
+          $ref: '#/definitions/handlers.MenuResponse'
         type: array
       token:
         type: string
       user:
-        $ref: '#/definitions/internal_handlers.UserResponse'
+        $ref: '#/definitions/handlers.UserResponse'
     type: object
-  internal_handlers.MenuResponse:
+  handlers.MenuResponse:
+    description: Menu item response model
     properties:
       children:
         items:
-          $ref: '#/definitions/internal_handlers.MenuResponse'
+          $ref: '#/definitions/handlers.MenuResponse'
         type: array
+      created_at:
+        example: "2024-01-01T12:00:00Z"
+        type: string
+      created_by:
+        example: john.doe@example.com
+        type: string
       icon:
+        example: ni ni-chart-bar-32
         type: string
       id:
+        example: 1
         type: integer
       name:
+        example: Dashboard
         type: string
       parent_id:
-        type: integer
-      url:
-        type: string
-    type: object
-  internal_handlers.UpdateMenuRequest:
-    properties:
-      icon:
-        type: string
-      name:
-        type: string
-      parent_id:
+        example: 0
         type: integer
       sort:
+        example: 1
+        type: integer
+      tenant_id:
+        example: 1
         type: integer
       url:
+        example: /dashboard
+        type: string
+    type: object
+  handlers.SuccessResponse:
+    description: Standard success response model
+    properties:
+      message:
+        example: Operation completed successfully
+        type: string
+    type: object
+  handlers.UpdateMenuRequest:
+    description: Update menu request model
+    properties:
+      icon:
+        example: ni ni-chart-bar-32
+        type: string
+      name:
+        example: Dashboard
+        type: string
+      parent_id:
+        example: 0
+        type: integer
+      sort:
+        example: 1
+        type: integer
+      url:
+        example: /dashboard
         type: string
     required:
     - name
     type: object
-  internal_handlers.UpdateUserRequest:
+  handlers.UpdateUserRequest:
     properties:
       email:
         type: string
@@ -103,7 +166,7 @@ definitions:
     - email
     - username
     type: object
-  internal_handlers.UserResponse:
+  handlers.UserResponse:
     properties:
       email:
         type: string
@@ -116,11 +179,174 @@ definitions:
     type: object
 host: localhost:8080
 info:
-  contact: {}
-  description: Vomo API Documentation
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Vomo backend API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
   title: Vomo API
   version: "1.0"
 paths:
+  /audits/date-range:
+    get:
+      consumes:
+      - application/json
+      description: Get audit history within a specific date range
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Start Date (YYYY-MM-DD)
+        in: query
+        name: start_date
+        required: true
+        type: string
+      - description: End Date (YYYY-MM-DD)
+        in: query
+        name: end_date
+        required: true
+        type: string
+      - description: Filter by Entity Type
+        in: query
+        name: entity_type
+        type: string
+      - description: Filter by Action
+        in: query
+        name: action
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.AuditResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get audit history by date range
+      tags:
+      - Audit
+  /audits/entity/{type}/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get audit history for a specific entity
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Entity Type
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: Entity ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.AuditResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get entity audit history
+      tags:
+      - Audit
+  /audits/tenant/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get audit history for a specific tenant
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Tenant ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.AuditResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get tenant audit history
+      tags:
+      - Audit
   /auth/login:
     post:
       consumes:
@@ -132,18 +358,18 @@ paths:
         name: credentials
         required: true
         schema:
-          $ref: '#/definitions/internal_handlers.LoginRequest'
+          $ref: '#/definitions/handlers.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.LoginResponse'
+            $ref: '#/definitions/handlers.LoginResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: User login
       tags:
       - auth
@@ -163,20 +389,24 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_handlers.MenuResponse'
+              $ref: '#/definitions/handlers.MenuResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Invalid request parameters
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get all menus
@@ -197,26 +427,30 @@ paths:
         name: menu
         required: true
         schema:
-          $ref: '#/definitions/internal_handlers.CreateMenuRequest'
+          $ref: '#/definitions/handlers.CreateMenuRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_handlers.MenuResponse'
+            $ref: '#/definitions/handlers.MenuResponse'
         "400":
-          description: Bad Request
+          description: Invalid request parameters
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create a new menu
@@ -242,23 +476,27 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
-          description: Bad Request
+          description: Invalid request parameters
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
-          description: Not Found
+          description: Menu not found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete a menu
@@ -283,23 +521,27 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.MenuResponse'
+            $ref: '#/definitions/handlers.MenuResponse'
         "400":
-          description: Bad Request
+          description: Invalid request parameters
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
-          description: Not Found
+          description: Menu not found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get a menu by ID
@@ -325,30 +567,34 @@ paths:
         name: menu
         required: true
         schema:
-          $ref: '#/definitions/internal_handlers.UpdateMenuRequest'
+          $ref: '#/definitions/handlers.UpdateMenuRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.MenuResponse'
+            $ref: '#/definitions/handlers.MenuResponse'
         "400":
-          description: Bad Request
+          description: Invalid request parameters
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
-          description: Not Found
+          description: Menu not found
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update a menu
@@ -375,20 +621,24 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_handlers.MenuResponse'
+              $ref: '#/definitions/handlers.MenuResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Invalid request parameters
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get menus by role
@@ -415,20 +665,24 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_handlers.MenuResponse'
+              $ref: '#/definitions/handlers.MenuResponse'
             type: array
         "400":
-          description: Bad Request
+          description: Invalid request parameters
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/gin.H'
-        "500":
-          description: Internal Server Error
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
-            $ref: '#/definitions/gin.H'
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get menus by user
@@ -453,7 +707,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/internal_handlers.UserResponse'
+              $ref: '#/definitions/handlers.UserResponse'
             type: array
       summary: List users
       tags:
@@ -468,18 +722,18 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/internal_handlers.CreateUserRequest'
+          $ref: '#/definitions/handlers.CreateUserRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/internal_handlers.UserResponse'
+            $ref: '#/definitions/handlers.UserResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Create new user
       tags:
       - users
@@ -500,11 +754,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Delete user
       tags:
       - users
@@ -522,11 +776,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.UserResponse'
+            $ref: '#/definitions/handlers.UserResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Get user by ID
       tags:
       - users
@@ -545,25 +799,30 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/internal_handlers.UpdateUserRequest'
+          $ref: '#/definitions/handlers.UpdateUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handlers.UserResponse'
+            $ref: '#/definitions/handlers.UserResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/internal_handlers.ErrorResponse'
+            $ref: '#/definitions/handlers.ErrorResponse'
       summary: Update user
       tags:
       - users
+produces:
+- application/json
+schemes:
+- http
+- https
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token.

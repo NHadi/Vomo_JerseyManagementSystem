@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 	"vomo/internal/application"
+	"vomo/internal/domain/appcontext"
 	"vomo/internal/infrastructure/jwt"
 
 	"github.com/gin-gonic/gin"
@@ -51,8 +52,15 @@ func Login(userService *application.UserService, menuService *application.MenuSe
 			return
 		}
 
+		// Set up temporary context for menu retrieval
+		userCtx := &appcontext.UserContext{
+			Username: user.Username,
+			TenantID: user.TenantModel.TenantID,
+		}
+		c.Set(appcontext.UserContextKey, userCtx)
+
 		// Get menus for the user's role with tenant
-		menus, err := menuService.GetMenusByRoleID(user.RoleID, user.TenantID)
+		menus, err := menuService.GetMenusByRoleID(user.RoleID, c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to retrieve menus"})
 			return
