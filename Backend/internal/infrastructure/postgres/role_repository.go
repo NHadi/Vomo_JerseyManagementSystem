@@ -29,7 +29,11 @@ func (r *RoleRepository) Create(role *role.Role, ctx *gin.Context) error {
 func (r *RoleRepository) FindByID(id int, ctx *gin.Context) (*role.Role, error) {
 	var role role.Role
 	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
-	if err := r.db.WithContext(ctx.Request.Context()).Preload("Permissions").Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).First(&role).Error; err != nil {
+	if err := r.db.WithContext(ctx.Request.Context()).
+		Preload("Permissions").
+		Preload("Menus").
+		Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).
+		First(&role).Error; err != nil {
 		return nil, err
 	}
 	return &role, nil

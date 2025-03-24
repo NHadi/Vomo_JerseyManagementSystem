@@ -180,6 +180,14 @@ func GetRole(service *application.RoleService) gin.HandlerFunc {
 		}
 		role.Permissions = permissions
 
+		// Fetch menus for the role
+		menus, err := service.GetRoleMenus(id, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch role menus"})
+			return
+		}
+		role.Menus = menus
+
 		c.JSON(http.StatusOK, toRoleResponse(role))
 	}
 }
@@ -362,6 +370,15 @@ func GetAllRoles(service *application.RoleService) gin.HandlerFunc {
 				return
 			}
 			r.Permissions = permissions
+
+			// Fetch menus for each role
+			menus, err := service.GetRoleMenus(r.ID, c)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch role menus"})
+				return
+			}
+			r.Menus = menus
+
 			response[i] = toRoleResponse(&r)
 		}
 
