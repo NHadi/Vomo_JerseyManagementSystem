@@ -109,6 +109,9 @@
                         case 'audit':
                             await this.loadAuditGrid();
                             break;
+                        case 'role':
+                            await this.loadRoleGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -293,6 +296,63 @@
                     } catch (error) {
                         console.error('Failed to load audit component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load audit component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadRoleGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.rolePageInstance) {
+                window.rolePageInstance.dispose();
+                window.rolePageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/role.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="role"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the role.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/role.js';
+                        script.setAttribute('data-page', 'role');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the role page instance
+                            if (!window.rolePageInstance) {
+                                window.rolePageInstance = new window.RolePage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load role module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load role component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load role component</div>');
                         reject(error);
                     }
                 });
