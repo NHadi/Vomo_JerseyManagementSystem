@@ -155,24 +155,24 @@ func main() {
 			// Role routes
 			roles := protected.Group("/roles")
 			{
-				roles.POST("", middleware.PermissionChecker("ROLE_CREATE"), handlers.CreateRole(roleService))
+				roles.POST("", middleware.PermissionChecker("ROLE_MANAGE"), handlers.CreateRole(roleService))
 				roles.GET("/:id", middleware.PermissionChecker("ROLE_VIEW"), handlers.GetRole(roleService))
-				roles.PUT("/:id", middleware.PermissionChecker("ROLE_UPDATE"), handlers.UpdateRole(roleService))
+				roles.PUT("/:id", middleware.PermissionChecker("ROLE_MANAGE"), handlers.UpdateRole(roleService))
 				roles.DELETE("/:id", middleware.PermissionChecker("ROLE_DELETE"), handlers.DeleteRole(roleService))
-				roles.POST("/:id/menus", middleware.PermissionChecker("ROLE_UPDATE"), handlers.AssignMenusToRole(roleService))
-				roles.POST("/:id/permissions", middleware.PermissionChecker("ROLE_UPDATE"), handlers.AssignPermissionsToRole(roleService))
-				roles.DELETE("/:id/permissions", middleware.PermissionChecker("ROLE_UPDATE"), handlers.RemovePermissionsFromRole(roleService))
+				roles.POST("/:id/menus", middleware.PermissionChecker("ROLE_MANAGE"), handlers.AssignMenusToRole(roleService))
+				roles.POST("/:id/permissions", middleware.PermissionChecker("ROLE_MANAGE"), handlers.AssignPermissionsToRole(roleService))
+				roles.DELETE("/:id/permissions", middleware.PermissionChecker("ROLE_MANAGE"), handlers.RemovePermissionsFromRole(roleService))
 				roles.GET("", middleware.PermissionChecker("ROLE_VIEW"), handlers.GetAllRoles(roleService))
 			}
 
 			// Permission routes
 			permissions := protected.Group("/permissions")
 			{
-				permissions.POST("", middleware.PermissionChecker("PERMISSION_CREATE"), handlers.CreatePermission(permissionService))
+				permissions.POST("", middleware.PermissionChecker("PERMISSION_MANAGE"), handlers.CreatePermission(permissionService))
 				permissions.GET("", middleware.PermissionChecker("PERMISSION_VIEW"), handlers.GetAllPermissions(permissionService))
 				permissions.GET("/:id", middleware.PermissionChecker("PERMISSION_VIEW"), handlers.GetPermission(permissionService))
-				permissions.PUT("/:id", middleware.PermissionChecker("PERMISSION_UPDATE"), handlers.UpdatePermission(permissionService))
-				permissions.DELETE("/:id", middleware.PermissionChecker("PERMISSION_DELETE"), handlers.DeletePermission(permissionService))
+				permissions.PUT("/:id", middleware.PermissionChecker("PERMISSION_MANAGE"), handlers.UpdatePermission(permissionService))
+				permissions.DELETE("/:id", middleware.PermissionChecker("PERMISSION_MANAGE"), handlers.DeletePermission(permissionService))
 			}
 
 			// Audit routes

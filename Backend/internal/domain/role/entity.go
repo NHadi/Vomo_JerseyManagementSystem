@@ -44,22 +44,3 @@ func (RoleMenu) TableName() string {
 func (RolePermission) TableName() string {
 	return "role_permissions"
 }
-
-type Repository interface {
-	Create(role *Role) error
-	FindByID(id int) (*Role, error)
-	FindByName(name string) (*Role, error)
-	FindAll() ([]Role, error)
-	Update(role *Role) error
-	Delete(id int) error
-
-	// Menu relationship methods
-	AssignMenus(roleID int, menuIDs []int) error
-	RemoveMenus(roleID int, menuIDs []int) error
-	GetRoleMenus(roleID int) ([]menu.Menu, error)
-
-	// Permission methods
-	AssignPermissions(roleID int, permissionIDs []int) error
-	RemovePermissions(roleID int, permissionIDs []int) error
-	GetRolePermissions(roleID int) ([]permission.Permission, error)
-}

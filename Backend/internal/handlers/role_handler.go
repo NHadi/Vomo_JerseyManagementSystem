@@ -102,27 +102,27 @@ func CreateRole(service *application.RoleService) gin.HandlerFunc {
 			Description: req.Description,
 		}
 
-		if err := service.Create(newRole); err != nil {
+		if err := service.Create(newRole, c); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
 
 		// Assign permissions if provided
 		if len(req.PermissionIDs) > 0 {
-			if err := service.AssignPermissions(newRole.ID, req.PermissionIDs); err != nil {
+			if err := service.AssignPermissions(newRole.ID, req.PermissionIDs, c); err != nil {
 				c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to assign permissions"})
 				return
 			}
 		}
 
 		// Fetch the complete role with permissions
-		role, err := service.FindByID(newRole.ID)
+		role, err := service.FindByID(newRole.ID, c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch created role"})
 			return
 		}
 
-		permissions, err := service.GetRolePermissions(role.ID)
+		permissions, err := service.GetRolePermissions(role.ID, c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch role permissions"})
 			return
@@ -155,14 +155,14 @@ func GetRole(service *application.RoleService) gin.HandlerFunc {
 			return
 		}
 
-		role, err := service.FindByID(id)
+		role, err := service.FindByID(id, c)
 		if err != nil {
 			c.JSON(http.StatusNotFound, ErrorResponse{Error: "Role not found"})
 			return
 		}
 
 		// Fetch permissions for the role
-		permissions, err := service.GetRolePermissions(id)
+		permissions, err := service.GetRolePermissions(id, c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch role permissions"})
 			return
@@ -203,7 +203,7 @@ func UpdateRole(service *application.RoleService) gin.HandlerFunc {
 			return
 		}
 
-		existingRole, err := service.FindByID(id)
+		existingRole, err := service.FindByID(id, c)
 		if err != nil {
 			c.JSON(http.StatusNotFound, ErrorResponse{Error: "Role not found"})
 			return
@@ -212,26 +212,35 @@ func UpdateRole(service *application.RoleService) gin.HandlerFunc {
 		existingRole.Name = req.Name
 		existingRole.Description = req.Description
 
-		if err := service.Update(existingRole); err != nil {
+		if err := service.Update(existingRole, c); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
 
-		// Update permissions
-		if err := service.AssignPermissions(id, req.PermissionIDs); err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to update permissions"})
+		// Update permissions if provided
+		if req.PermissionIDs != nil {
+			if err := service.AssignPermissions(id, req.PermissionIDs, c); err != nil {
+				c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to update permissions"})
+				return
+			}
+		}
+
+		// Fetch the updated role with its permissions
+		updatedRole, err := service.FindByID(id, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch updated role"})
 			return
 		}
 
 		// Fetch updated permissions
-		permissions, err := service.GetRolePermissions(id)
+		permissions, err := service.GetRolePermissions(id, c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch role permissions"})
 			return
 		}
-		existingRole.Permissions = permissions
+		updatedRole.Permissions = permissions
 
-		c.JSON(http.StatusOK, toRoleResponse(existingRole))
+		c.JSON(http.StatusOK, toRoleResponse(updatedRole))
 	}
 }
 
@@ -257,7 +266,7 @@ func DeleteRole(service *application.RoleService) gin.HandlerFunc {
 			return
 		}
 
-		if err := service.Delete(id); err != nil {
+		if err := service.Delete(id, c); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
@@ -296,7 +305,7 @@ func AssignMenusToRole(service *application.RoleService) gin.HandlerFunc {
 			return
 		}
 
-		if err := service.AssignMenus(id, req.MenuIDs); err != nil {
+		if err := service.AssignMenus(id, req.MenuIDs, c); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
@@ -319,7 +328,7 @@ func AssignMenusToRole(service *application.RoleService) gin.HandlerFunc {
 // @Router /roles [get]
 func GetAllRoles(service *application.RoleService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		roles, err := service.FindAll()
+		roles, err := service.FindAll(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
@@ -328,7 +337,7 @@ func GetAllRoles(service *application.RoleService) gin.HandlerFunc {
 		response := make([]RoleResponse, len(roles))
 		for i, r := range roles {
 			// Fetch permissions for each role
-			permissions, err := service.GetRolePermissions(r.ID)
+			permissions, err := service.GetRolePermissions(r.ID, c)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch role permissions"})
 				return

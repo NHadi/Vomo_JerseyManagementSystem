@@ -262,7 +262,7 @@ func AssignPermissionsToRole(service *application.RoleService) gin.HandlerFunc {
 			return
 		}
 
-		if err := service.AssignPermissions(id, req.PermissionIDs); err != nil {
+		if err := service.AssignPermissions(id, req.PermissionIDs, c); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
@@ -301,7 +301,7 @@ func RemovePermissionsFromRole(service *application.RoleService) gin.HandlerFunc
 			return
 		}
 
-		if err := service.RemovePermissions(id, req.PermissionIDs); err != nil {
+		if err := service.RemovePermissions(id, req.PermissionIDs, c); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}

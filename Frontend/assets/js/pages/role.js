@@ -25,8 +25,6 @@ window.RolePage = class {
             this.grid = null;
         }
         // Clean up event listeners
-        $('#addRoleBtn').off('click');
-        $('#roleSearchBox').off('input');
         $('#permissionModal').off('shown.bs.modal hidden.bs.modal');
         $('#savePermissions').off('click');
         $('.select-all-category').off('click');
@@ -34,17 +32,6 @@ window.RolePage = class {
     }
 
     bindEvents() {
-        // Add role button
-        $('#addRoleBtn').on('click', () => {
-            this.grid.addRow();
-        });
-
-        // Search box
-        $('#roleSearchBox').on('input', (e) => {
-            const searchText = e.target.value;
-            this.grid.searchByText(searchText);
-        });
-
         // Permission modal events
         $('#permissionModal').on('shown.bs.modal', () => {
             this.renderPermissionCategories();
@@ -160,26 +147,69 @@ window.RolePage = class {
                 },
                 {
                     type: 'buttons',
-                    width: 110,
-                    buttons: [
-                        {
-                            hint: 'Manage Permissions',
-                            icon: 'key',
-                            onClick: (e) => {
-                                this.currentRole = e.row.data;
-                                this.selectedPermissions = new Set(e.row.data.permissions.map(p => p.id));
+                    width: 140,
+                    alignment: 'center',
+                    cellTemplate: (container, options) => {
+                        const $buttonContainer = $('<div>')
+                            .addClass('d-flex justify-content-end align-items-center');
+
+                        // Permissions Button
+                        $('<button>')
+                            .addClass('btn btn-icon-only btn-sm btn-primary mr-2')
+                            .attr('title', 'Manage Permissions')
+                            .append($('<i>').addClass('ni ni-key-25'))
+                            .on('click', () => {
+                                this.currentRole = options.row.data;
+                                this.selectedPermissions = new Set((options.row.data.permissions || []).map(p => p.id));
                                 $('#permissionModal').modal('show');
-                            }
-                        },
-                        'edit',
-                        'delete'
-                    ]
+                            })
+                            .appendTo($buttonContainer);
+
+                        // Edit Button
+                        $('<button>')
+                            .addClass('btn btn-icon-only btn-sm btn-info mr-2')
+                            .attr('title', 'Edit Role')
+                            .append($('<i>').addClass('fas fa-edit'))
+                            .on('click', () => {
+                                this.grid.editRow(options.rowIndex);
+                            })
+                            .appendTo($buttonContainer);
+
+                        // Delete Button
+                        $('<button>')
+                            .addClass('btn btn-icon-only btn-sm btn-danger')
+                            .attr('title', 'Delete Role')
+                            .append($('<i>').addClass('fas fa-trash'))
+                            .on('click', () => {
+                                this.grid.deleteRow(options.rowIndex);
+                            })
+                            .appendTo($buttonContainer);
+
+                        container.append($buttonContainer);
+                    }
                 }
             ],
             showBorders: true,
             filterRow: { visible: true },
-            searchPanel: { visible: false },
+            searchPanel: { visible: true },
             headerFilter: { visible: true },
+            groupPanel: { visible: true },
+            columnChooser: { enabled: true },
+            toolbar: {
+                items: [
+                    {
+                        location: 'before',
+                        widget: 'dxButton',
+                        options: {
+                            icon: 'plus',
+                            text: 'Add Role',
+                            onClick: () => this.grid.addRow()
+                        }
+                    },
+                    'searchPanel',
+                    'columnChooserButton'
+                ]
+            },
             editing: {
                 mode: 'popup',
                 allowUpdating: true,
@@ -220,7 +250,7 @@ window.RolePage = class {
         }).dxDataGrid('instance');
     }
 
-    groupPermissionsByCategory(permissions) {
+    groupPermissionsByCategory(permissions = []) {
         const grouped = {};
         permissions.forEach(permission => {
             const category = this.getPermissionCategory(permission.name);
@@ -255,7 +285,6 @@ window.RolePage = class {
 
     renderPermissionCategories() {
         this.allPermissions = this.getAllPermissions();
-        const $categories = $('.permission-categories').empty();
         const $permissionList = $('.permission-list').empty();
         
         // Filter permissions based on search
@@ -278,14 +307,29 @@ window.RolePage = class {
         });
 
         // Only show categories that have matching permissions
+        if (Object.keys(groupedPermissions).length === 0) {
+            $permissionList.append(`
+                <div class="no-results">
+                    <i class="ni ni-fat-remove"></i>
+                    <div class="h4 mb-1">No Results Found</div>
+                    <p class="text-muted">
+                        No permissions match your search criteria. Try adjusting your search terms.
+                    </p>
+                </div>
+            `);
+            return;
+        }
+
         Object.entries(groupedPermissions)
-            .filter(([_, permissions]) => permissions.length > 0)
+            .sort(([a], [b]) => a.localeCompare(b))
             .forEach(([category, permissions]) => {
                 const $categoryGroup = $('<div>').addClass('category-group mb-3');
                 
-                // Add category header with select all checkbox
-                const $header = $('<div>').addClass('category-header d-flex align-items-center mb-2');
-                const $checkbox = $('<div>').addClass('custom-control custom-checkbox mr-3');
+                // Add category header with select all checkbox and count badge
+                const $header = $('<div>').addClass('category-header d-flex align-items-center justify-content-between');
+                const $headerLeft = $('<div>').addClass('d-flex align-items-center');
+                
+                const $checkbox = $('<div>').addClass('custom-control custom-checkbox');
                 const $input = $('<input>')
                     .addClass('custom-control-input select-all-category')
                     .attr({
@@ -296,16 +340,26 @@ window.RolePage = class {
                 const $label = $('<label>')
                     .addClass('custom-control-label')
                     .attr('for', `category-${category}`)
-                    .text(`${category} (${permissions.length})`);
+                    .text(category);
                 
                 $checkbox.append($input, $label);
-                $header.append($checkbox);
+                $headerLeft.append($checkbox);
+                
+                // Add count badge
+                const $count = $('<span>')
+                    .addClass('badge badge-soft-primary ml-2')
+                    .text(`${permissions.length} permission${permissions.length !== 1 ? 's' : ''}`);
+                $headerLeft.append($count);
+                
+                $header.append($headerLeft);
                 $categoryGroup.append($header);
 
-                // Add permissions for this category
-                const $permissionsContainer = $('<div>').addClass('ml-4');
-                permissions.forEach(permission => {
-                    const $item = this.createPermissionItem(permission);
+                // Add permissions for this category with animation delay
+                const $permissionsContainer = $('<div>').addClass('p-3');
+                permissions.forEach((permission, index) => {
+                    const $item = this.createPermissionItem(permission)
+                        .css('animation', `fadeInUp 0.2s ease-out ${index * 0.05}s forwards`)
+                        .css('opacity', '0');
                     $permissionsContainer.append($item);
                 });
                 
@@ -313,17 +367,27 @@ window.RolePage = class {
                 $permissionList.append($categoryGroup);
             });
 
-        // Show "no results" message if no permissions match the filter
-        if (Object.keys(groupedPermissions).length === 0) {
-            $permissionList.append(
-                $('<div>')
-                    .addClass('text-center text-muted p-4')
-                    .text('No permissions match your search')
-            );
-        }
-
         // Update select all checkboxes state
         this.updateSelectAllCheckboxes();
+
+        // Add animation keyframes if not already present
+        if (!document.getElementById('permission-animations')) {
+            const style = document.createElement('style');
+            style.id = 'permission-animations';
+            style.textContent = `
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     }
 
     createPermissionItem(permission) {
@@ -338,12 +402,20 @@ window.RolePage = class {
                 checked: this.selectedPermissions.has(permission.id)
             })
             .on('change', (e) => {
-                if (e.target.checked) {
+                const checked = e.target.checked;
+                if (checked) {
                     this.selectedPermissions.add(permission.id);
+                    $item.addClass('permission-selected');
                 } else {
                     this.selectedPermissions.delete(permission.id);
+                    $item.removeClass('permission-selected');
                 }
                 this.updateSelectAllCheckboxes();
+                
+                // Add ripple effect
+                const $ripple = $('<div>').addClass('ripple');
+                $checkbox.append($ripple);
+                setTimeout(() => $ripple.remove(), 1000);
             });
         
         const $label = $('<label>')
@@ -353,8 +425,15 @@ window.RolePage = class {
         $checkbox.append($input, $label);
         
         const $info = $('<div>').addClass('permission-info');
-        const $name = $('<div>').addClass('permission-name');
+        const $name = $('<div>').addClass('permission-name d-flex align-items-center');
         const $description = $('<div>').addClass('permission-description');
+
+        // Add category badge
+        const category = this.getPermissionCategory(permission.name);
+        const $badge = $('<span>')
+            .addClass('badge badge-soft-primary badge-pill ml-2')
+            .css('font-size', '10px')
+            .text(category);
 
         // Highlight matching text if there's a filter
         if (this.permissionFilter) {
@@ -365,8 +444,15 @@ window.RolePage = class {
             $description.text(permission.description);
         }
 
+        $name.append($badge);
         $info.append($name, $description);
         $item.append($checkbox, $info);
+
+        // Add selected state if permission is selected
+        if (this.selectedPermissions.has(permission.id)) {
+            $item.addClass('permission-selected');
+        }
+
         return $item;
     }
 
@@ -399,7 +485,7 @@ window.RolePage = class {
         const permissions = new Set();
         const data = this.grid.getDataSource().items();
         data.forEach(role => {
-            if (role.permissions) {
+            if (role.permissions && Array.isArray(role.permissions)) {
                 role.permissions.forEach(permission => {
                     permissions.add(JSON.stringify(permission));
                 });
@@ -415,9 +501,10 @@ window.RolePage = class {
             const permissions = this.allPermissions
                 .filter(p => this.selectedPermissions.has(p.id));
 
-            await vomoAPI.updateRole(this.currentRole.id, {
-                ...this.currentRole,
-                permissions
+            const updatedRole = await vomoAPI.updateRole(this.currentRole.id, {
+                name: this.currentRole.name,
+                description: this.currentRole.description,
+                permission_ids: Array.from(this.selectedPermissions)
             });
 
             // Update grid data

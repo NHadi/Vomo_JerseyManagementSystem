@@ -45,8 +45,9 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Set user ID and tenant ID in context
+		// Set user ID, username, and tenant ID in context
 		c.Set("userID", userID)
+		c.Set("username", claims.Username)
 		c.Set("tenantID", claims.TenantID)
 
 		// Get user service from the application container

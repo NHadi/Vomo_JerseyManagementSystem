@@ -10,13 +10,22 @@ import (
 func AuditContext() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get values set by AuthMiddleware and TenantMiddleware
-		username := c.GetString("username")
-		tenantID := c.GetInt("tenant_id")
+		username, exists := c.Get("username")
+		if !exists {
+			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized - User context not found"})
+			return
+		}
+
+		tenantID, exists := c.Get("tenant_id")
+		if !exists {
+			c.AbortWithStatusJSON(400, gin.H{"error": "Bad Request - Tenant ID not found"})
+			return
+		}
 
 		// Create and set user context
 		userCtx := &appcontext.UserContext{
-			Username: username,
-			TenantID: tenantID,
+			Username: username.(string),
+			TenantID: tenantID.(int),
 		}
 		c.Set(appcontext.UserContextKey, userCtx)
 		c.Next()
