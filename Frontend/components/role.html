@@ -58,7 +58,8 @@
 
 <style>
 /* Permission Grid Styles */
-.permission-container {
+.permission-container,
+.menu-container {
     max-height: 100px;
     overflow-y: auto;
     padding: 8px;
@@ -66,7 +67,8 @@
     border-radius: 4px;
 }
 
-.permission-badge {
+.permission-badge,
+.menu-badge {
     display: inline-flex;
     align-items: center;
     padding: 4px 12px;
@@ -78,6 +80,21 @@
     font-weight: 600;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(94, 114, 228, 0.2);
+}
+
+.menu-badge i {
+    font-size: 14px;
+    margin-right: 6px;
+}
+
+.menu-badge {
+    background-color: #2dce89; /* Different color for menu badges */
+    box-shadow: 0 2px 4px rgba(45, 206, 137, 0.2);
+}
+
+.menu-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(45, 206, 137, 0.25);
 }
 
 .permission-badge:hover {
@@ -607,5 +624,165 @@ mark {
 /* Column Chooser Button */
 .dx-button.dx-button-normal.dx-button-mode-contained {
     border-radius: 6px;
+}
+
+/* Menu Container Styles */
+.menu-container {
+    max-height: none !important;
+    background: transparent !important;
+    padding: 8px !important;
+}
+
+.menu-category {
+    position: relative;
+    margin-bottom: 12px;
+    padding-left: 24px;
+}
+
+.menu-category::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 22px;
+    bottom: 0;
+    width: 2px;
+    background: rgba(94, 114, 228, 0.1);
+}
+
+.menu-category:last-child::before {
+    display: none;
+}
+
+.menu-category-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.menu-category-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8898aa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.menu-category-title::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #5e72e4;
+    border-radius: 50%;
+    margin-right: 8px;
+    margin-left: -28px;
+}
+
+.menu-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    margin: 2px 4px;
+    background: linear-gradient(45deg, #2dce89, #2dcecc);
+    border-radius: 6px;
+    font-size: 12px;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 4px rgba(45, 206, 137, 0.1);
+}
+
+.menu-badge i {
+    font-size: 14px;
+    margin-right: 6px;
+    opacity: 0.9;
+}
+
+.menu-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(45, 206, 137, 0.2);
+}
+
+.menu-badge.parent-menu {
+    background: linear-gradient(45deg, #5e72e4, #825ee4);
+    box-shadow: 0 2px 4px rgba(94, 114, 228, 0.1);
+}
+
+.menu-badge.parent-menu:hover {
+    box-shadow: 0 4px 8px rgba(94, 114, 228, 0.2);
+}
+
+.menu-badge.child-menu {
+    background: linear-gradient(45deg, #2dce89, #2dcecc);
+    margin-left: 16px;
+}
+
+.menu-badges-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-left: 4px;
+}
+
+/* Menu Badge Counter */
+.menu-category-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: rgba(94, 114, 228, 0.1);
+    color: #5e72e4;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 10px;
+    margin-left: 8px;
+}
+
+/* Empty State */
+.no-menus {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    color: #8898aa;
+    font-size: 13px;
+}
+
+.no-menus i {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+/* Animation for menu badges */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.menu-badge {
+    animation: slideIn 0.3s ease-out forwards;
+}
+
+.menu-badge:nth-child(2) { animation-delay: 0.1s; }
+.menu-badge:nth-child(3) { animation-delay: 0.2s; }
+.menu-badge:nth-child(4) { animation-delay: 0.3s; }
+
+/* Hover effect for menu category */
+.menu-category:hover .menu-category-title::before {
+    transform: scale(1.2);
+    transition: transform 0.2s ease;
 }
 </style> 

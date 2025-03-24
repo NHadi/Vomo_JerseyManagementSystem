@@ -113,33 +113,164 @@ window.RolePage = class {
                     cellTemplate: (container, options) => {
                         if (!options.value || options.value.length === 0) {
                             $('<div>')
-                                .addClass('text-muted font-italic')
-                                .text('No permissions assigned')
+                                .addClass('no-menus')
+                                .append($('<i>').addClass('ni ni-key-25'))
+                                .append($('<span>').text('No permissions assigned'))
                                 .appendTo(container);
                             return;
                         }
 
-                        const $container = $('<div>').addClass('permission-container');
+                        const $container = $('<div>').addClass('menu-container');
                         
                         // Group permissions by category
                         const groupedPermissions = this.groupPermissionsByCategory(options.value);
                         
                         // Create category sections
-                        Object.entries(groupedPermissions).forEach(([category, permissions]) => {
-                            const $categoryContainer = $('<div>').addClass('mb-2');
-                            $('<small>')
-                                .addClass('text-muted d-block mb-1')
-                                .text(category)
-                                .appendTo($categoryContainer);
+                        Object.entries(groupedPermissions)
+                            .sort(([a], [b]) => a.localeCompare(b))
+                            .forEach(([category, permissions]) => {
+                                const $category = $('<div>').addClass('menu-category');
+                                const $header = $('<div>').addClass('menu-category-header');
+                                
+                                $('<div>')
+                                    .addClass('menu-category-title')
+                                    .text(category)
+                                    .append(
+                                        $('<span>')
+                                            .addClass('menu-category-count')
+                                            .text(permissions.length)
+                                    )
+                                    .appendTo($header);
+                                
+                                $category.append($header);
+                                
+                                // Add permission badges
+                                const $badgesContainer = $('<div>').addClass('menu-badges-container');
+                                permissions.forEach((permission, index) => {
+                                    const $badge = $('<span>')
+                                        .addClass('menu-badge permission-badge')
+                                        .css('animation-delay', `${index * 0.1}s`)
+                                        .append(
+                                            $('<i>')
+                                                .addClass('ni ni-key-25')
+                                                .css('margin-right', '6px')
+                                        )
+                                        .append(
+                                            $('<span>').text(permission.name)
+                                        );
+                                    
+                                    $badgesContainer.append($badge);
+                                });
+                                
+                                $category.append($badgesContainer);
+                                $container.append($category);
+                            });
+                        
+                        container.append($container);
+                    }
+                },
+                {
+                    dataField: 'menus',
+                    caption: 'Menus',
+                    allowFiltering: false,
+                    cellTemplate: (container, options) => {
+                        if (!options.value || options.value.length === 0) {
+                            $('<div>')
+                                .addClass('no-menus')
+                                .append($('<i>').addClass('ni ni-app'))
+                                .append($('<span>').text('No menus assigned'))
+                                .appendTo(container);
+                            return;
+                        }
+
+                        const $container = $('<div>').addClass('menu-container');
+                        
+                        // Group menus by parent
+                        const mainMenus = options.value.filter(m => !m.parent_id);
+                        const subMenus = options.value.filter(m => m.parent_id);
+                        
+                        // Create main menu category
+                        if (mainMenus.length > 0) {
+                            const $mainCategory = $('<div>').addClass('menu-category');
+                            const $mainHeader = $('<div>').addClass('menu-category-header');
                             
-                            permissions.forEach(permission => {
-                                $('<span>')
-                                    .addClass('permission-badge')
-                                    .text(permission.name)
-                                    .appendTo($categoryContainer);
+                            $('<div>')
+                                .addClass('menu-category-title')
+                                .text('Main Menu')
+                                .append(
+                                    $('<span>')
+                                        .addClass('menu-category-count')
+                                        .text(mainMenus.length)
+                                )
+                                .appendTo($mainHeader);
+                            
+                            $mainCategory.append($mainHeader);
+                            
+                            // Add main menu badges
+                            const $mainBadgesContainer = $('<div>').addClass('menu-badges-container');
+                            mainMenus.forEach((menu, index) => {
+                                const $menuBadge = $('<span>')
+                                    .addClass('menu-badge parent-menu')
+                                    .css('animation-delay', `${index * 0.1}s`)
+                                    .append(
+                                        $('<i>')
+                                            .addClass(menu.icon)
+                                    )
+                                    .append(
+                                        $('<span>').text(menu.name)
+                                    );
+                                
+                                $mainBadgesContainer.append($menuBadge);
                             });
                             
-                            $container.append($categoryContainer);
+                            $mainCategory.append($mainBadgesContainer);
+                            $container.append($mainCategory);
+                        }
+                        
+                        // Group and create sub-menu categories
+                        const menuGroups = mainMenus.reduce((acc, mainMenu) => {
+                            const children = subMenus.filter(sub => sub.parent_id === mainMenu.id);
+                            if (children.length > 0) {
+                                acc[mainMenu.name] = children;
+                            }
+                            return acc;
+                        }, {});
+                        
+                        Object.entries(menuGroups).forEach(([parentName, children]) => {
+                            const $subCategory = $('<div>').addClass('menu-category');
+                            const $subHeader = $('<div>').addClass('menu-category-header');
+                            
+                            $('<div>')
+                                .addClass('menu-category-title')
+                                .text(parentName)
+                                .append(
+                                    $('<span>')
+                                        .addClass('menu-category-count')
+                                        .text(children.length)
+                                )
+                                .appendTo($subHeader);
+                            
+                            $subCategory.append($subHeader);
+                            
+                            // Add sub-menu badges
+                            const $subBadgesContainer = $('<div>').addClass('menu-badges-container');
+                            children.forEach((menu, index) => {
+                                const $menuBadge = $('<span>')
+                                    .addClass('menu-badge child-menu')
+                                    .css('animation-delay', `${index * 0.1}s`)
+                                    .append(
+                                        $('<i>')
+                                            .addClass(menu.icon)
+                                    )
+                                    .append(
+                                        $('<span>').text(menu.name)
+                                    );
+                                
+                                $subBadgesContainer.append($menuBadge);
+                            });
+                            
+                            $subCategory.append($subBadgesContainer);
+                            $container.append($subCategory);
                         });
                         
                         container.append($container);
@@ -267,7 +398,7 @@ window.RolePage = class {
             'Permission': ['View Permissions', 'Manage Permissions'],
             'Role': ['View Roles', 'Manage Roles', 'Delete Roles'],
             'User': ['View Users', 'Manage Users', 'Delete Users'],
-            'Menu': ['View Menus', 'Manage Menus'],
+            'Menu': ['View Menus', 'Manage Menus', 'Delete Menus'],
             'Zone': ['View Zones', 'Manage Zones', 'Delete Zones'],
             'Order': ['View Orders', 'Create Orders', 'Update Orders', 'Delete Orders', 'Approve Orders'],
             'Payment': ['View Payments', 'Process Payments', 'Cancel Payments'],
