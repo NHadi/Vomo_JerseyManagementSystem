@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"vomo/internal/application"
+	"vomo/internal/domain/common"
 	"vomo/internal/domain/role"
 
 	"github.com/gin-gonic/gin"
@@ -97,9 +98,19 @@ func CreateRole(service *application.RoleService) gin.HandlerFunc {
 			return
 		}
 
+		// Get tenant ID from header
+		tenantID, err := strconv.Atoi(c.GetHeader("X-Tenant-ID"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid tenant ID"})
+			return
+		}
+
 		newRole := &role.Role{
 			Name:        req.Name,
 			Description: req.Description,
+			TenantModel: common.TenantModel{
+				TenantID: tenantID,
+			},
 		}
 
 		if err := service.Create(newRole, c); err != nil {
@@ -197,6 +208,13 @@ func UpdateRole(service *application.RoleService) gin.HandlerFunc {
 			return
 		}
 
+		// Get tenant ID from header
+		tenantID, err := strconv.Atoi(c.GetHeader("X-Tenant-ID"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid tenant ID"})
+			return
+		}
+
 		var req UpdateRoleRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
@@ -211,6 +229,7 @@ func UpdateRole(service *application.RoleService) gin.HandlerFunc {
 
 		existingRole.Name = req.Name
 		existingRole.Description = req.Description
+		existingRole.TenantID = tenantID
 
 		if err := service.Update(existingRole, c); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})

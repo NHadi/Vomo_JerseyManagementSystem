@@ -88,7 +88,25 @@ func (r *RoleRepository) Update(role *role.Role, ctx *gin.Context) error {
 
 func (r *RoleRepository) Delete(id int, ctx *gin.Context) error {
 	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
-	return r.db.WithContext(ctx.Request.Context()).Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).Delete(&role.Role{}).Error
+
+	return r.db.WithContext(ctx.Request.Context()).Transaction(func(tx *gorm.DB) error {
+		// First delete all role_menus associations
+		if err := tx.Exec("DELETE FROM role_menus WHERE role_id = ?", id).Error; err != nil {
+			return err
+		}
+
+		// Then delete all role_permissions associations
+		if err := tx.Exec("DELETE FROM role_permissions WHERE role_id = ?", id).Error; err != nil {
+			return err
+		}
+
+		// Finally delete the role itself
+		if err := tx.Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).Delete(&role.Role{}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func (r *RoleRepository) AssignPermissions(roleID int, permissionIDs []int, ctx *gin.Context) error {
