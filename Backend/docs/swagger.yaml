@@ -2,6 +2,8 @@ basePath: /api
 definitions:
   handlers.AssignMenusRequest:
     type: object
+  handlers.AssignPermissionsRequest:
+    type: object
   handlers.AuditResponse:
     description: Audit trail entry response model
     properties:
@@ -50,6 +52,18 @@ definitions:
     required:
     - name
     type: object
+  handlers.CreatePermissionRequest:
+    description: Create permission request model
+    properties:
+      description:
+        example: Permission to create new users
+        type: string
+      name:
+        example: CREATE_USER
+        type: string
+    required:
+    - name
+    type: object
   handlers.CreateRoleRequest:
     description: Create role request model
     properties:
@@ -71,15 +85,19 @@ definitions:
     - name
     type: object
   handlers.CreateUserRequest:
+    description: Create user request model
     properties:
       email:
+        example: john.doe@example.com
         type: string
       password:
-        minLength: 6
+        example: securepassword123
         type: string
       role_id:
+        example: 1
         type: integer
       username:
+        example: john.doe
         type: string
     required:
     - email
@@ -151,22 +169,31 @@ definitions:
         type: string
     type: object
   handlers.PermissionResponse:
+    description: Permission response model
     properties:
       created_at:
+        example: "2024-03-24T21:41:49Z"
         type: string
       created_by:
+        example: admin
         type: string
       description:
+        example: Permission to create new users
         type: string
       id:
+        example: 1
         type: integer
       name:
+        example: CREATE_USER
         type: string
       tenant_id:
+        example: 1
         type: integer
       updated_at:
+        example: "2024-03-24T21:41:49Z"
         type: string
       updated_by:
+        example: admin
         type: string
     type: object
   handlers.RoleResponse:
@@ -233,6 +260,18 @@ definitions:
     required:
     - name
     type: object
+  handlers.UpdatePermissionRequest:
+    description: Update permission request model
+    properties:
+      description:
+        example: Permission to create new users
+        type: string
+      name:
+        example: CREATE_USER
+        type: string
+    required:
+    - name
+    type: object
   handlers.UpdateRoleRequest:
     description: Update role request model
     properties:
@@ -254,24 +293,47 @@ definitions:
     - name
     type: object
   handlers.UpdateUserRequest:
+    description: Update user request model
     properties:
       email:
+        example: john.doe@example.com
         type: string
       username:
+        example: john.doe
         type: string
     required:
     - email
     - username
     type: object
   handlers.UserResponse:
+    description: User response model
     properties:
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
       email:
+        example: john.doe@example.com
         type: string
       id:
+        example: 123e4567-e89b-12d3-a456-426614174000
         type: string
       role_id:
+        example: 1
         type: integer
+      tenant_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
       username:
+        example: john.doe
         type: string
     type: object
 host: localhost:8080
@@ -785,7 +847,272 @@ paths:
       summary: Get menus by user
       tags:
       - Menu
+  /permissions:
+    get:
+      description: Get all permissions
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.PermissionResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all permissions
+      tags:
+      - Permission
+    post:
+      consumes:
+      - application/json
+      description: Create a new permission with the provided details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Permission Data
+        in: body
+        name: permission
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreatePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.PermissionResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new permission
+      tags:
+      - Permission
+  /permissions/{id}:
+    delete:
+      description: Delete an existing permission
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Permission ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Permission not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a permission
+      tags:
+      - Permission
+    get:
+      description: Get permission details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Permission ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PermissionResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Permission not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a permission by ID
+      tags:
+      - Permission
+    put:
+      consumes:
+      - application/json
+      description: Update an existing permission with new details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Permission ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Permission Data
+        in: body
+        name: permission
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdatePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PermissionResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Permission not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a permission
+      tags:
+      - Permission
   /roles:
+    get:
+      description: Get a list of all roles with their permissions and menus
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.RoleResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all roles
+      tags:
+      - Role
     post:
       consumes:
       - application/json
@@ -1028,18 +1355,122 @@ paths:
       summary: Assign menus to a role
       tags:
       - Role
+  /roles/{id}/permissions:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a list of permissions from a specific role
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: List of permission IDs
+        in: body
+        name: permissions
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AssignPermissionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Role not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove permissions from a role
+      tags:
+      - Permission
+    post:
+      consumes:
+      - application/json
+      description: Assign a list of permissions to a specific role
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: List of permission IDs
+        in: body
+        name: permissions
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AssignPermissionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Role not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Assign permissions to a role
+      tags:
+      - Permission
   /users:
     get:
-      description: Get paginated list of users
+      description: Get a list of all users
       parameters:
-      - description: Page number
-        in: query
-        name: page
-        type: integer
-      - description: Page size
-        in: query
-        name: size
-        type: integer
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -1049,15 +1480,38 @@ paths:
             items:
               $ref: '#/definitions/handlers.UserResponse'
             type: array
-      summary: List users
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all users
       tags:
-      - users
+      - User
     post:
       consumes:
       - application/json
-      description: Create a new user with the provided data
+      description: Create a new user with the provided details
       parameters:
-      - description: User data
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: User Data
         in: body
         name: user
         required: true
@@ -1071,16 +1525,35 @@ paths:
           schema:
             $ref: '#/definitions/handlers.UserResponse'
         "400":
-          description: Bad Request
+          description: Invalid request parameters
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Create new user
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new user
       tags:
-      - users
+      - User
   /users/{id}:
     delete:
-      description: Delete user by ID
+      description: Delete an existing user
       parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
       - description: User ID
         in: path
         name: id
@@ -1089,22 +1562,43 @@ paths:
       produces:
       - application/json
       responses:
-        "204":
-          description: No Content
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
         "400":
-          description: Bad Request
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "404":
-          description: Not Found
+          description: User not found
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Delete user
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a user
       tags:
-      - users
+      - User
     get:
-      description: Get user details by user ID
+      description: Get user details by ID
       parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
       - description: User ID
         in: path
         name: id
@@ -1117,24 +1611,47 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/handlers.UserResponse'
-        "404":
-          description: Not Found
+        "400":
+          description: Invalid request parameters
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Get user by ID
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a user by ID
       tags:
-      - users
+      - User
     put:
       consumes:
       - application/json
-      description: Update user details
+      description: Update an existing user with new details
       parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
       - description: User ID
         in: path
         name: id
         required: true
         type: string
-      - description: User data
+      - description: User Data
         in: body
         name: user
         required: true
@@ -1148,16 +1665,30 @@ paths:
           schema:
             $ref: '#/definitions/handlers.UserResponse'
         "400":
-          description: Bad Request
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "404":
-          description: Not Found
+          description: User not found
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Update user
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a user
       tags:
-      - users
+      - User
 produces:
 - application/json
 schemes:

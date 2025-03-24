@@ -61,3 +61,7 @@ func (s *RoleService) RemovePermissions(roleID int, permissionIDs []int) error {
 func (s *RoleService) GetRolePermissions(roleID int) ([]permission.Permission, error) {
 	return s.repository.GetRolePermissions(roleID)
 }
+
+func (s *RoleService) FindAll() ([]role.Role, error) {
+	return s.repository.FindAll()
+}

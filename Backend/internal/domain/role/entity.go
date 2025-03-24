@@ -13,10 +13,8 @@ type Role struct {
 	Name        string                  `gorm:"type:varchar(100);not null;unique" json:"name"`
 	Description string                  `gorm:"type:text" json:"description"`
 	Menus       []menu.Menu             `gorm:"many2many:role_menus;" json:"menus,omitempty"`
-	Permissions []permission.Permission `gorm:"many2many:role_permission;" json:"permissions"`
+	Permissions []permission.Permission `gorm:"many2many:role_permissions;" json:"permissions"`
 	common.TenantModel
-	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 
 // RoleMenu represents the role_menus junction table

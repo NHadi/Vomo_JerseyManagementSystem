@@ -304,3 +304,39 @@ func AssignMenusToRole(service *application.RoleService) gin.HandlerFunc {
 		c.JSON(http.StatusOK, SuccessResponse{Message: "Menus assigned successfully"})
 	}
 }
+
+// @Summary Get all roles
+// @Description Get a list of all roles with their permissions and menus
+// @Tags Role
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Success 200 {array} RoleResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /roles [get]
+func GetAllRoles(service *application.RoleService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roles, err := service.FindAll()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		response := make([]RoleResponse, len(roles))
+		for i, r := range roles {
+			// Fetch permissions for each role
+			permissions, err := service.GetRolePermissions(r.ID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch role permissions"})
+				return
+			}
+			r.Permissions = permissions
+			response[i] = toRoleResponse(&r)
+		}
+
+		c.JSON(http.StatusOK, response)
+	}
+}

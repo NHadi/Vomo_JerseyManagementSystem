@@ -55,36 +55,49 @@ func (r *RoleRepository) Delete(id int) error {
 func (r *RoleRepository) AssignPermissions(roleID int, permissionIDs []int) error {
 	// Start a transaction
 	return r.db.Transaction(func(tx *gorm.DB) error {
-		// Clear existing permissions for the role
-		if err := tx.Table("role_permission").Where("role_id = ?", roleID).Delete(&struct{}{}).Error; err != nil {
+		// Delete existing permissions
+		if err := tx.Table("role_permissions").Where("role_id = ?", roleID).Delete(&struct{}{}).Error; err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		// Get the role to get tenant_id
+		var role role.Role
+		if err := tx.First(&role, roleID).Error; err != nil {
+			tx.Rollback()
 			return err
 		}
 
 		// Insert new permissions
-		for _, permID := range permissionIDs {
-			if err := tx.Table("role_permission").Create(map[string]interface{}{
+		for _, permissionID := range permissionIDs {
+			if err := tx.Table("role_permissions").Create(map[string]interface{}{
 				"role_id":       roleID,
-				"permission_id": permID,
+				"permission_id": permissionID,
+				"tenant_id":     role.TenantID,
+				"created_by":    "system", // Default to system for now
+				"updated_by":    "system", // Default to system for now
 			}).Error; err != nil {
+				tx.Rollback()
 				return err
 			}
 		}
 
-		return nil
+		return tx.Commit().Error
 	})
 }
 
 func (r *RoleRepository) RemovePermissions(roleID int, permissionIDs []int) error {
-	return r.db.Table("role_permission").
+	return r.db.Table("role_permissions").
 		Where("role_id = ? AND permission_id IN ?", roleID, permissionIDs).
 		Delete(&struct{}{}).Error
 }
 
 func (r *RoleRepository) GetRolePermissions(roleID int) ([]permission.Permission, error) {
 	var permissions []permission.Permission
-	err := r.db.Table("master_permission").
-		Joins("JOIN role_permission ON master_permission.id = role_permission.permission_id").
-		Where("role_permission.role_id = ?", roleID).
+	err := r.db.Table("role_permissions").
+		Select("master_permission.*").
+		Joins("JOIN master_permission ON master_permission.id = role_permissions.permission_id").
+		Where("role_permissions.role_id = ?", roleID).
 		Find(&permissions).Error
 	return permissions, err
 }

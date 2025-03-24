@@ -162,6 +162,7 @@ func main() {
 				roles.POST("/:id/menus", middleware.PermissionChecker("ROLE_UPDATE"), handlers.AssignMenusToRole(roleService))
 				roles.POST("/:id/permissions", middleware.PermissionChecker("ROLE_UPDATE"), handlers.AssignPermissionsToRole(roleService))
 				roles.DELETE("/:id/permissions", middleware.PermissionChecker("ROLE_UPDATE"), handlers.RemovePermissionsFromRole(roleService))
+				roles.GET("", middleware.PermissionChecker("ROLE_VIEW"), handlers.GetAllRoles(roleService))
 			}
 
 			// Permission routes
