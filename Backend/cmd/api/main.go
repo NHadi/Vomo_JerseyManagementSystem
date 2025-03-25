@@ -36,6 +36,8 @@ import (
 	"vomo/internal/infrastructure/logging"
 	"vomo/internal/infrastructure/postgres"
 	"vomo/internal/middleware"
+	"vomo/internal/routes"
+	"vomo/internal/services"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -125,64 +127,13 @@ func main() {
 		}
 
 		// Protected routes with tenant
-		protected := api.Group("")
-		protected.Use(middleware.AuthMiddleware())
-		protected.Use(middleware.TenantMiddleware())
-		protected.Use(middleware.AuditContext())
-		{
-			// Menu routes
-			menus := protected.Group("/menus")
-			{
-				menus.POST("", middleware.PermissionChecker("MENU_CREATE"), handlers.CreateMenu(menuService))
-				menus.PUT("/:id", middleware.PermissionChecker("MENU_UPDATE"), handlers.UpdateMenu(menuService))
-				menus.DELETE("/:id", middleware.PermissionChecker("MENU_DELETE"), handlers.DeleteMenu(menuService))
-				menus.GET("/:id", middleware.PermissionChecker("MENU_VIEW"), handlers.GetMenu(menuService))
-				menus.GET("", middleware.PermissionChecker("MENU_VIEW"), handlers.GetAllMenus(menuService))
-				menus.GET("/by-role", middleware.PermissionChecker("MENU_VIEW"), handlers.GetMenusByRole(menuService))
-				menus.GET("/by-user/:user_id", middleware.PermissionChecker("MENU_VIEW"), handlers.GetMenusByUser(menuService))
-			}
-
-			// User routes
-			users := protected.Group("/users")
-			{
-				users.GET("", middleware.PermissionChecker("USER_VIEW"), handlers.GetUsers(userService))
-				users.POST("", middleware.PermissionChecker("USER_CREATE"), handlers.CreateUser(userService))
-				users.GET("/:id", middleware.PermissionChecker("USER_VIEW"), handlers.GetUser(userService))
-				users.PUT("/:id", middleware.PermissionChecker("USER_UPDATE"), handlers.UpdateUser(userService))
-				users.DELETE("/:id", middleware.PermissionChecker("USER_DELETE"), handlers.DeleteUser(userService))
-			}
-
-			// Role routes
-			roles := protected.Group("/roles")
-			{
-				roles.POST("", middleware.PermissionChecker("ROLE_MANAGE"), handlers.CreateRole(roleService))
-				roles.GET("/:id", middleware.PermissionChecker("ROLE_VIEW"), handlers.GetRole(roleService))
-				roles.PUT("/:id", middleware.PermissionChecker("ROLE_MANAGE"), handlers.UpdateRole(roleService))
-				roles.DELETE("/:id", middleware.PermissionChecker("ROLE_DELETE"), handlers.DeleteRole(roleService))
-				roles.POST("/:id/menus", middleware.PermissionChecker("ROLE_MANAGE"), handlers.AssignMenusToRole(roleService))
-				roles.POST("/:id/permissions", middleware.PermissionChecker("ROLE_MANAGE"), handlers.AssignPermissionsToRole(roleService))
-				roles.DELETE("/:id/permissions", middleware.PermissionChecker("ROLE_MANAGE"), handlers.RemovePermissionsFromRole(roleService))
-				roles.GET("", middleware.PermissionChecker("ROLE_VIEW"), handlers.GetAllRoles(roleService))
-			}
-
-			// Permission routes
-			permissions := protected.Group("/permissions")
-			{
-				permissions.POST("", middleware.PermissionChecker("PERMISSION_MANAGE"), handlers.CreatePermission(permissionService))
-				permissions.GET("", middleware.PermissionChecker("PERMISSION_VIEW"), handlers.GetAllPermissions(permissionService))
-				permissions.GET("/:id", middleware.PermissionChecker("PERMISSION_VIEW"), handlers.GetPermission(permissionService))
-				permissions.PUT("/:id", middleware.PermissionChecker("PERMISSION_MANAGE"), handlers.UpdatePermission(permissionService))
-				permissions.DELETE("/:id", middleware.PermissionChecker("PERMISSION_MANAGE"), handlers.DeletePermission(permissionService))
-			}
-
-			// Audit routes
-			audits := protected.Group("/audits")
-			{
-				audits.GET("/entity/:type/:id", middleware.PermissionChecker("AUDIT_TRAIL_VIEW"), handlers.GetEntityAuditHistory(auditService))
-				audits.GET("/tenant/:id", middleware.PermissionChecker("AUDIT_TRAIL_VIEW"), handlers.GetTenantAuditHistory(auditService))
-				audits.GET("/date-range", middleware.PermissionChecker("AUDIT_TRAIL_VIEW"), handlers.GetAuditHistoryByDateRange(auditService))
-			}
-		}
+		routes.SetupRoutes(api, &services.Services{
+			MenuService:       menuService,
+			UserService:       userService,
+			RoleService:       roleService,
+			PermissionService: permissionService,
+			AuditService:      auditService,
+		})
 	}
 
 	// Start server
