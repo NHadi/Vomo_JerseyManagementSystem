@@ -242,6 +242,48 @@ TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public.master_zone
     OWNER to vomo_admin;
 
+-- Create sequence for master_office
+CREATE SEQUENCE IF NOT EXISTS master_office_id_seq;
+
+-- Table: public.master_office
+
+-- DROP TABLE IF EXISTS public.master_office;
+
+CREATE TABLE IF NOT EXISTS public.master_office
+(
+    id integer NOT NULL DEFAULT nextval('master_office_id_seq'::regclass),
+    name character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    code character varying(50) COLLATE pg_catalog."default",
+    address text COLLATE pg_catalog."default",
+    phone character varying(20) COLLATE pg_catalog."default",
+    email character varying(255) COLLATE pg_catalog."default",
+    zone_id integer,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(50) COLLATE pg_catalog."default",
+    updated_by character varying(50) COLLATE pg_catalog."default",
+    tenant_id integer NOT NULL,
+    CONSTRAINT master_office_pkey PRIMARY KEY (id),
+    CONSTRAINT master_office_code_key UNIQUE (code),
+    CONSTRAINT master_office_email_key UNIQUE (email),
+    CONSTRAINT master_office_zone_id_fkey FOREIGN KEY (zone_id)
+        REFERENCES public.master_zone (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT master_office_tenant_id_fkey FOREIGN KEY (tenant_id)
+        REFERENCES public.master_tenant (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.master_office
+    OWNER to vomo_admin;
+
+-- Set sequence owner
+ALTER SEQUENCE master_office_id_seq OWNED BY public.master_office.id;
+
 -- Table: public.role_menus
 
 -- DROP TABLE IF EXISTS public.role_menus;

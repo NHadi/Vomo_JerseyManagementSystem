@@ -106,6 +106,15 @@
                         case 'menu':
                             await this.loadMenuGrid();
                             break;
+                        case 'zone':
+                            await this.loadZoneGrid();
+                            break;
+                        case 'region':
+                            await this.loadRegionGrid();
+                            break;
+                        case 'office':
+                            await this.loadOfficeGrid();
+                            break;
                         case 'audit':
                             await this.loadAuditGrid();
                             break;
@@ -242,6 +251,177 @@
                     } catch (error) {
                         console.error('Failed to load menu component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load menu component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadZoneGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.zonePageInstance) {
+                window.zonePageInstance.dispose();
+                window.zonePageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/zone.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="zone"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the zone.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/zone.js';
+                        script.setAttribute('data-page', 'zone');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the zone page instance
+                            if (!window.zonePageInstance) {
+                                window.zonePageInstance = new window.ZonePage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load zone module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load zone component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load zone component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadRegionGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.regionPageInstance) {
+                window.regionPageInstance.dispose();
+                window.regionPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/region.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="region"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the region.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/region.js';
+                        script.setAttribute('data-page', 'region');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the region page instance
+                            if (!window.regionPageInstance) {
+                                window.regionPageInstance = new window.RegionPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load region module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load region component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load region component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadOfficeGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.officePageInstance) {
+                window.officePageInstance.dispose();
+                window.officePageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/office.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="office"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the office.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/office.js';
+                        script.setAttribute('data-page', 'office');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the office page instance
+                            if (!window.officePageInstance) {
+                                window.officePageInstance = new window.OfficePage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load office module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load office component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load office component</div>');
                         reject(error);
                     }
                 });

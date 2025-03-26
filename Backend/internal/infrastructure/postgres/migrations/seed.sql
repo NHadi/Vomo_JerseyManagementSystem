@@ -113,3 +113,59 @@ VALUES (
     1,  -- Admin role
     1   -- Default tenant
 ) ON CONFLICT DO NOTHING;
+
+-- Seed data for master_region
+INSERT INTO public.master_region (name, description, tenant_id, created_by, updated_by, created_at, updated_at) VALUES
+('North Region', 'Northern region of the country', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('South Region', 'Southern region of the country', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('East Region', 'Eastern region of the country', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('West Region', 'Western region of the country', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Central Region', 'Central region of the country', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- Seed data for master_zone
+INSERT INTO public.master_zone (name, region_id, description, tenant_id, created_by, updated_by, created_at, updated_at) VALUES
+('North Zone 1', 1, 'First zone in North Region', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('North Zone 2', 1, 'Second zone in North Region', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('South Zone 1', 2, 'First zone in South Region', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('South Zone 2', 2, 'Second zone in South Region', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('East Zone 1', 3, 'First zone in East Region', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('East Zone 2', 3, 'Second zone in East Region', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('West Zone 1', 4, 'First zone in West Region', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('West Zone 2', 4, 'Second zone in West Region', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Central Zone 1', 5, 'First zone in Central Region', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('Central Zone 2', 5, 'Second zone in Central Region', 1, 'admin', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- Insert sample offices
+INSERT INTO public.master_office (name, code, address, phone, email, zone_id, created_at, updated_at, created_by, updated_by, tenant_id)
+VALUES 
+    -- North Zone A Offices
+    ('North City Main Office', 'NCMA001', '123 North City Main St', '+12345678901', 'north.city@office.com', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    ('North City Branch Office', 'NCBA001', '456 North City Branch Ave', '+12345678902', 'north.branch@office.com', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    
+    -- North Zone B Offices
+    ('North Rural Main Office', 'NRMA001', '789 North Rural Main Rd', '+12345678903', 'north.rural@office.com', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    ('North Rural Branch Office', 'NRBA001', '321 North Rural Branch St', '+12345678904', 'north.rural.branch@office.com', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    
+    -- South Zone A Offices
+    ('South City Main Office', 'SCMA001', '123 South City Main St', '+12345678905', 'south.city@office.com', 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    ('South City Branch Office', 'SCBA001', '456 South City Branch Ave', '+12345678906', 'south.branch@office.com', 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    
+    -- South Zone B Offices
+    ('South Rural Main Office', 'SRMA001', '789 South Rural Main Rd', '+12345678907', 'south.rural@office.com', 4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    ('South Rural Branch Office', 'SRBA001', '321 South Rural Branch St', '+12345678908', 'south.rural.branch@office.com', 4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    
+    -- East Zone A Offices
+    ('East City Main Office', 'ECMA001', '123 East City Main St', '+12345678909', 'east.city@office.com', 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    ('East City Branch Office', 'ECBA001', '456 East City Branch Ave', '+12345678910', 'east.branch@office.com', 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    
+    -- East Zone B Offices
+    ('East Rural Main Office', 'ERMA001', '789 East Rural Main Rd', '+12345678911', 'east.rural@office.com', 6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    ('East Rural Branch Office', 'ERBA001', '321 East Rural Branch St', '+12345678912', 'east.rural.branch@office.com', 6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    
+    -- West Zone A Offices
+    ('West City Main Office', 'WCMA001', '123 West City Main St', '+12345678913', 'west.city@office.com', 7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    ('West City Branch Office', 'WCBA001', '456 West City Branch Ave', '+12345678914', 'west.branch@office.com', 7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    
+    -- West Zone B Offices
+    ('West Rural Main Office', 'WRMA001', '789 West Rural Main Rd', '+12345678915', 'west.rural@office.com', 8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1),
+    ('West Rural Branch Office', 'WRBA001', '321 West Rural Branch St', '+12345678916', 'west.rural.branch@office.com', 8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'admin', 'admin', 1);

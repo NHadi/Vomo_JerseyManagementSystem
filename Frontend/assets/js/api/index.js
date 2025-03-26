@@ -3,6 +3,9 @@ import { menuAPI } from './modules/menus.js';
 import { auditAPI } from './modules/audits.js';
 import { roleAPI } from './modules/roles.js';
 import { backupAPI } from './modules/backups.js';
+import { zoneAPI } from './modules/zones.js';
+import { regionAPI } from './modules/regions.js';
+import { officeAPI } from './modules/offices.js';
 import { config } from './config.js';
 
 // Initialize the API namespace
@@ -12,6 +15,9 @@ export const vomoAPI = {
     ...auditAPI,
     ...roleAPI,
     ...backupAPI,
+    ...zoneAPI,
+    ...regionAPI,
+    ...officeAPI,
     config
 };
 

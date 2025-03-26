@@ -13,12 +13,15 @@ type PermissionService = *application.PermissionService
 type AuditService = *audit.Service
 type BackupService = *application.BackupService
 
-// Services holds all the service instances
+// Services holds all the application services
 type Services struct {
-	MenuService       MenuService
-	UserService       UserService
-	RoleService       RoleService
-	PermissionService PermissionService
-	AuditService      AuditService
-	BackupService     BackupService
+	MenuService       *application.MenuService
+	UserService       *application.UserService
+	RoleService       *application.RoleService
+	PermissionService *application.PermissionService
+	AuditService      *audit.Service
+	BackupService     *application.BackupService
+	ZoneService       *application.ZoneService
+	RegionService     *application.RegionService
+	OfficeService     *application.OfficeService
 }

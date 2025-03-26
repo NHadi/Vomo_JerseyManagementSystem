@@ -84,6 +84,9 @@ func main() {
 	roleRepo := postgres.NewRoleRepository(db)
 	permissionRepo := postgres.NewPermissionRepository(db)
 	backupRepo := postgres.NewBackupRepository(db)
+	zoneRepo := postgres.NewZoneRepository(db)
+	regionRepo := postgres.NewRegionRepository(db)
+	officeRepo := postgres.NewOfficeRepository(db)
 
 	// Initialize services
 	auditService := audit.NewService(auditRepo)
@@ -92,6 +95,9 @@ func main() {
 	roleService := application.NewRoleService(roleRepo, permissionRepo)
 	permissionService := application.NewPermissionService(permissionRepo)
 	backupService := application.NewBackupService(backupRepo, cfg)
+	zoneService := application.NewZoneService(zoneRepo)
+	regionService := application.NewRegionService(regionRepo, zoneRepo)
+	officeService := application.NewOfficeService(officeRepo)
 
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -136,6 +142,9 @@ func main() {
 			PermissionService: permissionService,
 			AuditService:      auditService,
 			BackupService:     backupService,
+			ZoneService:       zoneService,
+			RegionService:     regionService,
+			OfficeService:     officeService,
 		})
 	}
 

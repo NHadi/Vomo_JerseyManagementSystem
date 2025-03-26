@@ -67,6 +67,32 @@ definitions:
     required:
     - name
     type: object
+  handlers.CreateOfficeRequest:
+    description: Create office request model
+    properties:
+      address:
+        example: 123 Main St
+        type: string
+      code:
+        example: MO001
+        type: string
+      email:
+        example: main@office.com
+        type: string
+      name:
+        example: Main Office
+        type: string
+      phone:
+        example: "+1234567890"
+        type: string
+      zone_id:
+        example: 1
+        type: integer
+    required:
+    - code
+    - email
+    - name
+    type: object
   handlers.CreatePermissionRequest:
     description: Create permission request model
     properties:
@@ -75,6 +101,18 @@ definitions:
         type: string
       name:
         example: CREATE_USER
+        type: string
+    required:
+    - name
+    type: object
+  handlers.CreateRegionRequest:
+    description: Create region request model
+    properties:
+      description:
+        example: Northern region
+        type: string
+      name:
+        example: North Region
         type: string
     required:
     - name
@@ -119,6 +157,21 @@ definitions:
     - password
     - role_id
     - username
+    type: object
+  handlers.CreateZoneRequest:
+    description: Create zone request model
+    properties:
+      description:
+        example: Northern region zone
+        type: string
+      name:
+        example: North Zone
+        type: string
+      region_id:
+        example: 1
+        type: integer
+    required:
+    - name
     type: object
   handlers.ErrorResponse:
     description: Standard error response model
@@ -183,6 +236,46 @@ definitions:
         example: /dashboard
         type: string
     type: object
+  handlers.OfficeResponse:
+    description: Office response model
+    properties:
+      address:
+        example: 123 Main St
+        type: string
+      code:
+        example: MO001
+        type: string
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      email:
+        example: main@office.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Main Office
+        type: string
+      phone:
+        example: "+1234567890"
+        type: string
+      tenant_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
+      zone_id:
+        example: 1
+        type: integer
+    type: object
   handlers.PermissionResponse:
     description: Permission response model
     properties:
@@ -200,6 +293,34 @@ definitions:
         type: integer
       name:
         example: CREATE_USER
+        type: string
+      tenant_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
+    type: object
+  handlers.RegionResponse:
+    description: Region response model
+    properties:
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      description:
+        example: Northern region
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: North Region
         type: string
       tenant_id:
         example: 1
@@ -275,6 +396,32 @@ definitions:
     required:
     - name
     type: object
+  handlers.UpdateOfficeRequest:
+    description: Update office request model
+    properties:
+      address:
+        example: 123 Main St
+        type: string
+      code:
+        example: MO001
+        type: string
+      email:
+        example: main@office.com
+        type: string
+      name:
+        example: Main Office
+        type: string
+      phone:
+        example: "+1234567890"
+        type: string
+      zone_id:
+        example: 1
+        type: integer
+    required:
+    - code
+    - email
+    - name
+    type: object
   handlers.UpdatePermissionRequest:
     description: Update permission request model
     properties:
@@ -283,6 +430,18 @@ definitions:
         type: string
       name:
         example: CREATE_USER
+        type: string
+    required:
+    - name
+    type: object
+  handlers.UpdateRegionRequest:
+    description: Update region request model
+    properties:
+      description:
+        example: Northern region
+        type: string
+      name:
+        example: North Region
         type: string
     required:
     - name
@@ -320,6 +479,21 @@ definitions:
     - email
     - username
     type: object
+  handlers.UpdateZoneRequest:
+    description: Update zone request model
+    properties:
+      description:
+        example: Northern region zone
+        type: string
+      name:
+        example: North Zone
+        type: string
+      region_id:
+        example: 1
+        type: integer
+    required:
+    - name
+    type: object
   handlers.UserResponse:
     description: User response model
     properties:
@@ -349,6 +523,37 @@ definitions:
         type: string
       username:
         example: john.doe
+        type: string
+    type: object
+  handlers.ZoneResponse:
+    description: Zone response model
+    properties:
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      description:
+        example: Northern region zone
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: North Zone
+        type: string
+      region_id:
+        example: 1
+        type: integer
+      tenant_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
         type: string
     type: object
 host: localhost:8080
@@ -1005,6 +1210,277 @@ paths:
       summary: Get menus by user
       tags:
       - Menu
+  /offices:
+    get:
+      description: Get all offices
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.OfficeResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all offices
+      tags:
+      - Office
+    post:
+      consumes:
+      - application/json
+      description: Create a new office with the provided details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Office Data
+        in: body
+        name: office
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateOfficeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.OfficeResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new office
+      tags:
+      - Office
+  /offices/{id}:
+    delete:
+      description: Delete an existing office
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Office ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Office not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete an office
+      tags:
+      - Office
+    get:
+      description: Get office details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Office ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.OfficeResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Office not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get an office by ID
+      tags:
+      - Office
+    put:
+      consumes:
+      - application/json
+      description: Update an existing office with new details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Office ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Office Data
+        in: body
+        name: office
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateOfficeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.OfficeResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Office not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an office
+      tags:
+      - Office
+  /offices/by-zone:
+    get:
+      description: Get all offices for a specific zone
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Zone ID
+        in: query
+        name: zone_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.OfficeResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get offices by zone
+      tags:
+      - Office
   /permissions:
     get:
       description: Get all permissions
@@ -1232,6 +1708,233 @@ paths:
       summary: Update a permission
       tags:
       - Permission
+  /regions:
+    get:
+      description: Get all regions
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.RegionResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all regions
+      tags:
+      - Region
+    post:
+      consumes:
+      - application/json
+      description: Create a new region with the provided details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Region Data
+        in: body
+        name: region
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateRegionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.RegionResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new region
+      tags:
+      - Region
+  /regions/{id}:
+    delete:
+      description: Delete an existing region
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Region ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Region not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a region
+      tags:
+      - Region
+    get:
+      description: Get region details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Region ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.RegionResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Region not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a region by ID
+      tags:
+      - Region
+    put:
+      consumes:
+      - application/json
+      description: Update an existing region with new details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Region ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Region Data
+        in: body
+        name: region
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateRegionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.RegionResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Region not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a region
+      tags:
+      - Region
   /roles:
     get:
       description: Get a list of all roles with their permissions and menus
@@ -1847,6 +2550,277 @@ paths:
       summary: Update a user
       tags:
       - User
+  /zones:
+    get:
+      description: Get all zones
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.ZoneResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all zones
+      tags:
+      - Zone
+    post:
+      consumes:
+      - application/json
+      description: Create a new zone with the provided details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Zone Data
+        in: body
+        name: zone
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateZoneRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.ZoneResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new zone
+      tags:
+      - Zone
+  /zones/{id}:
+    delete:
+      description: Delete an existing zone
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Zone ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Zone not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a zone
+      tags:
+      - Zone
+    get:
+      description: Get zone details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Zone ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ZoneResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Zone not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a zone by ID
+      tags:
+      - Zone
+    put:
+      consumes:
+      - application/json
+      description: Update an existing zone with new details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Zone ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Zone Data
+        in: body
+        name: zone
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateZoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ZoneResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Zone not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a zone
+      tags:
+      - Zone
+  /zones/by-region:
+    get:
+      description: Get all zones for a specific region
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Region ID
+        in: query
+        name: region_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.ZoneResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get zones by region
+      tags:
+      - Zone
 produces:
 - application/json
 schemes:
