@@ -1,5 +1,20 @@
 basePath: /api
 definitions:
+  backup.Backup:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      file_name:
+        type: string
+      id:
+        type: integer
+      size:
+        type: integer
+      tenant_id:
+        type: integer
+    type: object
   handlers.AssignMenusRequest:
     type: object
   handlers.AssignPermissionsRequest:
@@ -532,6 +547,149 @@ paths:
       summary: User login
       tags:
       - auth
+  /backups:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all available backups
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/backup.Backup'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List all backups
+      tags:
+      - backup
+    post:
+      consumes:
+      - application/json
+      description: Create a new backup of the database
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/backup.Backup'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new database backup
+      tags:
+      - backup
+  /backups/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a specific backup
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Backup ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a backup
+      tags:
+      - backup
+  /backups/{id}/restore:
+    post:
+      consumes:
+      - application/json
+      description: Restore the database from a specific backup
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Backup ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Restore from a backup
+      tags:
+      - backup
   /menus:
     get:
       description: Get all menu items

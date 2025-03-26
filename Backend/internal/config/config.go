@@ -41,11 +41,11 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return &Config{
-		DBHost:           getEnv("DB_HOST", "localhost"),
-		DBUser:           getEnv("DB_USER", "vomo_admin"),
-		DBPassword:       getEnv("DB_PASSWORD", "vomo_admin_123@#$"),
-		DBName:           getEnv("DB_NAME", "vomo_production_managament"),
-		DBPort:           getEnv("DB_PORT", "5432"),
+		DBHost:           getEnv("POSTGRES_HOST", "localhost"),
+		DBUser:           getEnv("POSTGRES_USER", "vomo_admin"),
+		DBPassword:       getEnv("POSTGRES_PASSWORD", "vomo_admin_123@#$"),
+		DBName:           getEnv("POSTGRES_DB", "vomo_production_managament"),
+		DBPort:           getEnv("POSTGRES_PORT", "5432"),
 		JWTSecret:        getEnv("JWT_SECRET", "your-secret-key"),
 		JWTRefreshSecret: getEnv("JWT_REFRESH_SECRET", "your-refresh-secret-key"),
 	}, nil
@@ -68,6 +68,6 @@ func (c *Config) GetDBPortInt() int {
 }
 
 func (c *Config) GetServerPort() string {
-    port := getEnv("SERVER_PORT", "8080")
-    return ":" + port
+	port := getEnv("SERVER_PORT", "8080")
+	return ":" + port
 }

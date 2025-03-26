@@ -11,6 +11,7 @@ type UserService = *application.UserService
 type RoleService = *application.RoleService
 type PermissionService = *application.PermissionService
 type AuditService = *audit.Service
+type BackupService = *application.BackupService
 
 // Services holds all the service instances
 type Services struct {
@@ -19,4 +20,5 @@ type Services struct {
 	RoleService       RoleService
 	PermissionService PermissionService
 	AuditService      AuditService
+	BackupService     BackupService
 }

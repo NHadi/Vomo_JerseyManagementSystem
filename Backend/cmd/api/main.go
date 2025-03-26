@@ -83,6 +83,7 @@ func main() {
 	auditRepo := postgres.NewAuditRepository(db)
 	roleRepo := postgres.NewRoleRepository(db)
 	permissionRepo := postgres.NewPermissionRepository(db)
+	backupRepo := postgres.NewBackupRepository(db)
 
 	// Initialize services
 	auditService := audit.NewService(auditRepo)
@@ -90,6 +91,7 @@ func main() {
 	userService := application.NewUserService(userRepo)
 	roleService := application.NewRoleService(roleRepo, permissionRepo)
 	permissionService := application.NewPermissionService(permissionRepo)
+	backupService := application.NewBackupService(backupRepo, cfg)
 
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -133,10 +135,11 @@ func main() {
 			RoleService:       roleService,
 			PermissionService: permissionService,
 			AuditService:      auditService,
+			BackupService:     backupService,
 		})
 	}
 
-	// Start server
+	// Start Server
 	port := cfg.GetServerPort()
 	logger.Info("Server starting", map[string]interface{}{
 		"port": port,

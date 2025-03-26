@@ -3,6 +3,8 @@ package middleware
 import (
 	"vomo/internal/domain/appcontext"
 
+	"context"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,7 +18,7 @@ func AuditContext() gin.HandlerFunc {
 			return
 		}
 
-		tenantID, exists := c.Get("tenant_id")
+		tenantID, exists := c.Get("tenantID")
 		if !exists {
 			c.AbortWithStatusJSON(400, gin.H{"error": "Bad Request - Tenant ID not found"})
 			return
@@ -27,7 +29,11 @@ func AuditContext() gin.HandlerFunc {
 			Username: username.(string),
 			TenantID: tenantID.(int),
 		}
+
+		// Set in both gin context and request context
 		c.Set(appcontext.UserContextKey, userCtx)
+		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), appcontext.UserContextKey, userCtx))
+
 		c.Next()
 	}
 }

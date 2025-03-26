@@ -6,11 +6,11 @@ services:
     container_name: postgres_db
     restart: always
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     environment:
-      POSTGRES_DB: vomo_production_managament
-      POSTGRES_USER: vomo_admin
-      POSTGRES_PASSWORD: vomo_admin_123@#$
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backup:/app/backup  # Backup inside the project root folder
@@ -22,8 +22,8 @@ services:
     ports:
       - "5050:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@vomo.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     depends_on:
       - postgres
 
@@ -34,10 +34,10 @@ services:
     volumes:
       - ./backup:/app/backup  # Backup stored inside project root
     environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: vomo_production_managament
-      POSTGRES_USER: vomo_admin
-      POSTGRES_PASSWORD: vomo_admin_123@#$
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     entrypoint: ["/bin/sh", "-c", "while true; do sleep 86400; pg_dump -h $POSTGRES_HOST -U $POSTGRES_USER -F c -b -v -f /app/backup/db_backup_$(date +%F).dump $POSTGRES_DB; done"]
     depends_on:
       - postgres
@@ -62,8 +62,8 @@ services:
     container_name: kibana
     restart: always
     environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - SERVER_PUBLICBASEURL=http://localhost:5601
+      - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS}
+      - SERVER_PUBLICBASEURL=${KIBANA_SERVER_PUBLICBASEURL}
     ports:
       - "5601:5601"
     depends_on:

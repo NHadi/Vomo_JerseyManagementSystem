@@ -112,6 +112,9 @@
                         case 'role':
                             await this.loadRoleGrid();
                             break;
+                        case 'backup':
+                            await this.loadBackupGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -353,6 +356,63 @@
                     } catch (error) {
                         console.error('Failed to load role component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load role component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadBackupGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.backupPageInstance) {
+                window.backupPageInstance.dispose();
+                window.backupPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/backup.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="backup"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the backup.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/backup.js';
+                        script.setAttribute('data-page', 'backup');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the backup page instance
+                            if (!window.backupPageInstance) {
+                                window.backupPageInstance = new window.BackupPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load backup module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load backup component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load backup component</div>');
                         reject(error);
                     }
                 });

@@ -20,5 +20,6 @@ func SetupRoutes(router *gin.RouterGroup, services *services.Services) {
 		SetupRoleRoutes(protected, services.RoleService)
 		SetupPermissionRoutes(protected, services.PermissionService)
 		SetupAuditRoutes(protected, services.AuditService)
+		SetupBackupRoutes(protected, services.BackupService)
 	}
 }
