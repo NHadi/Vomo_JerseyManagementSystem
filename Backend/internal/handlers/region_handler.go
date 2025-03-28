@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"vomo/internal/application"
 	"vomo/internal/domain/region"
+	"vomo/internal/domain/zone"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,14 +13,15 @@ import (
 // RegionResponse represents the region response structure
 // @Description Region response model
 type RegionResponse struct {
-	ID          int    `json:"id" example:"1"`
-	Name        string `json:"name" example:"North Region"`
-	Description string `json:"description" example:"Northern region"`
-	CreatedAt   string `json:"created_at" example:"2024-03-24T21:41:49Z"`
-	CreatedBy   string `json:"created_by" example:"admin"`
-	UpdatedAt   string `json:"updated_at" example:"2024-03-24T21:41:49Z"`
-	UpdatedBy   string `json:"updated_by" example:"admin"`
-	TenantID    int    `json:"tenant_id" example:"1"`
+	ID          int         `json:"id" example:"1"`
+	Name        string      `json:"name" example:"North Region"`
+	Description string      `json:"description" example:"Northern region"`
+	CreatedAt   string      `json:"created_at" example:"2024-03-24T21:41:49Z"`
+	CreatedBy   string      `json:"created_by" example:"admin"`
+	UpdatedAt   string      `json:"updated_at" example:"2024-03-24T21:41:49Z"`
+	UpdatedBy   string      `json:"updated_by" example:"admin"`
+	TenantID    int         `json:"tenant_id" example:"1"`
+	Zones       []zone.Zone `json:"zones,omitempty"`
 }
 
 // CreateRegionRequest represents the request structure for creating a region
@@ -46,6 +48,7 @@ func toRegionResponse(r *region.Region) RegionResponse {
 		UpdatedAt:   r.UpdatedAt.String(),
 		UpdatedBy:   r.UpdatedBy,
 		TenantID:    r.TenantID,
+		Zones:       r.Zones,
 	}
 }
 

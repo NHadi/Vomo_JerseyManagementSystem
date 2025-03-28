@@ -145,62 +145,52 @@ window.RegionPage = class {
                 },
                 {
                     type: 'buttons',
-                    width: 120,
-                    buttons: [
-                        {
-                            icon: 'fas fa-map-marked-alt',
-                            hint: 'Manage Zones',
-                            onClick: (e) => {
-                                const region = e.row.data;
-                                $('#zoneModal').modal('show');
-                            },
-                            template: (container, options) => {
-                                const region = options.row.data;
-                                container.innerHTML = `
-                                    <button class="btn btn-icon-only btn-primary" 
-                                            data-region-id="${region.id}"
-                                            data-region-name="${region.name}"
-                                            title="Manage Zones">
-                                        <i class="fas fa-map-marked-alt"></i>
-                                    </button>
-                                `;
-                            }
-                        },
-                        {
-                            icon: 'fas fa-edit',
-                            hint: 'Edit Region',
-                            onClick: (e) => {
-                                const region = e.row.data;
-                                this.editRegion(region);
-                            },
-                            template: (container, options) => {
-                                const region = options.row.data;
-                                container.innerHTML = `
-                                    <button class="btn btn-icon-only btn-info" 
-                                            title="Edit Region">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                `;
-                            }
-                        },
-                        {
-                            icon: 'fas fa-trash',
-                            hint: 'Delete Region',
-                            onClick: (e) => {
-                                const region = e.row.data;
-                                this.deleteRegion(region);
-                            },
-                            template: (container, options) => {
-                                const region = options.row.data;
-                                container.innerHTML = `
-                                    <button class="btn btn-icon-only btn-danger" 
-                                            title="Delete Region">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                `;
-                            }
-                        }
-                    ]
+                    width: 140,
+                    alignment: 'center',
+                    cellTemplate: (container, options) => {
+                        const $buttonContainer = $('<div>')
+                            .addClass('d-flex justify-content-end align-items-center');
+
+                        // Manage Zones Button
+                        $('<button>')
+                            .addClass('btn btn-icon-only btn-sm btn-primary mr-2')
+                            .attr({
+                                'title': 'Manage Zones',
+                                'data-toggle': 'modal',
+                                'data-target': '#zoneModal',
+                                'data-region-id': options.row.data.id,
+                                'data-region-name': options.row.data.name
+                            })
+                            .append($('<i>').addClass('fas fa-map-marked-alt'))
+                            .appendTo($buttonContainer);
+
+                        // Edit Button
+                        $('<button>')
+                            .addClass('btn btn-icon-only btn-sm btn-info mr-2')
+                            .attr('title', 'Edit Region')
+                            .append($('<i>').addClass('fas fa-edit'))
+                            .on('click', () => {
+                                this.grid.editRow(options.rowIndex);
+                            })
+                            .appendTo($buttonContainer);
+
+                        // Delete Button
+                        $('<button>')
+                            .addClass('btn btn-icon-only btn-sm btn-danger')
+                            .attr('title', 'Delete Region')
+                            .append($('<i>').addClass('fas fa-trash'))
+                            .on('click', () => {
+                                DevExpress.ui.dialog.confirm("Are you sure you want to delete this region?", "Confirm deletion")
+                                    .then((result) => {
+                                        if (result) {
+                                            this.grid.deleteRow(options.rowIndex);
+                                        }
+                                    });
+                            })
+                            .appendTo($buttonContainer);
+
+                        container.append($buttonContainer);
+                    }
                 }
             ],
             showBorders: true,
@@ -223,6 +213,10 @@ window.RegionPage = class {
                 allowUpdating: true,
                 allowDeleting: true,
                 allowAdding: true,
+                useIcons: true,
+                texts: {
+                    confirmDeleteMessage: 'Are you sure you want to delete this region?'
+                },
                 popup: {
                     title: 'Region Information',
                     showTitle: true,
@@ -390,11 +384,22 @@ window.RegionPage = class {
     }
 
     editRegion(region) {
-        this.grid.editRow(this.grid.getRowElement(region.id));
+        const rowIndex = this.grid.getRowIndexByKey(region.id);
+        if (rowIndex >= 0) {
+            this.grid.editRow(rowIndex);
+        }
     }
 
     deleteRegion(region) {
-        this.grid.deleteRow(this.grid.getRowElement(region.id));
+        const rowIndex = this.grid.getRowIndexByKey(region.id);
+        if (rowIndex >= 0) {
+            DevExpress.ui.dialog.confirm("Are you sure you want to delete this region?", "Confirm deletion")
+                .then((result) => {
+                    if (result) {
+                        this.grid.deleteRow(rowIndex);
+                    }
+                });
+        }
     }
 };
 

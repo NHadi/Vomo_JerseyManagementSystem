@@ -87,6 +87,8 @@ func main() {
 	zoneRepo := postgres.NewZoneRepository(db)
 	regionRepo := postgres.NewRegionRepository(db)
 	officeRepo := postgres.NewOfficeRepository(db)
+	productRepo := postgres.NewProductRepository(db)
+	productCategoryRepo := postgres.NewProductCategoryRepository(db)
 
 	// Initialize services
 	auditService := audit.NewService(auditRepo)
@@ -98,6 +100,8 @@ func main() {
 	zoneService := application.NewZoneService(zoneRepo, regionRepo)
 	regionService := application.NewRegionService(regionRepo, zoneRepo)
 	officeService := application.NewOfficeService(officeRepo)
+	productService := application.NewProductService(productRepo)
+	productCategoryService := application.NewProductCategoryService(productCategoryRepo)
 
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -136,15 +140,17 @@ func main() {
 
 		// Protected routes with tenant
 		routes.SetupRoutes(api, &services.Services{
-			MenuService:       menuService,
-			UserService:       userService,
-			RoleService:       roleService,
-			PermissionService: permissionService,
-			AuditService:      auditService,
-			BackupService:     backupService,
-			ZoneService:       zoneService,
-			RegionService:     regionService,
-			OfficeService:     officeService,
+			MenuService:            menuService,
+			UserService:            userService,
+			RoleService:            roleService,
+			PermissionService:      permissionService,
+			AuditService:           auditService,
+			BackupService:          backupService,
+			ZoneService:            zoneService,
+			RegionService:          regionService,
+			OfficeService:          officeService,
+			ProductService:         productService,
+			ProductCategoryService: productCategoryService,
 		})
 	}
 

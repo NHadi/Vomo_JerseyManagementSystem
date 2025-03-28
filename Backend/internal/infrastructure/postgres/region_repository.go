@@ -27,6 +27,7 @@ func (r *RegionRepository) FindByID(id int, ctx *gin.Context) (*region.Region, e
 	var region region.Region
 	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
 	if err := r.db.WithContext(ctx.Request.Context()).
+		Preload("Zones").
 		Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).
 		First(&region).Error; err != nil {
 		return nil, err
@@ -38,6 +39,7 @@ func (r *RegionRepository) FindAll(ctx *gin.Context) ([]region.Region, error) {
 	var regions []region.Region
 	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
 	if err := r.db.WithContext(ctx.Request.Context()).
+		Preload("Zones").
 		Where("tenant_id = ?", userCtx.TenantID).
 		Find(&regions).Error; err != nil {
 		return nil, err

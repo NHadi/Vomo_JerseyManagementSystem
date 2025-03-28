@@ -39,7 +39,7 @@ type UpdatePermissionRequest struct {
 // AssignPermissionsRequest represents the request structure for assigning permissions to a role
 // @Description Assign permissions request model
 type AssignPermissionsRequest struct {
-	PermissionIDs []int `json:"permission_ids" binding:"required" example:"[1, 2, 3]"`
+	PermissionIDs []int `json:"permission_ids" binding:"required" example:"1,2,3"`
 }
 
 func toPermissionResponse(p *permission.Permission) PermissionResponse {

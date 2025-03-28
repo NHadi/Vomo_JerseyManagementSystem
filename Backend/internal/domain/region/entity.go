@@ -2,15 +2,17 @@ package region
 
 import (
 	"vomo/internal/domain/common"
+	"vomo/internal/domain/zone"
 
 	"github.com/gin-gonic/gin"
 )
 
 // Region represents the master_region table
 type Region struct {
-	ID          int    `gorm:"primaryKey;autoIncrement:true;column:id" json:"id"`
-	Name        string `gorm:"type:varchar(100);not null" json:"name"`
-	Description string `gorm:"type:text" json:"description"`
+	ID          int         `gorm:"primaryKey;autoIncrement:true;column:id" json:"id"`
+	Name        string      `gorm:"type:varchar(100);not null" json:"name"`
+	Description string      `gorm:"type:text" json:"description"`
+	Zones       []zone.Zone `gorm:"foreignKey:RegionID" json:"zones,omitempty"`
 	common.TenantModel
 }
 

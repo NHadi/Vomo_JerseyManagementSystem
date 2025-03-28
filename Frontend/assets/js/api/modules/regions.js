@@ -4,7 +4,6 @@ import { getAuthHeaders } from '../utils/headers.js';
 export const regionAPI = {
     async getRegions() {
         try {
-            // First, get all regions
             const response = await fetch(`${config.baseUrl}/regions`, {
                 headers: getAuthHeaders()
             });
@@ -14,27 +13,7 @@ export const regionAPI = {
                 throw new Error(error.error || 'Failed to fetch regions');
             }
             
-            const regions = await response.json();
-
-            // For each region, fetch its zones
-            const regionsWithZones = await Promise.all(regions.map(async (region) => {
-                try {
-                    const zonesResponse = await fetch(`${config.baseUrl}/regions/${region.id}/zones`, {
-                        headers: getAuthHeaders()
-                    });
-                    
-                    if (zonesResponse.ok) {
-                        const zones = await zonesResponse.json();
-                        return { ...region, zones };
-                    }
-                    return { ...region, zones: [] };
-                } catch (error) {
-                    console.error(`Error fetching zones for region ${region.id}:`, error);
-                    return { ...region, zones: [] };
-                }
-            }));
-            
-            return regionsWithZones;
+            return await response.json();
         } catch (error) {
             console.error('Get regions error:', error);
             throw error;
