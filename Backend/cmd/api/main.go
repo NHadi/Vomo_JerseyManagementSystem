@@ -89,6 +89,8 @@ func main() {
 	officeRepo := postgres.NewOfficeRepository(db)
 	productRepo := postgres.NewProductRepository(db)
 	productCategoryRepo := postgres.NewProductCategoryRepository(db)
+	employeeRepo := postgres.NewEmployeeRepository(db)
+	divisionRepo := postgres.NewDivisionRepository(db)
 
 	// Initialize services
 	auditService := audit.NewService(auditRepo)
@@ -100,6 +102,8 @@ func main() {
 	zoneService := application.NewZoneService(zoneRepo, regionRepo, officeRepo)
 	regionService := application.NewRegionService(regionRepo, zoneRepo)
 	officeService := application.NewOfficeService(officeRepo)
+	divisionService := application.NewDivisionService(divisionRepo)
+	employeeService := application.NewEmployeeService(employeeRepo)
 	productService := application.NewProductService(productRepo)
 	productCategoryService := application.NewProductCategoryService(productCategoryRepo)
 
@@ -149,6 +153,8 @@ func main() {
 			ZoneService:            zoneService,
 			RegionService:          regionService,
 			OfficeService:          officeService,
+			DivisionService:        divisionService,
+			EmployeeService:        employeeService,
 			ProductService:         productService,
 			ProductCategoryService: productCategoryService,
 		})

@@ -33,11 +33,7 @@ window.OfficePage = class {
 
     bindEvents() {
         // Modal show event
-        $('#zoneModal').on('show.bs.modal', (event) => {
-            const button = $(event.relatedTarget);
-            const officeId = button.data('office-id');
-            const officeName = button.data('office-name');
-            this.currentOffice = { id: officeId, name: officeName };
+        $('#zoneModal').on('show.bs.modal', () => {
             this.loadZones();
         });
 
@@ -83,109 +79,151 @@ window.OfficePage = class {
                 {
                     dataField: 'name',
                     caption: 'Office Name',
-                    validationRules: [{ type: 'required' }]
+                    validationRules: [{ type: 'required' }],
+                    cellTemplate: (container, options) => {
+                        $('<div>')
+                            .addClass('d-flex align-items-center')
+                            .append(
+                                $('<i>').addClass('ni ni-building mr-2 text-primary')
+                            )
+                            .append(
+                                $('<span>').text(options.data.name || '')
+                            )
+                            .appendTo(container);
+                    }
                 },
                 {
                     dataField: 'code',
-                    caption: 'Office Code'
+                    caption: 'Office Code',
+                    validationRules: [{ type: 'required' }],
+                    cellTemplate: (container, options) => {
+                        $('<div>')
+                            .addClass('text-muted small')
+                            .text(options.data.code || '')
+                            .appendTo(container);
+                    }
                 },
                 {
                     dataField: 'address',
-                    caption: 'Address'
+                    caption: 'Address',
+                    cellTemplate: (container, options) => {
+                        $('<div>')
+                            .addClass('text-muted small')
+                            .text(options.data.address || 'No address provided')
+                            .appendTo(container);
+                    }
                 },
                 {
                     dataField: 'phone',
-                    caption: 'Phone'
+                    caption: 'Phone',
+                    cellTemplate: (container, options) => {
+                        $('<div>')
+                            .addClass('text-muted small')
+                            .text(options.data.phone || 'No phone provided')
+                            .appendTo(container);
+                    }
                 },
                 {
                     dataField: 'email',
-                    caption: 'Email'
+                    caption: 'Email',
+                    validationRules: [{ type: 'email' }],
+                    cellTemplate: (container, options) => {
+                        $('<div>')
+                            .addClass('text-muted small')
+                            .text(options.data.email || 'No email provided')
+                            .appendTo(container);
+                    }
                 },
                 {
                     dataField: 'zone',
                     caption: 'Zone',
+                    allowFiltering: false,
+                    allowSorting: false,
                     cellTemplate: (container, options) => {
-                        const office = options.data;
-                        container.innerHTML = `
-                            <div class="zone-container">
-                                ${office.zone ? `
-                                    <span class="zone-badge">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        ${office.zone.name}
-                                    </span>
-                                ` : `
-                                    <div class="text-muted small">
-                                        <i class="fas fa-info-circle mr-1"></i>
-                                        No zone assigned
-                                    </div>
-                                `}
-                            </div>
-                        `;
+                        const $container = $('<div>').addClass('zone-container');
+                        
+                        if (options.data.zone) {
+                            $('<span>')
+                                .addClass('zone-badge')
+                                .append(
+                                    $('<i>').addClass('fas fa-map-marker-alt')
+                                )
+                                .append(
+                                    $('<span>').text(' ' + options.data.zone.name)
+                                )
+                                .attr('title', options.data.zone.description || '')
+                                .appendTo($container);
+                        } else {
+                            $('<div>')
+                                .addClass('text-muted small')
+                                .append(
+                                    $('<i>').addClass('fas fa-info-circle mr-1')
+                                )
+                                .append(
+                                    $('<span>').text('No zone assigned')
+                                )
+                                .appendTo($container);
+                        }
+                        
+                        $container.appendTo(container);
                     }
                 },
                 {
                     type: 'buttons',
-                    width: 120,
-                    buttons: [
-                        {
-                            icon: 'fas fa-map-marked-alt',
-                            hint: 'Manage Zone',
-                            onClick: (e) => {
-                                const office = e.row.data;
-                                $('#zoneModal').modal('show');
-                            },
-                            template: (container, options) => {
-                                const office = options.row.data;
-                                container.innerHTML = `
-                                    <button class="btn btn-icon-only btn-primary" 
-                                            data-office-id="${office.id}"
-                                            data-office-name="${office.name}"
-                                            title="Manage Zone">
-                                        <i class="fas fa-map-marked-alt"></i>
-                                    </button>
-                                `;
-                            }
-                        },
-                        {
-                            icon: 'fas fa-edit',
-                            hint: 'Edit Office',
-                            onClick: (e) => {
-                                const office = e.row.data;
-                                this.editOffice(office);
-                            },
-                            template: (container, options) => {
-                                const office = options.row.data;
-                                container.innerHTML = `
-                                    <button class="btn btn-icon-only btn-info" 
-                                            title="Edit Office">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                `;
-                            }
-                        },
-                        {
-                            icon: 'fas fa-trash',
-                            hint: 'Delete Office',
-                            onClick: (e) => {
-                                const office = e.row.data;
-                                this.deleteOffice(office);
-                            },
-                            template: (container, options) => {
-                                const office = options.row.data;
-                                container.innerHTML = `
-                                    <button class="btn btn-icon-only btn-danger" 
-                                            title="Delete Office">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                `;
-                            }
-                        }
-                    ]
+                    width: 140,
+                    alignment: 'center',
+                    cellTemplate: (container, options) => {
+                        const $buttonContainer = $('<div>')
+                            .addClass('d-flex justify-content-end align-items-center');
+
+                        // Manage Zone Button
+                        $('<button>')
+                            .addClass('btn btn-icon-only btn-sm btn-primary mr-2')
+                            .attr({
+                                'title': 'Manage Zone',
+                                'data-toggle': 'modal',
+                                'data-target': '#zoneModal',
+                                'data-office-id': options.row.data.id,
+                                'data-office-name': options.row.data.name
+                            })
+                            .append($('<i>').addClass('fas fa-map-marked-alt'))
+                            .appendTo($buttonContainer);
+
+                        // Edit Button
+                        $('<button>')
+                            .addClass('btn btn-icon-only btn-sm btn-info mr-2')
+                            .attr('title', 'Edit Office')
+                            .append($('<i>').addClass('fas fa-edit'))
+                            .on('click', () => {
+                                this.grid.editRow(options.rowIndex);
+                            })
+                            .appendTo($buttonContainer);
+
+                        // Delete Button
+                        $('<button>')
+                            .addClass('btn btn-icon-only btn-sm btn-danger')
+                            .attr('title', 'Delete Office')
+                            .append($('<i>').addClass('fas fa-trash'))
+                            .on('click', () => {
+                                DevExpress.ui.dialog.confirm("Are you sure you want to delete this office?", "Confirm deletion")
+                                    .then((result) => {
+                                        if (result) {
+                                            this.grid.deleteRow(options.rowIndex);
+                                        }
+                                    });
+                            })
+                            .appendTo($buttonContainer);
+
+                        container.append($buttonContainer);
+                    }
                 }
             ],
             showBorders: true,
             filterRow: { visible: true },
             searchPanel: { visible: true },
+            headerFilter: { visible: true },
+            groupPanel: { visible: false },
+            columnChooser: { enabled: true },
             paging: {
                 pageSize: 10
             },
@@ -195,12 +233,78 @@ window.OfficePage = class {
                 showInfo: true,
                 showNavigationButtons: true
             },
+            editing: {
+                mode: 'popup',
+                allowUpdating: true,
+                allowDeleting: true,
+                allowAdding: true,
+                useIcons: true,
+                texts: {
+                    confirmDeleteMessage: 'Are you sure you want to delete this office?'
+                },
+                popup: {
+                    title: 'Office Information',
+                    showTitle: true,
+                    width: 700,
+                    height: 525
+                },
+                form: {
+                    items: [
+                        {
+                            itemType: 'group',
+                            colCount: 2,
+                            items: [
+                                {
+                                    dataField: 'name',
+                                    validationRules: [{ type: 'required', message: 'Office name is required' }]
+                                },
+                                {
+                                    dataField: 'code',
+                                    validationRules: [{ type: 'required', message: 'Office code is required' }]
+                                },
+                                {
+                                    dataField: 'email',
+                                    validationRules: [
+                                        { type: 'required', message: 'Email is required' },
+                                        { type: 'email', message: 'Invalid email format' }
+                                    ]
+                                },
+                                {
+                                    dataField: 'phone'
+                                },
+                                {
+                                    dataField: 'address',
+                                    editorType: 'dxTextArea',
+                                    editorOptions: {
+                                        height: 100
+                                    },
+                                    colSpan: 2
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            toolbar: {
+                items: [
+                    {
+                        location: 'before',
+                        widget: 'dxButton',
+                        options: {
+                            icon: 'plus',
+                            text: 'Add Office',
+                            onClick: () => this.grid.addRow()
+                        }
+                    },
+                    'searchPanel',
+                    'columnChooserButton'
+                ]
+            },
             onRowInserting: (e) => this.handleRowInserting(e),
             onRowUpdating: (e) => this.handleRowUpdating(e),
-            onRowRemoving: (e) => this.handleRowRemoving(e)
+            onRowRemoving: (e) => this.handleRowRemoving(e),
+            onInitialized: () => this.loadData()
         }).dxDataGrid('instance');
-
-        this.loadData();
     }
 
     async loadData() {
@@ -262,10 +366,8 @@ window.OfficePage = class {
                     <div class="zone-details">${zone.description || 'No description provided'}</div>
                 </div>
             </div>
-        `).on('change', (e) => {
-            if (e.target.checked) {
-                this.selectedZone = zone;
-            }
+        `).on('change', 'input[type="radio"]', () => {
+            this.selectedZone = zone;
         });
     }
 
@@ -278,7 +380,7 @@ window.OfficePage = class {
 
             await vomoAPI.assignZone(this.currentOffice.id, this.selectedZone.id);
             $('#zoneModal').modal('hide');
-            this.loadData();
+            await this.loadData();
             DevExpress.ui.notify('Zone assigned successfully', 'success', 3000);
         } catch (error) {
             console.error('Error saving zone:', error);
@@ -300,7 +402,8 @@ window.OfficePage = class {
 
     async handleRowUpdating(e) {
         try {
-            await vomoAPI.updateOffice(e.key.id, {...e.oldData, ...e.newData});
+            const updatedData = { ...e.oldData, ...e.newData };
+            await vomoAPI.updateOffice(e.key, updatedData);
             DevExpress.ui.notify('Office updated successfully', 'success', 3000);
         } catch (error) {
             console.error('Error updating office:', error);
@@ -311,7 +414,7 @@ window.OfficePage = class {
 
     async handleRowRemoving(e) {
         try {
-            await vomoAPI.deleteOffice(e.key.id);
+            await vomoAPI.deleteOffice(e.key);
             DevExpress.ui.notify('Office deleted successfully', 'success', 3000);
         } catch (error) {
             console.error('Error deleting office:', error);

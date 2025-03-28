@@ -24,6 +24,8 @@ func SetupRoutes(router *gin.RouterGroup, services *services.Services) {
 		SetupZoneRoutes(protected, services.ZoneService)
 		SetupRegionRoutes(protected, services.RegionService)
 		SetupOfficeRoutes(protected, services.OfficeService)
+		SetupDivisionRoutes(protected, services.DivisionService)
+		SetupEmployeeRoutes(protected, services.EmployeeService, services.DivisionService)
 		SetupProductRoutes(protected, services.ProductService, services.ProductCategoryService)
 		SetupProductCategoryRoutes(protected, services.ProductCategoryService)
 	}

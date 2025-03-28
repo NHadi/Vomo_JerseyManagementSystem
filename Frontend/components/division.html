@@ -1,0 +1,156 @@
+# Division Management Page
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <div class="card-header border-0">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h3 class="mb-0">Division Management</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="divisionGrid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Grid Styles */
+.dx-datagrid {
+    background-color: transparent;
+}
+
+.dx-datagrid-headers {
+    border-bottom: 2px solid #e9ecef;
+}
+
+.dx-datagrid-headers .dx-datagrid-table .dx-row > td {
+    border-bottom: none;
+    background-color: #f8f9fa;
+    padding: 16px 14px;
+}
+
+.dx-datagrid-rowsview .dx-row {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.dx-datagrid-rowsview .dx-row:hover {
+    background-color: #f8f9fa;
+}
+
+.dx-datagrid-rowsview .dx-row > td {
+    padding: 16px 14px;
+}
+
+/* Button Styles */
+.btn-icon-only {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-icon-only i {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.btn-icon-only:hover {
+    transform: translateY(-1px);
+}
+
+.btn-icon-only.btn-primary {
+    background-color: #5e72e4;
+    border-color: #5e72e4;
+    box-shadow: 0 2px 4px rgba(94, 114, 228, 0.2);
+}
+
+.btn-icon-only.btn-primary:hover {
+    background-color: #4d61d9;
+    border-color: #4d61d9;
+    box-shadow: 0 4px 6px rgba(94, 114, 228, 0.25);
+}
+
+.btn-icon-only.btn-info {
+    background-color: #11cdef;
+    border-color: #11cdef;
+    box-shadow: 0 2px 4px rgba(17, 205, 239, 0.2);
+}
+
+.btn-icon-only.btn-info:hover {
+    background-color: #0fb5d3;
+    border-color: #0fb5d3;
+    box-shadow: 0 4px 6px rgba(17, 205, 239, 0.25);
+}
+
+.btn-icon-only.btn-danger {
+    background-color: #f5365c;
+    border-color: #f5365c;
+    box-shadow: 0 2px 4px rgba(245, 54, 92, 0.2);
+}
+
+.btn-icon-only.btn-danger:hover {
+    background-color: #f01d48;
+    border-color: #f01d48;
+    box-shadow: 0 4px 6px rgba(245, 54, 92, 0.25);
+}
+
+/* Add Division Button */
+.dx-button.dx-button-has-icon.dx-button-has-text {
+    border-radius: 6px;
+    background-color: #5e72e4;
+    border-color: #5e72e4;
+    box-shadow: 0 2px 4px rgba(94, 114, 228, 0.2);
+    transition: all 0.2s ease;
+}
+
+.dx-button.dx-button-has-icon.dx-button-has-text:hover {
+    background-color: #4d61d9;
+    border-color: #4d61d9;
+    box-shadow: 0 4px 6px rgba(94, 114, 228, 0.25);
+    transform: translateY(-1px);
+}
+
+.dx-button.dx-button-has-icon.dx-button-has-text .dx-button-content {
+    padding: 8px 16px;
+    color: white;
+}
+
+.dx-button.dx-button-has-icon.dx-button-has-text .dx-icon {
+    margin-right: 8px;
+    font-size: 14px;
+    color: white;
+}
+
+/* Employee Count Badge */
+.employee-count {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    background: rgba(94, 114, 228, 0.1);
+    border-radius: 4px;
+    font-size: 12px;
+    color: #5e72e4;
+    font-weight: 600;
+}
+
+.employee-count i {
+    margin-right: 4px;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* Description Text */
+.description-text {
+    color: #8898aa;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 0;
+}
+</style> 

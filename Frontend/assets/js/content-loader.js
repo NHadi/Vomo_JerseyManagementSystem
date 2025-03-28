@@ -124,6 +124,15 @@
                         case 'backup':
                             await this.loadBackupGrid();
                             break;
+                        case 'division':
+                            await this.loadDivisionGrid();
+                            break;
+                        case 'employee':
+                            await this.loadEmployeeGrid();
+                            break;
+                        case 'product':
+                            await this.loadProductGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -593,6 +602,177 @@
                     } catch (error) {
                         console.error('Failed to load backup component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load backup component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadDivisionGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.divisionPageInstance) {
+                window.divisionPageInstance.dispose();
+                window.divisionPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/division.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="division"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the division.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/division.js';
+                        script.setAttribute('data-page', 'division');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the division page instance
+                            if (!window.divisionPageInstance) {
+                                window.divisionPageInstance = new window.DivisionPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load division module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load division component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load division component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadEmployeeGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.employeePageInstance) {
+                window.employeePageInstance.dispose();
+                window.employeePageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/employee.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="employee"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the employee.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/employee.js';
+                        script.setAttribute('data-page', 'employee');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the employee page instance
+                            if (!window.employeePageInstance) {
+                                window.employeePageInstance = new window.EmployeePage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load employee module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load employee component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load employee component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadProductGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.productPageInstance) {
+                window.productPageInstance.dispose();
+                window.productPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/product.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="product"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the product.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/product.js';
+                        script.setAttribute('data-page', 'product');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the product page instance
+                            if (!window.productPageInstance) {
+                                window.productPageInstance = new window.ProductPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load product module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load product component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load product component</div>');
                         reject(error);
                     }
                 });

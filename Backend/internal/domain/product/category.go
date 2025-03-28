@@ -18,6 +18,10 @@ type Category struct {
 	UpdatedBy   string    `json:"updated_by"`
 }
 
+func (Category) TableName() string {
+	return "master_product_category"
+}
+
 // CategoryRepository defines the interface for category data access
 type CategoryRepository interface {
 	Create(category *Category) error

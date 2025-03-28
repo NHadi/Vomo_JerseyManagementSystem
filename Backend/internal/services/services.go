@@ -26,6 +26,8 @@ type Services struct {
 	ZoneService            *application.ZoneService
 	RegionService          *application.RegionService
 	OfficeService          *application.OfficeService
+	DivisionService        *application.DivisionService
+	EmployeeService        *application.EmployeeService
 	ProductService         *application.ProductService
 	ProductCategoryService *application.ProductCategoryService
 }

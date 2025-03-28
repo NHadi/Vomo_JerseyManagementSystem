@@ -6,6 +6,9 @@ import { backupAPI } from './modules/backups.js';
 import { zoneAPI } from './modules/zones.js';
 import { regionAPI } from './modules/regions.js';
 import { officeAPI } from './modules/offices.js';
+import { divisionAPI } from './modules/divisions.js';
+import { employeeAPI } from './modules/employees.js';
+import { productAPI } from './modules/products.js';
 import { config } from './config.js';
 
 // Initialize the API namespace
@@ -18,6 +21,9 @@ export const vomoAPI = {
     ...zoneAPI,
     ...regionAPI,
     ...officeAPI,
+    ...divisionAPI,
+    ...employeeAPI,
+    ...productAPI,
     config
 };
 

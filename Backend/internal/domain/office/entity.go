@@ -15,8 +15,8 @@ type Office struct {
 	Address string       `gorm:"type:text" json:"address"`
 	Phone   string       `gorm:"type:varchar(20)" json:"phone"`
 	Email   string       `gorm:"type:varchar(255);unique" json:"email"`
-	ZoneID  *int         `gorm:"index" json:"zone_id"`
-	Zone    *models.Zone `gorm:"foreignKey:ZoneID;references:ID;references:master_zone" json:"zone,omitempty"`
+	ZoneID  *int         `gorm:"column:zone_id;index" json:"zone_id"`
+	Zone    *models.Zone `gorm:"foreignKey:ZoneID" json:"zone,omitempty"`
 	common.TenantModel
 }
 

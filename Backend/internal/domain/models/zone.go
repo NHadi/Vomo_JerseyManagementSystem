@@ -7,3 +7,8 @@ type Zone struct {
 	RegionID    *int   `json:"region_id"`
 	Description string `json:"description"`
 }
+
+// TableName specifies the table name for GORM
+func (Zone) TableName() string {
+	return "master_zone"
+}
