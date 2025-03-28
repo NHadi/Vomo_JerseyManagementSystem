@@ -25,24 +25,20 @@ func (r *ZoneRepository) Create(z *zone.Zone, ctx *gin.Context) error {
 
 func (r *ZoneRepository) FindByID(id int, ctx *gin.Context) (*zone.Zone, error) {
 	var zone zone.Zone
-	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
-	if err := r.db.WithContext(ctx.Request.Context()).
-		Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).
-		First(&zone).Error; err != nil {
-		return nil, err
-	}
-	return &zone, nil
+	result := r.db.WithContext(ctx.Request.Context()).
+		Preload("Offices").
+		Where("id = ? AND tenant_id = ?", id, ctx.GetInt("tenant_id")).
+		First(&zone)
+	return &zone, result.Error
 }
 
 func (r *ZoneRepository) FindAll(ctx *gin.Context) ([]zone.Zone, error) {
 	var zones []zone.Zone
-	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
-	if err := r.db.WithContext(ctx.Request.Context()).
-		Where("tenant_id = ?", userCtx.TenantID).
-		Find(&zones).Error; err != nil {
-		return nil, err
-	}
-	return zones, nil
+	result := r.db.WithContext(ctx.Request.Context()).
+		Preload("Offices").
+		Where("tenant_id = ?", ctx.GetInt("tenant_id")).
+		Find(&zones)
+	return zones, result.Error
 }
 
 func (r *ZoneRepository) Update(z *zone.Zone, ctx *gin.Context) error {
@@ -62,11 +58,9 @@ func (r *ZoneRepository) Delete(id int, ctx *gin.Context) error {
 
 func (r *ZoneRepository) FindByRegionID(regionID int, ctx *gin.Context) ([]zone.Zone, error) {
 	var zones []zone.Zone
-	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
-	if err := r.db.WithContext(ctx.Request.Context()).
-		Where("region_id = ? AND tenant_id = ?", regionID, userCtx.TenantID).
-		Find(&zones).Error; err != nil {
-		return nil, err
-	}
-	return zones, nil
+	result := r.db.WithContext(ctx.Request.Context()).
+		Preload("Offices").
+		Where("region_id = ? AND tenant_id = ?", regionID, ctx.GetInt("tenant_id")).
+		Find(&zones)
+	return zones, result.Error
 }

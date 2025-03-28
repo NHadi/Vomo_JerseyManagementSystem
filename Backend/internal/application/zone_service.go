@@ -1,6 +1,7 @@
 package application
 
 import (
+	"vomo/internal/domain/office"
 	"vomo/internal/domain/region"
 	"vomo/internal/domain/zone"
 
@@ -11,13 +12,15 @@ import (
 type ZoneService struct {
 	repo       zone.Repository
 	regionRepo region.Repository
+	officeRepo office.Repository
 }
 
 // NewZoneService creates a new zone service instance
-func NewZoneService(repo zone.Repository, regionRepo region.Repository) *ZoneService {
+func NewZoneService(repo zone.Repository, regionRepo region.Repository, officeRepo office.Repository) *ZoneService {
 	return &ZoneService{
 		repo:       repo,
 		regionRepo: regionRepo,
+		officeRepo: officeRepo,
 	}
 }
 
@@ -115,4 +118,58 @@ func (s *ZoneService) FindByRegionID(regionID int, ctx *gin.Context) ([]zone.Zon
 	}
 
 	return zones, regions, nil
+}
+
+func (s *ZoneService) AssignOffices(zoneID int, officeIDs []int, ctx *gin.Context) (*zone.Zone, *region.Region, error) {
+	// Get the zone
+	zone, region, err := s.FindByID(zoneID, ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Update each office's zone_id
+	for _, id := range officeIDs {
+		office, err := s.officeRepo.FindByID(id, ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+		office.ZoneID = &zoneID
+		if err := s.officeRepo.Update(office, ctx); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	// Refresh the zone to get updated offices
+	zone, region, err = s.FindByID(zoneID, ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return zone, region, nil
+}
+
+func (s *ZoneService) RemoveOffices(zoneID int, officeIDs []int, ctx *gin.Context) error {
+	// Get the offices for this zone
+	offices, err := s.officeRepo.FindByZoneID(zoneID, ctx)
+	if err != nil {
+		return err
+	}
+
+	// Create a map of office IDs to remove for efficient lookup
+	removeIDs := make(map[int]bool)
+	for _, id := range officeIDs {
+		removeIDs[id] = true
+	}
+
+	// Update each office that needs to be removed
+	for _, office := range offices {
+		if removeIDs[office.ID] {
+			office.ZoneID = nil
+			if err := s.officeRepo.Update(&office, ctx); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

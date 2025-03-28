@@ -12,18 +12,26 @@ import (
 // OfficeResponse represents the office response structure
 // @Description Office response model
 type OfficeResponse struct {
-	ID        int    `json:"id" example:"1"`
-	Name      string `json:"name" example:"Main Office"`
-	Code      string `json:"code" example:"MO001"`
-	Address   string `json:"address" example:"123 Main St"`
-	Phone     string `json:"phone" example:"+1234567890"`
-	Email     string `json:"email" example:"main@office.com"`
-	ZoneID    *int   `json:"zone_id" example:"1"`
-	CreatedAt string `json:"created_at" example:"2024-03-24T21:41:49Z"`
-	CreatedBy string `json:"created_by" example:"admin"`
-	UpdatedAt string `json:"updated_at" example:"2024-03-24T21:41:49Z"`
-	UpdatedBy string `json:"updated_by" example:"admin"`
-	TenantID  int    `json:"tenant_id" example:"1"`
+	ID        int       `json:"id" example:"1"`
+	Name      string    `json:"name" example:"Main Office"`
+	Code      string    `json:"code" example:"MO001"`
+	Address   string    `json:"address" example:"123 Main St"`
+	Phone     string    `json:"phone" example:"+1234567890"`
+	Email     string    `json:"email" example:"main@office.com"`
+	ZoneID    *int      `json:"zone_id" example:"1"`
+	Zone      *ZoneInfo `json:"zone,omitempty"`
+	CreatedAt string    `json:"created_at" example:"2024-03-24T21:41:49Z"`
+	CreatedBy string    `json:"created_by" example:"admin"`
+	UpdatedAt string    `json:"updated_at" example:"2024-03-24T21:41:49Z"`
+	UpdatedBy string    `json:"updated_by" example:"admin"`
+	TenantID  int       `json:"tenant_id" example:"1"`
+}
+
+// ZoneInfo represents the zone information in office response
+type ZoneInfo struct {
+	ID          int    `json:"id" example:"1"`
+	Name        string `json:"name" example:"North Zone"`
+	Description string `json:"description" example:"Northern zone"`
 }
 
 // CreateOfficeRequest represents the request structure for creating an office
@@ -49,7 +57,7 @@ type UpdateOfficeRequest struct {
 }
 
 func toOfficeResponse(o *office.Office) OfficeResponse {
-	return OfficeResponse{
+	response := OfficeResponse{
 		ID:        o.ID,
 		Name:      o.Name,
 		Code:      o.Code,
@@ -63,6 +71,16 @@ func toOfficeResponse(o *office.Office) OfficeResponse {
 		UpdatedBy: o.UpdatedBy,
 		TenantID:  o.TenantID,
 	}
+
+	if o.Zone != nil {
+		response.Zone = &ZoneInfo{
+			ID:          o.Zone.ID,
+			Name:        o.Zone.Name,
+			Description: o.Zone.Description,
+		}
+	}
+
+	return response
 }
 
 // @Summary Create a new office

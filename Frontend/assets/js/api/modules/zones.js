@@ -113,7 +113,7 @@ export const zoneAPI = {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Failed to assign offices');
+                throw new Error(error.error || 'Failed to assign offices to zone');
             }
 
             return await response.json();
@@ -133,12 +133,30 @@ export const zoneAPI = {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Failed to remove offices');
+                throw new Error(error.error || 'Failed to remove offices from zone');
             }
 
             return true;
         } catch (error) {
             console.error('Remove offices error:', error);
+            throw error;
+        }
+    },
+
+    async getOffices() {
+        try {
+            const response = await fetch(`${config.baseUrl}/offices`, {
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to fetch offices');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Get offices error:', error);
             throw error;
         }
     }

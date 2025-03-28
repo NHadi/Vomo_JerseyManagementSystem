@@ -2,19 +2,20 @@ package zone
 
 import (
 	"vomo/internal/domain/common"
+	"vomo/internal/domain/models"
+	"vomo/internal/domain/office"
 
 	"github.com/gin-gonic/gin"
 )
 
 // Zone represents the master_zone table
 type Zone struct {
-	ID          int    `gorm:"primaryKey;autoIncrement:true;column:id" json:"id"`
-	Name        string `gorm:"type:varchar(100);not null" json:"name"`
-	RegionID    *int   `gorm:"index" json:"region_id"`
-	Description string `gorm:"type:text" json:"description"`
+	models.Zone
+	Offices []office.Office `gorm:"foreignKey:ZoneID;references:ID" json:"offices,omitempty"`
 	common.TenantModel
 }
 
+// TableName specifies the table name for GORM
 func (Zone) TableName() string {
 	return "master_zone"
 }

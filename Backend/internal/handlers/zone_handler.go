@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"vomo/internal/application"
+	"vomo/internal/domain/models"
 	"vomo/internal/domain/region"
 	"vomo/internal/domain/zone"
 
@@ -17,19 +18,29 @@ type RegionInfo struct {
 	Description string `json:"description" example:"Northern region"`
 }
 
+// OfficeInfo represents the office information in zone response
+type OfficeInfo struct {
+	ID      int    `json:"id" example:"1"`
+	Name    string `json:"name" example:"Main Office"`
+	Code    string `json:"code" example:"OFF-001"`
+	Address string `json:"address" example:"123 Main St"`
+	Phone   string `json:"phone" example:"+1234567890"`
+}
+
 // ZoneResponse represents the zone response structure
 // @Description Zone response model
 type ZoneResponse struct {
-	ID          int         `json:"id" example:"1"`
-	Name        string      `json:"name" example:"North Zone"`
-	RegionID    *int        `json:"region_id" example:"1"`
-	Region      *RegionInfo `json:"region,omitempty"`
-	Description string      `json:"description" example:"Northern region zone"`
-	CreatedAt   string      `json:"created_at" example:"2024-03-24T21:41:49Z"`
-	CreatedBy   string      `json:"created_by" example:"admin"`
-	UpdatedAt   string      `json:"updated_at" example:"2024-03-24T21:41:49Z"`
-	UpdatedBy   string      `json:"updated_by" example:"admin"`
-	TenantID    int         `json:"tenant_id" example:"1"`
+	ID          int          `json:"id" example:"1"`
+	Name        string       `json:"name" example:"North Zone"`
+	RegionID    *int         `json:"region_id" example:"1"`
+	Region      *RegionInfo  `json:"region,omitempty"`
+	Description string       `json:"description" example:"Northern region zone"`
+	CreatedAt   string       `json:"created_at" example:"2024-03-24T21:41:49Z"`
+	CreatedBy   string       `json:"created_by" example:"admin"`
+	UpdatedAt   string       `json:"updated_at" example:"2024-03-24T21:41:49Z"`
+	UpdatedBy   string       `json:"updated_by" example:"admin"`
+	TenantID    int          `json:"tenant_id" example:"1"`
+	Offices     []OfficeInfo `json:"offices,omitempty"`
 }
 
 // CreateZoneRequest represents the request structure for creating a zone
@@ -46,6 +57,11 @@ type UpdateZoneRequest struct {
 	Name        string `json:"name" binding:"required" example:"North Zone"`
 	RegionID    *int   `json:"region_id" example:"1"`
 	Description string `json:"description" example:"Northern region zone"`
+}
+
+// AssignOfficesRequest represents the request structure for assigning offices to a zone
+type AssignOfficesRequest struct {
+	OfficeIDs []int `json:"office_ids" binding:"required"`
 }
 
 func toZoneResponse(z *zone.Zone, r *region.Region) ZoneResponse {
@@ -66,6 +82,20 @@ func toZoneResponse(z *zone.Zone, r *region.Region) ZoneResponse {
 			ID:          r.ID,
 			Name:        r.Name,
 			Description: r.Description,
+		}
+	}
+
+	// Convert offices to OfficeInfo
+	if z.Offices != nil {
+		response.Offices = make([]OfficeInfo, len(z.Offices))
+		for i, office := range z.Offices {
+			response.Offices[i] = OfficeInfo{
+				ID:      office.ID,
+				Name:    office.Name,
+				Code:    office.Code,
+				Address: office.Address,
+				Phone:   office.Phone,
+			}
 		}
 	}
 
@@ -95,9 +125,11 @@ func CreateZone(service *application.ZoneService) gin.HandlerFunc {
 		}
 
 		zone := &zone.Zone{
-			Name:        req.Name,
-			RegionID:    req.RegionID,
-			Description: req.Description,
+			Zone: models.Zone{
+				Name:        req.Name,
+				RegionID:    req.RegionID,
+				Description: req.Description,
+			},
 		}
 
 		if err := service.Create(zone, c); err != nil {
@@ -297,5 +329,84 @@ func GetZonesByRegion(service *application.ZoneService) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, response)
+	}
+}
+
+// @Summary Assign offices to a zone
+// @Description Assign offices to an existing zone
+// @Tags Zone
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param id path int true "Zone ID"
+// @Param request body AssignOfficesRequest true "Office IDs"
+// @Success 200 {object} ZoneResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "Zone not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /zones/{id}/offices [post]
+func AssignOffices(service *application.ZoneService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid zone ID"})
+			return
+		}
+
+		var req AssignOfficesRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		zone, region, err := service.AssignOffices(id, req.OfficeIDs, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, toZoneResponse(zone, region))
+	}
+}
+
+// @Summary Remove offices from a zone
+// @Description Remove offices from an existing zone
+// @Tags Zone
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param id path int true "Zone ID"
+// @Param request body AssignOfficesRequest true "Office IDs"
+// @Success 200 {object} SuccessResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "Zone not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /zones/{id}/offices [delete]
+func RemoveOffices(service *application.ZoneService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid zone ID"})
+			return
+		}
+
+		var req AssignOfficesRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		if err := service.RemoveOffices(id, req.OfficeIDs, c); err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, SuccessResponse{Message: "Offices removed successfully"})
 	}
 }
