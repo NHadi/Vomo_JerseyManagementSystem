@@ -92,15 +92,17 @@ window.ProductPage = class {
                                 $('<i>').addClass('ni ni-box mr-2 text-primary')
                             )
                             .append(
-                                $('<span>').text(options.data.name || '')
+                                $('<div>')
+                                    .addClass('d-flex flex-column')
+                                    .append(
+                                        $('<span>').addClass('font-weight-bold').text(options.data.name || '')
+                                    )
+                                    .append(
+                                        $('<small>').addClass('text-muted').text(options.data.code || '')
+                                    )
                             )
                             .appendTo(container);
                     }
-                },
-                {
-                    dataField: 'code',
-                    caption: 'Product Code',
-                    validationRules: [{ type: 'required' }]
                 },
                 {
                     dataField: 'category',
@@ -136,16 +138,88 @@ window.ProductPage = class {
                     }
                 },
                 {
+                    dataField: 'size_available',
+                    caption: 'Sizes',
+                    allowFiltering: false,
+                    cellTemplate: (container, options) => {
+                        const sizes = options.data.size_available || [];
+                        const $container = $('<div>').addClass('d-flex flex-wrap gap-1');
+                        
+                        sizes.forEach(size => {
+                            $('<span>')
+                                .addClass('badge badge-soft-primary')
+                                .text(size)
+                                .appendTo($container);
+                        });
+                        
+                        $container.appendTo(container);
+                    }
+                },
+                {
+                    dataField: 'customization_options',
+                    caption: 'Customization',
+                    allowFiltering: false,
+                    cellTemplate: (container, options) => {
+                        const customOptions = options.data.customization_options || {};
+                        const $container = $('<div>').addClass('d-flex flex-wrap gap-2');
+                        
+                        Object.entries(customOptions).forEach(([key, value]) => {
+                            if (value) {
+                                $('<span>')
+                                    .addClass('badge badge-soft-success')
+                                    .append($('<i>').addClass('fas fa-check mr-1'))
+                                    .append(key.charAt(0).toUpperCase() + key.slice(1))
+                                    .appendTo($container);
+                            }
+                        });
+                        
+                        $container.appendTo(container);
+                    }
+                },
+                {
                     dataField: 'base_price',
-                    caption: 'Base Price',
-                    dataType: 'number',
-                    format: 'currency',
-                    validationRules: [{ type: 'required' }]
+                    caption: 'Price Info',
+                    cellTemplate: (container, options) => {
+                        const $container = $('<div>').addClass('d-flex flex-column');
+                        
+                        $('<div>')
+                            .addClass('font-weight-bold')
+                            .text(`$${options.data.base_price.toFixed(2)}`)
+                            .appendTo($container);
+                            
+                        if (options.data.bulk_discount_rules) {
+                            $('<small>')
+                                .addClass('text-success')
+                                .append($('<i>').addClass('fas fa-tag mr-1'))
+                                .append('Bulk discounts available')
+                                .appendTo($container);
+                        }
+                        
+                        $container.appendTo(container);
+                    }
+                },
+                {
+                    dataField: 'production_time',
+                    caption: 'Production',
+                    cellTemplate: (container, options) => {
+                        $('<div>')
+                            .addClass('d-flex flex-column')
+                            .append(
+                                $('<div>')
+                                    .append($('<i>').addClass('fas fa-clock mr-1'))
+                                    .append(`${options.data.production_time} days`)
+                            )
+                            .append(
+                                $('<small>')
+                                    .addClass('text-muted')
+                                    .append(`Min. Order: ${options.data.min_order_quantity}`)
+                            )
+                            .appendTo(container);
+                    }
                 },
                 {
                     dataField: 'stock_status',
-                    caption: 'Stock Status',
-                    validationRules: [{ type: 'required' }],
+                    caption: 'Status',
                     cellTemplate: (container, options) => {
                         const status = options.data.stock_status;
                         const statusClass = status === 'in_stock' ? 'text-success' : 'text-danger';
@@ -170,17 +244,14 @@ window.ProductPage = class {
                         const $buttonContainer = $('<div>')
                             .addClass('d-flex justify-content-end align-items-center');
 
-                        // Manage Category Button
+                        // View Details Button
                         $('<button>')
-                            .addClass('btn btn-icon-only btn-sm btn-primary mr-2')
-                            .attr({
-                                'title': 'Manage Category',
-                                'data-toggle': 'modal',
-                                'data-target': '#categoryModal',
-                                'data-product-id': options.row.data.id,
-                                'data-product-name': options.row.data.name
+                            .addClass('btn btn-icon-only btn-sm btn-secondary mr-2')
+                            .attr('title', 'View Details')
+                            .append($('<i>').addClass('fas fa-eye'))
+                            .on('click', () => {
+                                this.showProductDetails(options.data);
                             })
-                            .append($('<i>').addClass('fas fa-tag'))
                             .appendTo($buttonContainer);
 
                         // Edit Button
@@ -218,6 +289,93 @@ window.ProductPage = class {
             headerFilter: { visible: true },
             groupPanel: { visible: false },
             columnChooser: { enabled: true },
+            masterDetail: {
+                enabled: true,
+                template: (container, options) => {
+                    const product = options.data;
+                    
+                    $('<div>')
+                        .addClass('p-4 bg-light rounded')
+                        .append(`
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-uppercase text-muted mb-3">
+                                                <i class="fas fa-box-open mr-2"></i>Product Details
+                                            </h6>
+                                            <div class="mb-2">
+                                                <small class="text-muted">Material</small>
+                                                <div class="font-weight-bold">${product.material}</div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">Weight</small>
+                                                <div class="font-weight-bold">${product.weight}g</div>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted">Description</small>
+                                                <div class="text-muted">${product.description}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-uppercase text-muted mb-3">
+                                                <i class="fas fa-palette mr-2"></i>Available Options
+                                            </h6>
+                                            <div class="mb-3">
+                                                <small class="text-muted d-block mb-2">Sizes</small>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    ${(product.size_available || []).map(size => 
+                                                        `<span class="badge badge-soft-primary">${size}</span>`
+                                                    ).join('')}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block mb-2">Colors</small>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    ${(product.color_options || []).map(color => 
+                                                        `<span class="badge badge-soft-info">${color}</span>`
+                                                    ).join('')}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-uppercase text-muted mb-3">
+                                                <i class="fas fa-tags mr-2"></i>Bulk Discounts
+                                            </h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Quantity</th>
+                                                            <th>Discount</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        ${Object.entries(product.bulk_discount_rules || {}).map(([qty, discount]) => `
+                                                            <tr>
+                                                                <td>≥${qty} units</td>
+                                                                <td><span class="text-success">${discount}% off</span></td>
+                                                            </tr>
+                                                        `).join('')}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `)
+                        .appendTo(container);
+                }
+            },
             paging: {
                 pageSize: 10
             },
@@ -246,6 +404,7 @@ window.ProductPage = class {
                     items: [
                         {
                             itemType: 'group',
+                            caption: 'Basic Information',
                             colCount: 2,
                             items: [
                                 {
@@ -269,6 +428,57 @@ window.ProductPage = class {
                                     validationRules: [{ type: 'required', message: 'Category is required' }]
                                 },
                                 {
+                                    dataField: 'description',
+                                    editorType: 'dxTextArea',
+                                    editorOptions: {
+                                        height: 90
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            itemType: 'group',
+                            caption: 'Product Details',
+                            colCount: 2,
+                            items: [
+                                {
+                                    dataField: 'material',
+                                    validationRules: [{ type: 'required', message: 'Material is required' }]
+                                },
+                                {
+                                    dataField: 'weight',
+                                    editorType: 'dxNumberBox',
+                                    editorOptions: {
+                                        min: 0,
+                                        step: 0.1,
+                                        suffix: 'g'
+                                    }
+                                },
+                                {
+                                    dataField: 'size_available',
+                                    editorType: 'dxTagBox',
+                                    editorOptions: {
+                                        items: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'],
+                                        showSelectionControls: true,
+                                        applyValueMode: 'useButtons'
+                                    }
+                                },
+                                {
+                                    dataField: 'color_options',
+                                    editorType: 'dxTagBox',
+                                    editorOptions: {
+                                        showSelectionControls: true,
+                                        applyValueMode: 'useButtons'
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            itemType: 'group',
+                            caption: 'Pricing & Production',
+                            colCount: 2,
+                            items: [
+                                {
                                     dataField: 'base_price',
                                     editorType: 'dxNumberBox',
                                     editorOptions: {
@@ -279,17 +489,13 @@ window.ProductPage = class {
                                     validationRules: [{ type: 'required', message: 'Base price is required' }]
                                 },
                                 {
-                                    dataField: 'material',
-                                    validationRules: [{ type: 'required', message: 'Material is required' }]
-                                },
-                                {
                                     dataField: 'production_time',
                                     editorType: 'dxNumberBox',
                                     editorOptions: {
                                         min: 1,
-                                        step: 1
-                                    },
-                                    validationRules: [{ type: 'required', message: 'Production time is required' }]
+                                        step: 1,
+                                        suffix: ' days'
+                                    }
                                 },
                                 {
                                     dataField: 'min_order_quantity',
@@ -297,17 +503,7 @@ window.ProductPage = class {
                                     editorOptions: {
                                         min: 1,
                                         step: 1
-                                    },
-                                    validationRules: [{ type: 'required', message: 'Minimum order quantity is required' }]
-                                },
-                                {
-                                    dataField: 'weight',
-                                    editorType: 'dxNumberBox',
-                                    editorOptions: {
-                                        min: 0,
-                                        step: 0.1
-                                    },
-                                    validationRules: [{ type: 'required', message: 'Weight is required' }]
+                                    }
                                 },
                                 {
                                     dataField: 'stock_status',
@@ -315,16 +511,34 @@ window.ProductPage = class {
                                     editorOptions: {
                                         items: ['in_stock', 'out_of_stock', 'pre_order'],
                                         placeholder: 'Select stock status'
-                                    },
-                                    validationRules: [{ type: 'required', message: 'Stock status is required' }]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            itemType: 'group',
+                            caption: 'Customization Options',
+                            colCount: 2,
+                            items: [
+                                {
+                                    dataField: 'customization_options.name',
+                                    label: { text: 'Name Customization' },
+                                    editorType: 'dxSwitch'
                                 },
                                 {
-                                    dataField: 'description',
-                                    editorType: 'dxTextArea',
-                                    editorOptions: {
-                                        height: 100
-                                    },
-                                    validationRules: [{ type: 'required', message: 'Description is required' }]
+                                    dataField: 'customization_options.number',
+                                    label: { text: 'Number Customization' },
+                                    editorType: 'dxSwitch'
+                                },
+                                {
+                                    dataField: 'customization_options.patches',
+                                    label: { text: 'Patches Available' },
+                                    editorType: 'dxSwitch'
+                                },
+                                {
+                                    dataField: 'customization_options.team_logo',
+                                    label: { text: 'Team Logo Available' },
+                                    editorType: 'dxSwitch'
                                 }
                             ]
                         }
@@ -490,6 +704,153 @@ window.ProductPage = class {
                     }
                 });
         }
+    }
+
+    showProductDetails(product) {
+        const content = `
+            <div class="p-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-uppercase text-muted mb-3">
+                                    <i class="fas fa-info-circle mr-2"></i>Basic Information
+                                </h6>
+                                <div class="mb-2">
+                                    <small class="text-muted">Name</small>
+                                    <div class="font-weight-bold">${product.name}</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Code</small>
+                                    <div class="font-weight-bold">${product.code}</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Category</small>
+                                    <div class="font-weight-bold">${product.category?.name || 'N/A'}</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Material</small>
+                                    <div class="font-weight-bold">${product.material}</div>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Weight</small>
+                                    <div class="font-weight-bold">${product.weight}g</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-uppercase text-muted mb-3">
+                                    <i class="fas fa-dollar-sign mr-2"></i>Pricing & Production
+                                </h6>
+                                <div class="mb-2">
+                                    <small class="text-muted">Base Price</small>
+                                    <div class="font-weight-bold">$${product.base_price}</div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Minimum Order</small>
+                                    <div class="font-weight-bold">${product.min_order_quantity} units</div>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Production Time</small>
+                                    <div class="font-weight-bold">${product.production_time} days</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-uppercase text-muted mb-3">
+                                    <i class="fas fa-palette mr-2"></i>Available Options
+                                </h6>
+                                <div class="mb-3">
+                                    <small class="text-muted d-block mb-2">Sizes</small>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        ${(product.size_available || []).map(size => 
+                                            `<span class="badge badge-soft-primary">${size}</span>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block mb-2">Colors</small>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        ${(product.color_options || []).map(color => 
+                                            `<span class="badge badge-soft-info">${color}</span>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-uppercase text-muted mb-3">
+                                    <i class="fas fa-tags mr-2"></i>Bulk Discounts
+                                </h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Quantity</th>
+                                                <th>Discount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${Object.entries(product.bulk_discount_rules || {}).map(([qty, discount]) => `
+                                                <tr>
+                                                    <td>≥${qty} units</td>
+                                                    <td><span class="text-success">${discount}% off</span></td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-title text-uppercase text-muted mb-3">
+                                    <i class="fas fa-align-left mr-2"></i>Description
+                                </h6>
+                                <p class="mb-0">${product.description}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const popup = $('<div>').dxPopup({
+            title: `Product Details - ${product.name}`,
+            showTitle: true,
+            width: '90%',
+            maxWidth: '1200px',
+            height: '90%',
+            contentTemplate: () => content,
+            toolbarItems: [{
+                widget: 'dxButton',
+                toolbar: 'bottom',
+                location: 'after',
+                options: {
+                    text: 'Close',
+                    onClick: function(e) {
+                        popup.hide();
+                    }
+                }
+            }]
+        }).dxPopup('instance');
+
+        popup.show();
     }
 };
 
