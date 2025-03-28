@@ -4,23 +4,32 @@ import (
 	"net/http"
 	"strconv"
 	"vomo/internal/application"
+	"vomo/internal/domain/region"
 	"vomo/internal/domain/zone"
 
 	"github.com/gin-gonic/gin"
 )
 
+// RegionInfo represents the region information in zone response
+type RegionInfo struct {
+	ID          int    `json:"id" example:"1"`
+	Name        string `json:"name" example:"North Region"`
+	Description string `json:"description" example:"Northern region"`
+}
+
 // ZoneResponse represents the zone response structure
 // @Description Zone response model
 type ZoneResponse struct {
-	ID          int    `json:"id" example:"1"`
-	Name        string `json:"name" example:"North Zone"`
-	RegionID    *int   `json:"region_id" example:"1"`
-	Description string `json:"description" example:"Northern region zone"`
-	CreatedAt   string `json:"created_at" example:"2024-03-24T21:41:49Z"`
-	CreatedBy   string `json:"created_by" example:"admin"`
-	UpdatedAt   string `json:"updated_at" example:"2024-03-24T21:41:49Z"`
-	UpdatedBy   string `json:"updated_by" example:"admin"`
-	TenantID    int    `json:"tenant_id" example:"1"`
+	ID          int         `json:"id" example:"1"`
+	Name        string      `json:"name" example:"North Zone"`
+	RegionID    *int        `json:"region_id" example:"1"`
+	Region      *RegionInfo `json:"region,omitempty"`
+	Description string      `json:"description" example:"Northern region zone"`
+	CreatedAt   string      `json:"created_at" example:"2024-03-24T21:41:49Z"`
+	CreatedBy   string      `json:"created_by" example:"admin"`
+	UpdatedAt   string      `json:"updated_at" example:"2024-03-24T21:41:49Z"`
+	UpdatedBy   string      `json:"updated_by" example:"admin"`
+	TenantID    int         `json:"tenant_id" example:"1"`
 }
 
 // CreateZoneRequest represents the request structure for creating a zone
@@ -39,8 +48,8 @@ type UpdateZoneRequest struct {
 	Description string `json:"description" example:"Northern region zone"`
 }
 
-func toZoneResponse(z *zone.Zone) ZoneResponse {
-	return ZoneResponse{
+func toZoneResponse(z *zone.Zone, r *region.Region) ZoneResponse {
+	response := ZoneResponse{
 		ID:          z.ID,
 		Name:        z.Name,
 		RegionID:    z.RegionID,
@@ -51,6 +60,16 @@ func toZoneResponse(z *zone.Zone) ZoneResponse {
 		UpdatedBy:   z.UpdatedBy,
 		TenantID:    z.TenantID,
 	}
+
+	if r != nil {
+		response.Region = &RegionInfo{
+			ID:          r.ID,
+			Name:        r.Name,
+			Description: r.Description,
+		}
+	}
+
+	return response
 }
 
 // @Summary Create a new zone
@@ -86,7 +105,14 @@ func CreateZone(service *application.ZoneService) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, toZoneResponse(zone))
+		// Fetch the created zone with region info
+		createdZone, region, err := service.FindByID(zone.ID, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch created zone"})
+			return
+		}
+
+		c.JSON(http.StatusCreated, toZoneResponse(createdZone, region))
 	}
 }
 
@@ -112,13 +138,13 @@ func GetZone(service *application.ZoneService) gin.HandlerFunc {
 			return
 		}
 
-		zone, err := service.FindByID(id, c)
+		zone, region, err := service.FindByID(id, c)
 		if err != nil {
 			c.JSON(http.StatusNotFound, ErrorResponse{Error: "Zone not found"})
 			return
 		}
 
-		c.JSON(http.StatusOK, toZoneResponse(zone))
+		c.JSON(http.StatusOK, toZoneResponse(zone, region))
 	}
 }
 
@@ -136,7 +162,7 @@ func GetZone(service *application.ZoneService) gin.HandlerFunc {
 // @Router /zones [get]
 func GetAllZones(service *application.ZoneService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		zones, err := service.FindAll(c)
+		zones, regions, err := service.FindAll(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
@@ -144,7 +170,7 @@ func GetAllZones(service *application.ZoneService) gin.HandlerFunc {
 
 		response := make([]ZoneResponse, len(zones))
 		for i, z := range zones {
-			response[i] = toZoneResponse(&z)
+			response[i] = toZoneResponse(&z, regions[i])
 		}
 
 		c.JSON(http.StatusOK, response)
@@ -181,7 +207,7 @@ func UpdateZone(service *application.ZoneService) gin.HandlerFunc {
 			return
 		}
 
-		zone, err := service.FindByID(id, c)
+		zone, _, err := service.FindByID(id, c)
 		if err != nil {
 			c.JSON(http.StatusNotFound, ErrorResponse{Error: "Zone not found"})
 			return
@@ -196,7 +222,14 @@ func UpdateZone(service *application.ZoneService) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, toZoneResponse(zone))
+		// Fetch the updated zone with region info
+		updatedZone, region, err := service.FindByID(id, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch updated zone"})
+			return
+		}
+
+		c.JSON(http.StatusOK, toZoneResponse(updatedZone, region))
 	}
 }
 
@@ -252,7 +285,7 @@ func GetZonesByRegion(service *application.ZoneService) gin.HandlerFunc {
 			return
 		}
 
-		zones, err := service.FindByRegionID(regionID, c)
+		zones, regions, err := service.FindByRegionID(regionID, c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
@@ -260,7 +293,7 @@ func GetZonesByRegion(service *application.ZoneService) gin.HandlerFunc {
 
 		response := make([]ZoneResponse, len(zones))
 		for i, z := range zones {
-			response[i] = toZoneResponse(&z)
+			response[i] = toZoneResponse(&z, regions[i])
 		}
 
 		c.JSON(http.StatusOK, response)

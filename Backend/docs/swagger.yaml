@@ -304,6 +304,18 @@ definitions:
         example: admin
         type: string
     type: object
+  handlers.RegionInfo:
+    properties:
+      description:
+        example: Northern region
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: North Region
+        type: string
+    type: object
   handlers.RegionResponse:
     description: Region response model
     properties:
@@ -543,6 +555,8 @@ definitions:
       name:
         example: North Zone
         type: string
+      region:
+        $ref: '#/definitions/handlers.RegionInfo'
       region_id:
         example: 1
         type: integer

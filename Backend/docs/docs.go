@@ -3922,6 +3922,23 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.RegionInfo": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Northern region"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "North Region"
+                }
+            }
+        },
         "handlers.RegionResponse": {
             "description": "Region response model",
             "type": "object",
@@ -4250,6 +4267,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "North Zone"
+                },
+                "region": {
+                    "$ref": "#/definitions/handlers.RegionInfo"
                 },
                 "region_id": {
                     "type": "integer",

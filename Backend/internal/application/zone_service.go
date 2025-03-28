@@ -1,6 +1,7 @@
 package application
 
 import (
+	"vomo/internal/domain/region"
 	"vomo/internal/domain/zone"
 
 	"github.com/gin-gonic/gin"
@@ -8,13 +9,15 @@ import (
 
 // ZoneService handles business logic for zone operations
 type ZoneService struct {
-	repo zone.Repository
+	repo       zone.Repository
+	regionRepo region.Repository
 }
 
 // NewZoneService creates a new zone service instance
-func NewZoneService(repo zone.Repository) *ZoneService {
+func NewZoneService(repo zone.Repository, regionRepo region.Repository) *ZoneService {
 	return &ZoneService{
-		repo: repo,
+		repo:       repo,
+		regionRepo: regionRepo,
 	}
 }
 
@@ -24,13 +27,60 @@ func (s *ZoneService) Create(z *zone.Zone, ctx *gin.Context) error {
 }
 
 // FindByID retrieves a zone by its ID
-func (s *ZoneService) FindByID(id int, ctx *gin.Context) (*zone.Zone, error) {
-	return s.repo.FindByID(id, ctx)
+func (s *ZoneService) FindByID(id int, ctx *gin.Context) (*zone.Zone, *region.Region, error) {
+	z, err := s.repo.FindByID(id, ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var r *region.Region
+	if z.RegionID != nil {
+		r, err = s.regionRepo.FindByID(*z.RegionID, ctx)
+		if err != nil {
+			// Log error but don't fail the request
+			// Just return zone without region info
+			return z, nil, nil
+		}
+	}
+
+	return z, r, nil
 }
 
 // FindAll retrieves all zones
-func (s *ZoneService) FindAll(ctx *gin.Context) ([]zone.Zone, error) {
-	return s.repo.FindAll(ctx)
+func (s *ZoneService) FindAll(ctx *gin.Context) ([]zone.Zone, []*region.Region, error) {
+	zones, err := s.repo.FindAll(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Get all unique region IDs
+	regionIDs := make(map[int]struct{})
+	for _, z := range zones {
+		if z.RegionID != nil {
+			regionIDs[*z.RegionID] = struct{}{}
+		}
+	}
+
+	// Fetch all regions in one go
+	regions := make(map[int]*region.Region)
+	for regionID := range regionIDs {
+		r, err := s.regionRepo.FindByID(regionID, ctx)
+		if err != nil {
+			// Log error but continue
+			continue
+		}
+		regions[regionID] = r
+	}
+
+	// Create slice of regions in same order as zones
+	zoneRegions := make([]*region.Region, len(zones))
+	for i, z := range zones {
+		if z.RegionID != nil {
+			zoneRegions[i] = regions[*z.RegionID]
+		}
+	}
+
+	return zones, zoneRegions, nil
 }
 
 // Update updates an existing zone
@@ -44,6 +94,25 @@ func (s *ZoneService) Delete(id int, ctx *gin.Context) error {
 }
 
 // FindByRegionID retrieves all zones for a specific region
-func (s *ZoneService) FindByRegionID(regionID int, ctx *gin.Context) ([]zone.Zone, error) {
-	return s.repo.FindByRegionID(regionID, ctx)
+func (s *ZoneService) FindByRegionID(regionID int, ctx *gin.Context) ([]zone.Zone, []*region.Region, error) {
+	zones, err := s.repo.FindByRegionID(regionID, ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Get region details
+	r, err := s.regionRepo.FindByID(regionID, ctx)
+	if err != nil {
+		// Log error but don't fail the request
+		// Just return zones without region info
+		return zones, make([]*region.Region, len(zones)), nil
+	}
+
+	// Create slice of regions in same order as zones
+	regions := make([]*region.Region, len(zones))
+	for i := range zones {
+		regions[i] = r
+	}
+
+	return zones, regions, nil
 }

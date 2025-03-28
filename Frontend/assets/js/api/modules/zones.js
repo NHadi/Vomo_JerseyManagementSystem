@@ -20,6 +20,30 @@ export const zoneAPI = {
         }
     },
 
+    // Helper method to get unique regions from zones
+    getUniqueRegions(zones) {
+        const regionMap = new Map();
+        zones.forEach(zone => {
+            if (zone.region && !regionMap.has(zone.region.id)) {
+                regionMap.set(zone.region.id, zone.region);
+            }
+        });
+        return Array.from(regionMap.values());
+    },
+
+    // Helper method to get zones by region
+    getZonesByRegion(zones, regionId) {
+        return zones.filter(zone => zone.region_id === regionId);
+    },
+
+    // Helper method to get zone with region name
+    getZoneWithRegionName(zone) {
+        return {
+            ...zone,
+            regionName: zone.region ? zone.region.name : 'No Region'
+        };
+    },
+
     async createZone(zoneData) {
         try {
             const response = await fetch(`${config.baseUrl}/zones`, {

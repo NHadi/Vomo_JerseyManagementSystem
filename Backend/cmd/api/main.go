@@ -95,7 +95,7 @@ func main() {
 	roleService := application.NewRoleService(roleRepo, permissionRepo)
 	permissionService := application.NewPermissionService(permissionRepo)
 	backupService := application.NewBackupService(backupRepo, cfg)
-	zoneService := application.NewZoneService(zoneRepo)
+	zoneService := application.NewZoneService(zoneRepo, regionRepo)
 	regionService := application.NewRegionService(regionRepo, zoneRepo)
 	officeService := application.NewOfficeService(officeRepo)
 

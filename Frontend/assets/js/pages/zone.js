@@ -8,6 +8,7 @@ window.ZonePage = class {
         this.currentZone = null;
         this.allOffices = [];
         this.officeFilter = '';
+        this.regions = [];
         
         // Initialize components
         if (typeof DevExpress !== 'undefined') {
@@ -86,18 +87,12 @@ window.ZonePage = class {
                     caption: 'Description'
                 },
                 {
-                    dataField: 'region',
+                    dataField: 'region_id',
                     caption: 'Region',
                     lookup: {
-                        dataSource: async () => {
-                            const regions = await vomoAPI.getRegions();
-                            return regions.map(region => ({
-                                value: region.id,
-                                text: region.name
-                            }));
-                        },
-                        valueExpr: 'value',
-                        displayExpr: 'text'
+                        dataSource: () => this.regions,
+                        valueExpr: 'id',
+                        displayExpr: 'name'
                     }
                 },
                 {
@@ -239,15 +234,9 @@ window.ZonePage = class {
                                     label: { text: 'Region' },
                                     editorType: 'dxSelectBox',
                                     editorOptions: {
-                                        dataSource: async () => {
-                                            const regions = await vomoAPI.getRegions();
-                                            return regions.map(region => ({
-                                                value: region.id,
-                                                text: region.name
-                                            }));
-                                        },
-                                        valueExpr: 'value',
-                                        displayExpr: 'text'
+                                        dataSource: () => this.regions,
+                                        valueExpr: 'id',
+                                        displayExpr: 'name'
                                     }
                                 }
                             ]
@@ -434,6 +423,8 @@ window.ZonePage = class {
     async loadData() {
         try {
             const data = await vomoAPI.getZones();
+            // Extract unique regions from zone data
+            this.regions = vomoAPI.getUniqueRegions(data);
             this.grid.option('dataSource', data);
         } catch (error) {
             console.error('Error loading zones:', error);
