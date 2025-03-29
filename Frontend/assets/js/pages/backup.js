@@ -139,7 +139,7 @@ window.BackupPage = class {
             searchPanel: { visible: true },
             headerFilter: { visible: true },
             groupPanel: { visible: true },
-            columnChooser: { enabled: true },
+            columnChooser: { enabled: false },
             toolbar: {
                 items: [
                     {

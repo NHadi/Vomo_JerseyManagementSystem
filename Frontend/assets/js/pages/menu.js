@@ -115,7 +115,7 @@ window.MenuPage = class {
             filterRow: { visible: true },
             searchPanel: { visible: true },
             groupPanel: { visible: true },
-            columnChooser: { enabled: true },
+            columnChooser: { enabled: false },
             headerFilter: { visible: true },
             masterDetail: {
                 enabled: true,

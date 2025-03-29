@@ -288,7 +288,7 @@ window.ProductPage = class {
             searchPanel: { visible: true },
             headerFilter: { visible: true },
             groupPanel: { visible: false },
-            columnChooser: { enabled: true },
+            columnChooser: { enabled: false },
             masterDetail: {
                 enabled: true,
                 template: (container, options) => {

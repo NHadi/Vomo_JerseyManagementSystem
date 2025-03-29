@@ -89,10 +89,21 @@ window.EmployeePage = class {
                         $('<div>')
                             .addClass('d-flex align-items-center')
                             .append(
-                                $('<i>').addClass('ni ni-single-02 mr-2 text-primary')
+                                $('<div>')
+                                    .addClass('avatar avatar-sm rounded-circle mr-3')
+                                    .css('background-color', this.getAvatarColor(options.data.name))
+                                    .append(
+                                        $('<span>')
+                                            .addClass('avatar-initials')
+                                            .text(this.getInitials(options.data.name))
+                                    )
                             )
                             .append(
-                                $('<span>').text(options.data.name || '')
+                                $('<div>')
+                                    .addClass('d-flex flex-column')
+                                    .append(
+                                        $('<span>').addClass('font-weight-bold').text(options.data.name || '')
+                                    )
                             )
                             .appendTo(container);
                     }
@@ -220,7 +231,7 @@ window.EmployeePage = class {
             searchPanel: { visible: true },
             headerFilter: { visible: true },
             groupPanel: { visible: false },
-            columnChooser: { enabled: true },
+            columnChooser: { enabled: false },
             paging: {
                 pageSize: 10
             },
@@ -237,34 +248,108 @@ window.EmployeePage = class {
                 allowAdding: true,
                 useIcons: true,
                 texts: {
-                    confirmDeleteMessage: 'Are you sure you want to delete this employee?'
+                    confirmDeleteMessage: 'Are you sure you want to delete this employee?',
+                    saveRowChanges: 'Save Changes',
+                    cancelRowChanges: 'Cancel',
+                    deleteRow: 'Delete',
+                    editRow: 'Edit',
+                    addRow: 'New Employee'
                 },
                 popup: {
                     title: 'Employee Information',
                     showTitle: true,
-                    width: 700,
-                    height: 425
+                    width: 800,
+                    height: 'auto',
+                    position: { my: 'center', at: 'center', of: window },
+                    showCloseButton: true,
+                    toolbarItems: [{
+                        toolbar: 'bottom',
+                        location: 'after',
+                        widget: 'dxButton',
+                        options: {
+                            text: 'Save',
+                            type: 'success',
+                            stylingMode: 'contained',
+                            onClick: () => {
+                                this.grid.saveEditData();
+                            }
+                        }
+                    }, {
+                        toolbar: 'bottom',
+                        location: 'after',
+                        widget: 'dxButton',
+                        options: {
+                            text: 'Cancel',
+                            stylingMode: 'outlined',
+                            onClick: () => {
+                                this.grid.cancelEditData();
+                            }
+                        }
+                    }]
                 },
                 form: {
+                    labelLocation: 'top',
+                    colCount: 1,
                     items: [
                         {
                             itemType: 'group',
+                            caption: 'Basic Information',
                             colCount: 2,
                             items: [
                                 {
                                     dataField: 'name',
-                                    validationRules: [{ type: 'required', message: 'Employee name is required' }]
+                                    label: { text: 'Full Name' },
+                                    validationRules: [{ type: 'required', message: 'Full name is required' }],
+                                    editorOptions: {
+                                        placeholder: 'Enter employee full name',
+                                        mode: 'text',
+                                        stylingMode: 'filled',
+                                        showClearButton: true,
+                                        valueChangeEvent: 'keyup change'
+                                    }
                                 },
                                 {
                                     dataField: 'email',
+                                    label: { text: 'Email Address' },
                                     validationRules: [
-                                        { type: 'required', message: 'Email is required' },
-                                        { type: 'email', message: 'Invalid email format' }
-                                    ]
-                                },
+                                        { type: 'required', message: 'Email address is required' },
+                                        { type: 'email', message: 'Please enter a valid email address' }
+                                    ],
+                                    editorOptions: {
+                                        placeholder: 'Enter work email address',
+                                        mode: 'email',
+                                        stylingMode: 'filled',
+                                        showClearButton: true,
+                                        valueChangeEvent: 'keyup change'
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            itemType: 'group',
+                            caption: 'Contact Details',
+                            colCount: 2,
+                            items: [
                                 {
                                     dataField: 'phone',
-                                    validationRules: [{ type: 'required', message: 'Phone number is required' }]
+                                    label: { text: 'Phone Number' },
+                                    validationRules: [
+                                        { type: 'required', message: 'Phone number is required' },
+                                        { 
+                                            type: 'pattern',
+                                            pattern: /^\+1 \(\d{3}\) \d{3}-\d{4}$/,
+                                            message: 'Please enter a valid phone number'
+                                        }
+                                    ],
+                                    editorOptions: {
+                                        placeholder: 'Enter phone number',
+                                        mask: '+1 (000) 000-0000',
+                                        maskRules: {"0": /[0-9]/},
+                                        maskInvalidMessage: 'Please enter a valid phone number',
+                                        stylingMode: 'filled',
+                                        showClearButton: true,
+                                        valueChangeEvent: 'keyup change'
+                                    }
                                 }
                             ]
                         }
@@ -391,37 +476,76 @@ window.EmployeePage = class {
         }
     }
 
+    getInitials(name) {
+        if (!name) return '';
+        return name.split(' ')
+            .map(part => part.charAt(0))
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+    }
+
+    getAvatarColor(name) {
+        if (!name) return '#5e72e4';
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const colors = [
+            '#5e72e4', '#11cdef', '#2dce89', '#fb6340', '#f5365c',
+            '#8965e0', '#ffd600', '#5603ad', '#8898aa', '#32325d'
+        ];
+        return colors[Math.abs(hash) % colors.length];
+    }
+
+    showNotification(message, type = 'success') {
+        DevExpress.ui.notify({
+            message,
+            type,
+            displayTime: 3000,
+            position: {
+                my: 'center top',
+                at: 'center top'
+            },
+            width: 'auto',
+            animation: {
+                show: { type: 'fade', duration: 400, from: 0, to: 1 },
+                hide: { type: 'fade', duration: 400, to: 0 }
+            }
+        });
+    }
+
     async handleRowInserting(e) {
         try {
             const result = await vomoAPI.createEmployee(e.data);
             e.data.id = result.id;
-            DevExpress.ui.notify('Employee created successfully', 'success', 3000);
+            this.showNotification('Employee created successfully');
         } catch (error) {
             console.error('Error creating employee:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to create employee', 'error', 3000);
+            this.showNotification('Failed to create employee', 'error');
         }
     }
 
     async handleRowUpdating(e) {
         try {
             await vomoAPI.updateEmployee(e.key.id, {...e.oldData, ...e.newData});
-            DevExpress.ui.notify('Employee updated successfully', 'success', 3000);
+            this.showNotification('Employee updated successfully');
         } catch (error) {
             console.error('Error updating employee:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to update employee', 'error', 3000);
+            this.showNotification('Failed to update employee', 'error');
         }
     }
 
     async handleRowRemoving(e) {
         try {
             await vomoAPI.deleteEmployee(e.key.id);
-            DevExpress.ui.notify('Employee deleted successfully', 'success', 3000);
+            this.showNotification('Employee deleted successfully');
         } catch (error) {
             console.error('Error deleting employee:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to delete employee', 'error', 3000);
+            this.showNotification('Failed to delete employee', 'error');
         }
     }
 

@@ -318,7 +318,7 @@ window.DivisionPage = class {
             },
             headerFilter: { visible: true },
             groupPanel: { visible: false },
-            columnChooser: { enabled: true },
+            columnChooser: { enabled: false },
             rowAlternationEnabled: true,
             hoverStateEnabled: true,
             paging: {
@@ -387,16 +387,7 @@ window.DivisionPage = class {
                             onClick: () => this.grid.addRow()
                         }
                     },
-                    'searchPanel',
-                    {
-                        location: 'after',
-                        widget: 'dxButton',
-                        options: {
-                            icon: 'columnchooser',
-                            hint: 'Column Chooser',
-                            onClick: () => this.grid.showColumnChooser()
-                        }
-                    }
+                    'searchPanel'
                 ]
             },
             onRowInserting: (e) => this.handleRowInserting(e),
