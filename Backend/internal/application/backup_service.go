@@ -73,12 +73,12 @@ func (s *BackupService) CreateBackup(ctx context.Context) (*backup.Backup, error
 
 	// Create backup record
 	backupRecord := &backup.Backup{
-		FileName:  filename,
-		Size:      fileSize,
-		CreatedAt: time.Now(),
-		CreatedBy: userCtx.Username,
-		TenantID:  userCtx.TenantID,
+		FileName: filename,
+		Size:     fileSize,
 	}
+	backupRecord.TenantID = userCtx.TenantID
+	backupRecord.CreatedBy = userCtx.Username
+	backupRecord.UpdatedBy = userCtx.Username
 
 	if err := s.repo.Create(ctx, backupRecord); err != nil {
 		// Clean up backup file

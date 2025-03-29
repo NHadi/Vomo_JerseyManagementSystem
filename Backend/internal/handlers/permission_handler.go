@@ -82,7 +82,7 @@ func CreatePermission(service *application.PermissionService) gin.HandlerFunc {
 			Description: req.Description,
 		}
 
-		if err := service.Create(perm); err != nil {
+		if err := service.Create(perm, c.Request.Context()); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
@@ -113,7 +113,7 @@ func GetPermission(service *application.PermissionService) gin.HandlerFunc {
 			return
 		}
 
-		perm, err := service.FindByID(id)
+		perm, err := service.FindByID(id, c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusNotFound, ErrorResponse{Error: "Permission not found"})
 			return
@@ -137,7 +137,7 @@ func GetPermission(service *application.PermissionService) gin.HandlerFunc {
 // @Router /permissions [get]
 func GetAllPermissions(service *application.PermissionService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		permissions, err := service.FindAll()
+		permissions, err := service.FindAll(c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
@@ -183,7 +183,7 @@ func UpdatePermission(service *application.PermissionService) gin.HandlerFunc {
 			return
 		}
 
-		perm, err := service.FindByID(id)
+		perm, err := service.FindByID(id, c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusNotFound, ErrorResponse{Error: "Permission not found"})
 			return
@@ -192,7 +192,7 @@ func UpdatePermission(service *application.PermissionService) gin.HandlerFunc {
 		perm.Name = req.Name
 		perm.Description = req.Description
 
-		if err := service.Update(perm); err != nil {
+		if err := service.Update(perm, c.Request.Context()); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}
@@ -223,7 +223,7 @@ func DeletePermission(service *application.PermissionService) gin.HandlerFunc {
 			return
 		}
 
-		if err := service.Delete(id); err != nil {
+		if err := service.Delete(id, c.Request.Context()); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
 		}

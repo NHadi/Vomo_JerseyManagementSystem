@@ -1,69 +1,116 @@
 package application
 
 import (
+	"context"
+	"vomo/internal/domain/audit"
 	"vomo/internal/domain/menu"
 	"vomo/internal/domain/permission"
 	"vomo/internal/domain/role"
-
-	"github.com/gin-gonic/gin"
 )
 
+// RoleService handles business logic for role operations
 type RoleService struct {
-	repository     role.Repository
+	repo           role.Repository
 	permissionRepo permission.Repository
+	auditSvc       *audit.Service
 }
 
-func NewRoleService(repo role.Repository, permRepo permission.Repository) *RoleService {
+// NewRoleService creates a new role service instance
+func NewRoleService(repo role.Repository, permissionRepo permission.Repository, auditSvc *audit.Service) *RoleService {
 	return &RoleService{
-		repository:     repo,
-		permissionRepo: permRepo,
+		repo:           repo,
+		permissionRepo: permissionRepo,
+		auditSvc:       auditSvc,
 	}
 }
 
-func (s *RoleService) Create(role *role.Role, ctx *gin.Context) error {
-	return s.repository.Create(role, ctx)
+// Create creates a new role
+func (s *RoleService) Create(r *role.Role, ctx context.Context) error {
+	if err := s.repo.Create(r, ctx); err != nil {
+		return err
+	}
+
+	// Log the create action
+	return s.auditSvc.LogChange("role", r.ID, audit.ActionCreate, nil, r, ctx)
 }
 
-func (s *RoleService) FindByID(id int, ctx *gin.Context) (*role.Role, error) {
-	return s.repository.FindByID(id, ctx)
+// FindByID retrieves a role by its ID
+func (s *RoleService) FindByID(id int, ctx context.Context) (*role.Role, error) {
+	return s.repo.FindByID(id, ctx)
 }
 
-func (s *RoleService) FindByName(name string, ctx *gin.Context) (*role.Role, error) {
-	return s.repository.FindByName(name, ctx)
+// FindAll retrieves all roles
+func (s *RoleService) FindAll(ctx context.Context) ([]role.Role, error) {
+	return s.repo.FindAll(ctx)
 }
 
-func (s *RoleService) Update(role *role.Role, ctx *gin.Context) error {
-	return s.repository.Update(role, ctx)
+// Update updates an existing role
+func (s *RoleService) Update(r *role.Role, ctx context.Context) error {
+	// Get old data for audit
+	oldRole, err := s.repo.FindByID(r.ID, ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Update(r, ctx); err != nil {
+		return err
+	}
+
+	// Log the update action
+	return s.auditSvc.LogChange("role", r.ID, audit.ActionUpdate, oldRole, r, ctx)
 }
 
-func (s *RoleService) Delete(id int, ctx *gin.Context) error {
-	return s.repository.Delete(id, ctx)
+// Delete deletes a role by its ID
+func (s *RoleService) Delete(id int, ctx context.Context) error {
+	// Get role data for audit
+	role, err := s.repo.FindByID(id, ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Delete(id, ctx); err != nil {
+		return err
+	}
+
+	// Log the delete action
+	return s.auditSvc.LogChange("role", id, audit.ActionDelete, role, nil, ctx)
 }
 
-func (s *RoleService) AssignMenus(roleID int, menuIDs []int, ctx *gin.Context) error {
-	return s.repository.AssignMenus(roleID, menuIDs, ctx)
+// FindByName retrieves a role by its name
+func (s *RoleService) FindByName(name string, ctx context.Context) (*role.Role, error) {
+	return s.repo.FindByName(name, ctx)
 }
 
-func (s *RoleService) RemoveMenus(roleID int, menuIDs []int, ctx *gin.Context) error {
-	return s.repository.RemoveMenus(roleID, menuIDs, ctx)
+// AssignMenus assigns menus to a role
+func (s *RoleService) AssignMenus(roleID int, menuIDs []int, ctx context.Context) error {
+	return s.repo.AssignMenus(roleID, menuIDs, ctx)
 }
 
-func (s *RoleService) GetRoleMenus(roleID int, ctx *gin.Context) ([]menu.Menu, error) {
-	return s.repository.GetRoleMenus(roleID, ctx)
+// RemoveMenus removes menus from a role
+func (s *RoleService) RemoveMenus(roleID int, menuIDs []int, ctx context.Context) error {
+	return s.repo.RemoveMenus(roleID, menuIDs, ctx)
 }
 
-func (s *RoleService) AssignPermissions(roleID int, permissionIDs []int, ctx *gin.Context) error {
-	return s.repository.AssignPermissions(roleID, permissionIDs, ctx)
+// GetRoleMenus retrieves all menus for a role
+func (s *RoleService) GetRoleMenus(roleID int, ctx context.Context) ([]menu.Menu, error) {
+	return s.repo.GetRoleMenus(roleID, ctx)
 }
 
-func (s *RoleService) RemovePermissions(roleID int, permissionIDs []int, ctx *gin.Context) error {
-	return s.repository.RemovePermissions(roleID, permissionIDs, ctx)
+// AssignPermissions assigns permissions to a role
+func (s *RoleService) AssignPermissions(roleID int, permissionIDs []int, ctx context.Context) error {
+	return s.repo.AssignPermissions(roleID, permissionIDs, ctx)
 }
 
-func (s *RoleService) GetRolePermissions(roleID int, ctx *gin.Context) ([]permission.Permission, error) {
-	return s.repository.GetRolePermissions(roleID, ctx)
+// RemovePermissions removes permissions from a role
+func (s *RoleService) RemovePermissions(roleID int, permissionIDs []int, ctx context.Context) error {
+	return s.repo.RemovePermissions(roleID, permissionIDs, ctx)
 }
 
-func (s *RoleService) FindAll(ctx *gin.Context) ([]role.Role, error) {
-	return s.repository.FindAll(ctx)
+// GetRolePermissions retrieves all permissions for a role
+func (s *RoleService) GetRolePermissions(roleID int, ctx context.Context) ([]permission.Permission, error) {
+	return s.repo.GetRolePermissions(roleID, ctx)
+}
+
+func (s *RoleService) GetPermissions(roleID int, ctx context.Context) ([]permission.Permission, error) {
+	return s.permissionRepo.FindAll(ctx)
 }

@@ -16,5 +16,6 @@ func SetupRegionRoutes(router *gin.RouterGroup, service *application.RegionServi
 		regions.GET("", handlers.GetAllRegions(service))
 		regions.PUT("/:id", handlers.UpdateRegion(service))
 		regions.DELETE("/:id", handlers.DeleteRegion(service))
+		regions.POST("/:id/zones", handlers.AssignZones(service))
 	}
 }

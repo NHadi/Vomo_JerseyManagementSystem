@@ -38,6 +38,12 @@ type UpdateRegionRequest struct {
 	Description string `json:"description" example:"Northern region"`
 }
 
+// AssignZonesRequest represents the request structure for assigning zones to a region
+// @Description Assign zones request model
+type AssignZonesRequest struct {
+	ZoneIDs []int `json:"zone_ids" binding:"required" example:"[1,2,3]"`
+}
+
 func toRegionResponse(r *region.Region) RegionResponse {
 	return RegionResponse{
 		ID:          r.ID,
@@ -225,5 +231,45 @@ func DeleteRegion(service *application.RegionService) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, SuccessResponse{Message: "Region deleted successfully"})
+	}
+}
+
+// @Summary Assign zones to a region
+// @Description Assign zones to a specific region
+// @Tags Region
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param id path int true "Region ID"
+// @Param request body AssignZonesRequest true "Zone IDs to assign"
+// @Success 200 {object} RegionResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "Region not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /regions/{id}/zones [post]
+func AssignZones(service *application.RegionService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid region ID"})
+			return
+		}
+
+		var req AssignZonesRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		region, err := service.AssignZones(id, req.ZoneIDs, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, toRegionResponse(region))
 	}
 }

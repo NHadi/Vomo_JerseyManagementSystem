@@ -1,10 +1,11 @@
 package product
 
 import (
+	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
-	"time"
+	"vomo/internal/domain/common"
 )
 
 // StringArray is a custom type for handling string arrays in GORM
@@ -78,6 +79,7 @@ func (m *IntMap) Scan(value interface{}) error {
 	}
 	return json.Unmarshal(bytes, &m)
 }
+
 func (Product) TableName() string {
 	return "master_product"
 }
@@ -100,20 +102,16 @@ type Product struct {
 	Weight               float64     `json:"weight"`
 	IsActive             bool        `json:"is_active"`
 	StockStatus          string      `json:"stock_status"`
-	TenantID             int         `json:"tenant_id"`
-	CreatedAt            time.Time   `json:"created_at"`
-	UpdatedAt            time.Time   `json:"updated_at"`
-	CreatedBy            string      `json:"created_by"`
-	UpdatedBy            string      `json:"updated_by"`
+	common.TenantModel
 }
 
 // ProductRepository defines the interface for product data access
 type ProductRepository interface {
-	Create(product *Product) error
-	FindByID(id int) (*Product, error)
-	FindByCode(code string) (*Product, error)
-	FindAll() ([]Product, error)
-	FindByCategoryID(categoryID int) ([]Product, error)
-	Update(product *Product) error
-	Delete(id int) error
+	Create(product *Product, ctx context.Context) error
+	FindByID(id int, ctx context.Context) (*Product, error)
+	FindByCode(code string, ctx context.Context) (*Product, error)
+	FindAll(ctx context.Context) ([]Product, error)
+	FindByCategoryID(categoryID int, ctx context.Context) ([]Product, error)
+	Update(product *Product, ctx context.Context) error
+	Delete(id int, ctx context.Context) error
 }

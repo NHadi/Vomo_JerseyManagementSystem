@@ -1,7 +1,6 @@
 package role
 
 import (
-	"time"
 	"vomo/internal/domain/common"
 	"vomo/internal/domain/menu"
 	"vomo/internal/domain/permission"
@@ -9,9 +8,9 @@ import (
 
 // Role represents the master_role table
 type Role struct {
-	ID          int                     `gorm:"primaryKey;autoIncrement:true;column:id" json:"id"`
-	Name        string                  `gorm:"type:varchar(100);not null;unique" json:"name"`
-	Description string                  `gorm:"type:text" json:"description"`
+	ID          int                     `json:"id" gorm:"primaryKey"`
+	Name        string                  `json:"name" gorm:"type:varchar(255);not null"`
+	Description string                  `json:"description" gorm:"type:text"`
 	Menus       []menu.Menu             `gorm:"many2many:role_menus;" json:"menus,omitempty"`
 	Permissions []permission.Permission `gorm:"many2many:role_permissions;" json:"permissions"`
 	common.TenantModel
@@ -19,18 +18,16 @@ type Role struct {
 
 // RoleMenu represents the role_menus junction table
 type RoleMenu struct {
-	ID     int `gorm:"primaryKey;autoIncrement:true;column:id"`
-	RoleID int `gorm:"column:role_id"`
-	MenuID int `gorm:"column:menu_id"`
+	RoleID int `json:"role_id" gorm:"primaryKey"`
+	MenuID int `json:"menu_id" gorm:"primaryKey"`
 	common.TenantModel
 }
 
 // RolePermission represents the role_permissions table
 type RolePermission struct {
-	ID           int       `gorm:"primaryKey;autoIncrement:true;column:id"`
-	RoleID       int       `gorm:"column:role_id"`
-	PermissionID int       `gorm:"column:permission_id"`
-	CreatedAt    time.Time `gorm:"column:created_at;default:CURRENT_TIMESTAMP"`
+	RoleID       int `json:"role_id" gorm:"primaryKey"`
+	PermissionID int `json:"permission_id" gorm:"primaryKey"`
+	common.TenantModel
 }
 
 func (Role) TableName() string {

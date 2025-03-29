@@ -11,7 +11,7 @@ import (
 func SetupRoutes(router *gin.RouterGroup, services *services.Services) {
 	// Protected routes with tenant
 	protected := router.Group("")
-	protected.Use(middleware.AuthMiddleware())
+	protected.Use(middleware.AuthMiddleware(services.UserService))
 	protected.Use(middleware.TenantMiddleware())
 	protected.Use(middleware.AuditContext())
 	{

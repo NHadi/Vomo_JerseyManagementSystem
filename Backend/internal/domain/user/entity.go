@@ -1,7 +1,6 @@
 package user
 
 import (
-	"time"
 	"vomo/internal/domain/common"
 
 	"github.com/google/uuid"
@@ -14,6 +13,5 @@ type User struct {
 	Password string    `gorm:"type:varchar(255);not null" json:"-"`
 	RoleID   int       `gorm:"type:integer;not null" json:"role_id"`
 	common.TenantModel
-	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
+

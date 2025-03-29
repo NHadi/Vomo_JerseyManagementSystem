@@ -1,10 +1,10 @@
 package postgres
 
 import (
+	"context"
 	"vomo/internal/domain/appcontext"
 	"vomo/internal/domain/office"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -16,17 +16,18 @@ func NewOfficeRepository(db *gorm.DB) office.Repository {
 	return &OfficeRepository{db: db}
 }
 
-func (r *OfficeRepository) Create(o *office.Office, ctx *gin.Context) error {
-	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
+func (r *OfficeRepository) Create(o *office.Office, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	o.TenantID = userCtx.TenantID
 	o.CreatedBy = userCtx.Username
 	o.UpdatedBy = userCtx.Username
-	return r.db.WithContext(ctx.Request.Context()).Create(o).Error
+	return r.db.WithContext(ctx).Create(o).Error
 }
 
-func (r *OfficeRepository) FindByID(id int, ctx *gin.Context) (*office.Office, error) {
+func (r *OfficeRepository) FindByID(id int, ctx context.Context) (*office.Office, error) {
 	var office office.Office
-	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
-	if err := r.db.WithContext(ctx.Request.Context()).
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).
 		Preload("Zone").
 		Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).
 		First(&office).Error; err != nil {
@@ -35,10 +36,10 @@ func (r *OfficeRepository) FindByID(id int, ctx *gin.Context) (*office.Office, e
 	return &office, nil
 }
 
-func (r *OfficeRepository) FindAll(ctx *gin.Context) ([]office.Office, error) {
+func (r *OfficeRepository) FindAll(ctx context.Context) ([]office.Office, error) {
 	var offices []office.Office
-	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
-	if err := r.db.WithContext(ctx.Request.Context()).
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).
 		Preload("Zone").
 		Where("tenant_id = ?", userCtx.TenantID).
 		Find(&offices).Error; err != nil {
@@ -47,25 +48,26 @@ func (r *OfficeRepository) FindAll(ctx *gin.Context) ([]office.Office, error) {
 	return offices, nil
 }
 
-func (r *OfficeRepository) Update(o *office.Office, ctx *gin.Context) error {
-	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
+func (r *OfficeRepository) Update(o *office.Office, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	o.TenantID = userCtx.TenantID
 	o.UpdatedBy = userCtx.Username
-	return r.db.WithContext(ctx.Request.Context()).
+	return r.db.WithContext(ctx).
 		Where("id = ? AND tenant_id = ?", o.ID, userCtx.TenantID).
 		Updates(o).Error
 }
 
-func (r *OfficeRepository) Delete(id int, ctx *gin.Context) error {
-	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
-	return r.db.WithContext(ctx.Request.Context()).
+func (r *OfficeRepository) Delete(id int, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	return r.db.WithContext(ctx).
 		Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).
 		Delete(&office.Office{}).Error
 }
 
-func (r *OfficeRepository) FindByZoneID(zoneID int, ctx *gin.Context) ([]office.Office, error) {
+func (r *OfficeRepository) FindByZoneID(zoneID int, ctx context.Context) ([]office.Office, error) {
 	var offices []office.Office
-	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
-	if err := r.db.WithContext(ctx.Request.Context()).
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).
 		Preload("Zone").
 		Where("zone_id = ? AND tenant_id = ?", zoneID, userCtx.TenantID).
 		Find(&offices).Error; err != nil {
@@ -74,10 +76,10 @@ func (r *OfficeRepository) FindByZoneID(zoneID int, ctx *gin.Context) ([]office.
 	return offices, nil
 }
 
-func (r *OfficeRepository) FindByCode(code string, ctx *gin.Context) (*office.Office, error) {
+func (r *OfficeRepository) FindByCode(code string, ctx context.Context) (*office.Office, error) {
 	var office office.Office
-	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
-	if err := r.db.WithContext(ctx.Request.Context()).
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).
 		Preload("Zone").
 		Where("code = ? AND tenant_id = ?", code, userCtx.TenantID).
 		First(&office).Error; err != nil {
@@ -86,10 +88,10 @@ func (r *OfficeRepository) FindByCode(code string, ctx *gin.Context) (*office.Of
 	return &office, nil
 }
 
-func (r *OfficeRepository) FindByEmail(email string, ctx *gin.Context) (*office.Office, error) {
+func (r *OfficeRepository) FindByEmail(email string, ctx context.Context) (*office.Office, error) {
 	var office office.Office
-	userCtx := ctx.MustGet(appcontext.UserContextKey).(*appcontext.UserContext)
-	if err := r.db.WithContext(ctx.Request.Context()).
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).
 		Preload("Zone").
 		Where("email = ? AND tenant_id = ?", email, userCtx.TenantID).
 		First(&office).Error; err != nil {

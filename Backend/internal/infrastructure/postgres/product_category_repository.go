@@ -1,7 +1,9 @@
 package postgres
 
 import (
+	"context"
 	"errors"
+	"vomo/internal/domain/appcontext"
 	"vomo/internal/domain/product"
 
 	"gorm.io/gorm"
@@ -20,14 +22,19 @@ func NewProductCategoryRepository(db *gorm.DB) *ProductCategoryRepository {
 }
 
 // Create creates a new product category
-func (r *ProductCategoryRepository) Create(category *product.Category) error {
-	return r.db.Create(category).Error
+func (r *ProductCategoryRepository) Create(category *product.Category, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	category.TenantID = userCtx.TenantID
+	category.CreatedBy = userCtx.Username
+	category.UpdatedBy = userCtx.Username
+	return r.db.WithContext(ctx).Create(category).Error
 }
 
 // FindByID finds a product category by ID
-func (r *ProductCategoryRepository) FindByID(id int) (*product.Category, error) {
+func (r *ProductCategoryRepository) FindByID(id int, ctx context.Context) (*product.Category, error) {
 	var category product.Category
-	if err := r.db.First(&category, id).Error; err != nil {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).First(&category).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("category not found")
 		}
@@ -37,9 +44,10 @@ func (r *ProductCategoryRepository) FindByID(id int) (*product.Category, error) 
 }
 
 // FindByCode finds a product category by code
-func (r *ProductCategoryRepository) FindByCode(code string) (*product.Category, error) {
+func (r *ProductCategoryRepository) FindByCode(code string, ctx context.Context) (*product.Category, error) {
 	var category product.Category
-	if err := r.db.Where("code = ?", code).First(&category).Error; err != nil {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).Where("code = ? AND tenant_id = ?", code, userCtx.TenantID).First(&category).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -49,17 +57,21 @@ func (r *ProductCategoryRepository) FindByCode(code string) (*product.Category, 
 }
 
 // FindAll retrieves all product categories
-func (r *ProductCategoryRepository) FindAll() ([]product.Category, error) {
+func (r *ProductCategoryRepository) FindAll(ctx context.Context) ([]product.Category, error) {
 	var categories []product.Category
-	if err := r.db.Find(&categories).Error; err != nil {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).Where("tenant_id = ?", userCtx.TenantID).Find(&categories).Error; err != nil {
 		return nil, err
 	}
 	return categories, nil
 }
 
 // Update updates an existing product category
-func (r *ProductCategoryRepository) Update(category *product.Category) error {
-	result := r.db.Save(category)
+func (r *ProductCategoryRepository) Update(category *product.Category, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	category.TenantID = userCtx.TenantID
+	category.UpdatedBy = userCtx.Username
+	result := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", category.ID, userCtx.TenantID).Save(category)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -70,8 +82,9 @@ func (r *ProductCategoryRepository) Update(category *product.Category) error {
 }
 
 // Delete deletes a product category
-func (r *ProductCategoryRepository) Delete(id int) error {
-	result := r.db.Delete(&product.Category{}, id)
+func (r *ProductCategoryRepository) Delete(id int, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	result := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).Delete(&product.Category{})
 	if result.Error != nil {
 		return result.Error
 	}

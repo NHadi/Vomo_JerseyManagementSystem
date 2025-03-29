@@ -1,10 +1,9 @@
 package office
 
 import (
+	"context"
 	"vomo/internal/domain/common"
 	"vomo/internal/domain/models"
-
-	"github.com/gin-gonic/gin"
 )
 
 // Office represents the master_office table
@@ -25,12 +24,12 @@ func (Office) TableName() string {
 }
 
 type Repository interface {
-	Create(office *Office, ctx *gin.Context) error
-	FindByID(id int, ctx *gin.Context) (*Office, error)
-	FindAll(ctx *gin.Context) ([]Office, error)
-	Update(office *Office, ctx *gin.Context) error
-	Delete(id int, ctx *gin.Context) error
-	FindByZoneID(zoneID int, ctx *gin.Context) ([]Office, error)
-	FindByCode(code string, ctx *gin.Context) (*Office, error)
-	FindByEmail(email string, ctx *gin.Context) (*Office, error)
+	Create(office *Office, ctx context.Context) error
+	FindByID(id int, ctx context.Context) (*Office, error)
+	FindAll(ctx context.Context) ([]Office, error)
+	Update(office *Office, ctx context.Context) error
+	Delete(id int, ctx context.Context) error
+	FindByZoneID(zoneID int, ctx context.Context) ([]Office, error)
+	FindByCode(code string, ctx context.Context) (*Office, error)
+	FindByEmail(email string, ctx context.Context) (*Office, error)
 }

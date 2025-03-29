@@ -1,7 +1,9 @@
 package postgres
 
 import (
+	"context"
 	"errors"
+	"vomo/internal/domain/appcontext"
 	"vomo/internal/domain/product"
 
 	"gorm.io/gorm"
@@ -20,14 +22,19 @@ func NewProductRepository(db *gorm.DB) *ProductRepository {
 }
 
 // Create creates a new product
-func (r *ProductRepository) Create(product *product.Product) error {
-	return r.db.Create(product).Error
+func (r *ProductRepository) Create(product *product.Product, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	product.TenantID = userCtx.TenantID
+	product.CreatedBy = userCtx.Username
+	product.UpdatedBy = userCtx.Username
+	return r.db.WithContext(ctx).Create(product).Error
 }
 
 // FindByID finds a product by ID
-func (r *ProductRepository) FindByID(id int) (*product.Product, error) {
+func (r *ProductRepository) FindByID(id int, ctx context.Context) (*product.Product, error) {
 	var product product.Product
-	if err := r.db.First(&product, id).Error; err != nil {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).First(&product).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("product not found")
 		}
@@ -37,9 +44,10 @@ func (r *ProductRepository) FindByID(id int) (*product.Product, error) {
 }
 
 // FindByCode finds a product by code
-func (r *ProductRepository) FindByCode(code string) (*product.Product, error) {
+func (r *ProductRepository) FindByCode(code string, ctx context.Context) (*product.Product, error) {
 	var product product.Product
-	if err := r.db.Where("code = ?", code).First(&product).Error; err != nil {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).Where("code = ? AND tenant_id = ?", code, userCtx.TenantID).First(&product).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -49,26 +57,31 @@ func (r *ProductRepository) FindByCode(code string) (*product.Product, error) {
 }
 
 // FindAll retrieves all products
-func (r *ProductRepository) FindAll() ([]product.Product, error) {
+func (r *ProductRepository) FindAll(ctx context.Context) ([]product.Product, error) {
 	var products []product.Product
-	if err := r.db.Find(&products).Error; err != nil {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).Where("tenant_id = ?", userCtx.TenantID).Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil
 }
 
 // FindByCategoryID retrieves all products in a category
-func (r *ProductRepository) FindByCategoryID(categoryID int) ([]product.Product, error) {
+func (r *ProductRepository) FindByCategoryID(categoryID int, ctx context.Context) ([]product.Product, error) {
 	var products []product.Product
-	if err := r.db.Where("category_id = ?", categoryID).Find(&products).Error; err != nil {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).Where("category_id = ? AND tenant_id = ?", categoryID, userCtx.TenantID).Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil
 }
 
 // Update updates an existing product
-func (r *ProductRepository) Update(product *product.Product) error {
-	result := r.db.Save(product)
+func (r *ProductRepository) Update(product *product.Product, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	product.TenantID = userCtx.TenantID
+	product.UpdatedBy = userCtx.Username
+	result := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", product.ID, userCtx.TenantID).Save(product)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -79,8 +92,9 @@ func (r *ProductRepository) Update(product *product.Product) error {
 }
 
 // Delete deletes a product
-func (r *ProductRepository) Delete(id int) error {
-	result := r.db.Delete(&product.Product{}, id)
+func (r *ProductRepository) Delete(id int, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	result := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).Delete(&product.Product{})
 	if result.Error != nil {
 		return result.Error
 	}

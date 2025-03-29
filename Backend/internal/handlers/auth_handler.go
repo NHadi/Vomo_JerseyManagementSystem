@@ -40,7 +40,7 @@ func Login(userService *application.UserService, menuService *application.MenuSe
 			return
 		}
 
-		user, err := userService.ValidateCredentials(req.Email, req.Password)
+		user, err := userService.ValidateCredentials(req.Email, req.Password, c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid credentials"})
 			return
@@ -151,7 +151,7 @@ func RefreshToken(userService *application.UserService) gin.HandlerFunc {
 		}
 
 		// Get user from database to verify existence
-		user, err := userService.GetUserByID(uuid.Must(uuid.Parse(tokenUser.UserID)))
+		user, err := userService.GetUserByID(uuid.Must(uuid.Parse(tokenUser.UserID)), c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
 			return

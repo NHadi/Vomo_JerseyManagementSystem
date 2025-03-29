@@ -151,18 +151,6 @@ window.RegionPage = class {
                         const $buttonContainer = $('<div>')
                             .addClass('d-flex justify-content-end align-items-center');
 
-                        // Manage Zones Button
-                        $('<button>')
-                            .addClass('btn btn-icon-only btn-sm btn-primary mr-2')
-                            .attr({
-                                'title': 'Manage Zones',
-                                'data-toggle': 'modal',
-                                'data-target': '#zoneModal',
-                                'data-region-id': options.row.data.id,
-                                'data-region-name': options.row.data.name
-                            })
-                            .append($('<i>').addClass('fas fa-map-marked-alt'))
-                            .appendTo($buttonContainer);
 
                         // Edit Button
                         $('<button>')

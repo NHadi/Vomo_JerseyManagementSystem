@@ -1,6 +1,9 @@
 package postgres
 
 import (
+	"context"
+	"errors"
+	"vomo/internal/domain/appcontext"
 	"vomo/internal/domain/user"
 
 	"github.com/google/uuid"
@@ -15,39 +18,72 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) Create(user *user.User) error {
-	return r.db.Create(user).Error
+func (r *UserRepository) Create(user *user.User, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	user.TenantID = userCtx.TenantID
+	user.CreatedBy = userCtx.Username
+	user.UpdatedBy = userCtx.Username
+	return r.db.WithContext(ctx).Create(user).Error
 }
 
-func (r *UserRepository) FindByID(id uuid.UUID) (*user.User, error) {
+func (r *UserRepository) FindByID(id uuid.UUID, ctx context.Context) (*user.User, error) {
 	var u user.User
-	if err := r.db.First(&u, "id = ?", id).Error; err != nil {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).First(&u).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
 		return nil, err
 	}
 	return &u, nil
 }
 
-func (r *UserRepository) FindByEmail(email string) (*user.User, error) {
+func (r *UserRepository) FindByEmail(email string, ctx context.Context) (*user.User, error) {
 	var u user.User
-	if err := r.db.First(&u, "email = ?", email).Error; err != nil {
+
+	// During login, just find by email without tenant context
+	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&u).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &u, nil
 }
 
-func (r *UserRepository) Update(user *user.User) error {
-	return r.db.Save(user).Error
+func (r *UserRepository) Update(user *user.User, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	user.TenantID = userCtx.TenantID
+	user.UpdatedBy = userCtx.Username
+	result := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", user.ID, userCtx.TenantID).Save(user)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("user not found")
+	}
+	return nil
 }
 
-func (r *UserRepository) Delete(id uuid.UUID) error {
-	return r.db.Delete(&user.User{}, "id = ?", id).Error
+func (r *UserRepository) Delete(id uuid.UUID, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	result := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).Delete(&user.User{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("user not found")
+	}
+	return nil
 }
 
-func (r *UserRepository) List(page, pageSize int) ([]user.User, error) {
+func (r *UserRepository) List(page, pageSize int, ctx context.Context) ([]user.User, error) {
 	var users []user.User
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
 	offset := (page - 1) * pageSize
 
-	result := r.db.
+	result := r.db.WithContext(ctx).
+		Where("tenant_id = ?", userCtx.TenantID).
 		Order("created_at DESC").
 		Offset(offset).
 		Limit(pageSize).
@@ -60,58 +96,82 @@ func (r *UserRepository) List(page, pageSize int) ([]user.User, error) {
 	return users, nil
 }
 
-func (r *UserRepository) FindByRole(roleID int) ([]user.User, error) {
+func (r *UserRepository) FindByRole(roleID int, ctx context.Context) ([]user.User, error) {
 	var users []user.User
-	err := r.db.Where("role_id = ?", roleID).Find(&users).Error
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	err := r.db.WithContext(ctx).Where("role_id = ? AND tenant_id = ?", roleID, userCtx.TenantID).Find(&users).Error
 	if err != nil {
 		return nil, err
 	}
 	return users, nil
 }
 
-func (r *UserRepository) Count() (int64, error) {
+func (r *UserRepository) Count(ctx context.Context) (int64, error) {
 	var count int64
-	err := r.db.Model(&user.User{}).Count(&count).Error
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	err := r.db.WithContext(ctx).Model(&user.User{}).Where("tenant_id = ?", userCtx.TenantID).Count(&count).Error
 	return count, err
 }
 
 // GetUserPermissions retrieves all permissions for a given user through their role
-func (r *UserRepository) GetUserPermissions(userID uuid.UUID) ([]string, error) {
+func (r *UserRepository) GetUserPermissions(userID uuid.UUID, ctx context.Context) ([]string, error) {
 	var permissionCodes []string
-	err := r.db.Table("master_permission").
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	err := r.db.WithContext(ctx).Table("master_permission").
 		Select("DISTINCT master_permission.code").
 		Joins("JOIN role_permissions ON master_permission.id = role_permissions.permission_id").
 		Joins("JOIN users ON role_permissions.role_id = users.role_id").
-		Where("users.id = ?", userID).
+		Where("users.id = ? AND users.tenant_id = ?", userID, userCtx.TenantID).
 		Pluck("code", &permissionCodes).Error
 	return permissionCodes, err
 }
 
 // FindAll retrieves all users
-func (r *UserRepository) FindAll() ([]user.User, error) {
+func (r *UserRepository) FindAll(ctx context.Context) ([]user.User, error) {
 	var users []user.User
-	err := r.db.Find(&users).Error
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	err := r.db.WithContext(ctx).Where("tenant_id = ?", userCtx.TenantID).Find(&users).Error
 	return users, err
 }
 
-func (r *UserRepository) FindByUsername(username string) (*user.User, error) {
+func (r *UserRepository) FindByUsername(username string, ctx context.Context) (*user.User, error) {
 	var u user.User
-	if err := r.db.First(&u, "username = ?", username).Error; err != nil {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	if err := r.db.WithContext(ctx).Where("username = ? AND tenant_id = ?", username, userCtx.TenantID).First(&u).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &u, nil
 }
 
-// AssignRole assigns a role to a user
-func (r *UserRepository) AssignRole(userID uuid.UUID, roleID int) error {
-	return r.db.Exec(`
-		INSERT INTO user_role (user_id, role_id, tenant_id)
-		VALUES (?, ?, (SELECT tenant_id FROM users WHERE id = ?))
-		ON CONFLICT (user_id, role_id, tenant_id) DO NOTHING
-	`, userID, roleID, userID).Error
+func (r *UserRepository) AssignRole(userID uuid.UUID, roleID int, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	result := r.db.WithContext(ctx).
+		Model(&user.User{}).
+		Where("id = ? AND tenant_id = ?", userID, userCtx.TenantID).
+		Update("role_id", roleID)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("user not found")
+	}
+	return nil
 }
 
-// RemoveRole removes a role from a user
-func (r *UserRepository) RemoveRole(userID uuid.UUID, roleID int) error {
-	return r.db.Exec("DELETE FROM user_role WHERE user_id = ? AND role_id = ?", userID, roleID).Error
+func (r *UserRepository) RemoveRole(userID uuid.UUID, roleID int, ctx context.Context) error {
+	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
+	result := r.db.WithContext(ctx).
+		Model(&user.User{}).
+		Where("id = ? AND tenant_id = ?", userID, userCtx.TenantID).
+		Update("role_id", nil)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("user not found")
+	}
+	return nil
 }

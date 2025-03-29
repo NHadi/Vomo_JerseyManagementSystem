@@ -25,6 +25,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	_ "vomo/docs"
@@ -95,21 +96,28 @@ func main() {
 	// Initialize services
 	auditService := audit.NewService(auditRepo)
 	menuService := application.NewMenuService(menuRepo, auditService)
-	userService := application.NewUserService(userRepo)
-	roleService := application.NewRoleService(roleRepo, permissionRepo)
-	permissionService := application.NewPermissionService(permissionRepo)
+	userService := application.NewUserService(userRepo, auditService)
+	roleService := application.NewRoleService(roleRepo, permissionRepo, auditService)
+	permissionService := application.NewPermissionService(permissionRepo, auditService)
 	backupService := application.NewBackupService(backupRepo, cfg)
-	zoneService := application.NewZoneService(zoneRepo, regionRepo, officeRepo)
-	regionService := application.NewRegionService(regionRepo, zoneRepo)
-	officeService := application.NewOfficeService(officeRepo)
-	divisionService := application.NewDivisionService(divisionRepo)
-	employeeService := application.NewEmployeeService(employeeRepo)
-	productService := application.NewProductService(productRepo)
-	productCategoryService := application.NewProductCategoryService(productCategoryRepo)
+	zoneService := application.NewZoneService(zoneRepo, regionRepo, officeRepo, auditService)
+	regionService := application.NewRegionService(regionRepo, zoneRepo, auditService)
+	officeService := application.NewOfficeService(officeRepo, auditService)
+	divisionService := application.NewDivisionService(divisionRepo, auditService)
+	employeeService := application.NewEmployeeService(employeeRepo, auditService)
+	productService := application.NewProductService(productRepo, auditService)
+	productCategoryService := application.NewProductCategoryService(productCategoryRepo, auditService)
 
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(middleware.LoggingMiddleware(logger))
+
+	// Add gin context to request context
+	r.Use(func(c *gin.Context) {
+		ctx := context.WithValue(c.Request.Context(), "gin_context", c)
+		c.Request = c.Request.WithContext(ctx)
+		c.Next()
+	})
 
 	// Setup CORS middleware
 	r.Use(func(c *gin.Context) {
@@ -132,33 +140,34 @@ func main() {
 	// Swagger documentation
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// API routes group
-	api := r.Group("/api")
-	{
-		// Public routes (no tenant required)
-		auth := api.Group("/auth")
-		{
-			auth.POST("/login", handlers.Login(userService, menuService))
-			auth.POST("/refresh", handlers.RefreshToken(userService))
-		}
+	// Setup middleware
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 
-		// Protected routes with tenant
-		routes.SetupRoutes(api, &services.Services{
-			MenuService:            menuService,
-			UserService:            userService,
-			RoleService:            roleService,
-			PermissionService:      permissionService,
-			AuditService:           auditService,
-			BackupService:          backupService,
-			ZoneService:            zoneService,
-			RegionService:          regionService,
-			OfficeService:          officeService,
-			DivisionService:        divisionService,
-			EmployeeService:        employeeService,
-			ProductService:         productService,
-			ProductCategoryService: productCategoryService,
-		})
-	}
+	// Protected routes
+	protected := r.Group("/api")
+	protected.Use(middleware.AuthMiddleware(userService))
+
+	// Public routes
+	r.POST("/api/auth/login", handlers.Login(userService, menuService))
+	r.POST("/api/auth/refresh", handlers.RefreshToken(userService))
+
+	// API routes group
+	routes.SetupRoutes(protected, &services.Services{
+		MenuService:            menuService,
+		UserService:            userService,
+		RoleService:            roleService,
+		PermissionService:      permissionService,
+		AuditService:           auditService,
+		BackupService:          backupService,
+		ZoneService:            zoneService,
+		RegionService:          regionService,
+		OfficeService:          officeService,
+		DivisionService:        divisionService,
+		EmployeeService:        employeeService,
+		ProductService:         productService,
+		ProductCategoryService: productCategoryService,
+	})
 
 	// Start Server
 	port := cfg.GetServerPort()

@@ -1,9 +1,8 @@
 package division
 
 import (
+	"context"
 	"vomo/internal/domain/common"
-
-	"github.com/gin-gonic/gin"
 )
 
 // Division represents the master_division table
@@ -19,9 +18,9 @@ func (Division) TableName() string {
 }
 
 type Repository interface {
-	Create(division *Division, ctx *gin.Context) error
-	FindByID(id int, ctx *gin.Context) (*Division, error)
-	FindAll(ctx *gin.Context) ([]Division, error)
-	Update(division *Division, ctx *gin.Context) error
-	Delete(id int, ctx *gin.Context) error
+	Create(division *Division, ctx context.Context) error
+	FindByID(id int, ctx context.Context) (*Division, error)
+	FindAll(ctx context.Context) ([]Division, error)
+	Update(division *Division, ctx context.Context) error
+	Delete(id int, ctx context.Context) error
 }

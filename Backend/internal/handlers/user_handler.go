@@ -83,7 +83,7 @@ func CreateUser(service *application.UserService) gin.HandlerFunc {
 			return
 		}
 
-		user, err := service.CreateUser(req.Username, req.Email, req.Password, req.RoleID)
+		user, err := service.CreateUser(req.Username, req.Email, req.Password, req.RoleID, c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
@@ -115,7 +115,7 @@ func GetUser(service *application.UserService) gin.HandlerFunc {
 			return
 		}
 
-		user, err := service.GetUserByID(id)
+		user, err := service.GetUserByID(id, c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusNotFound, ErrorResponse{Error: "User not found"})
 			return
@@ -139,7 +139,7 @@ func GetUser(service *application.UserService) gin.HandlerFunc {
 // @Router /users [get]
 func GetUsers(service *application.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		users, err := service.FindAll()
+		users, err := service.FindAll(c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
@@ -179,7 +179,7 @@ func UpdateUser(service *application.UserService) gin.HandlerFunc {
 			return
 		}
 
-		user, err := service.UpdateUser(id, req.Username, req.Email)
+		user, err := service.UpdateUser(id, req.Username, req.Email, c.Request.Context())
 		if err != nil {
 			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
 			return
@@ -211,7 +211,7 @@ func DeleteUser(service *application.UserService) gin.HandlerFunc {
 			return
 		}
 
-		if err := service.DeleteUser(id); err != nil {
+		if err := service.DeleteUser(id, c.Request.Context()); err != nil {
 			c.JSON(http.StatusNotFound, ErrorResponse{Error: "User not found"})
 			return
 		}

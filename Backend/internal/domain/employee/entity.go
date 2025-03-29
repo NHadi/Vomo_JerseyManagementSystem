@@ -1,9 +1,8 @@
 package employee
 
 import (
+	"context"
 	"vomo/internal/domain/common"
-
-	"github.com/gin-gonic/gin"
 )
 
 // Employee represents the master_employee table
@@ -21,11 +20,11 @@ func (Employee) TableName() string {
 }
 
 type Repository interface {
-	Create(employee *Employee, ctx *gin.Context) error
-	FindByID(id int, ctx *gin.Context) (*Employee, error)
-	FindAll(ctx *gin.Context) ([]Employee, error)
-	Update(employee *Employee, ctx *gin.Context) error
-	Delete(id int, ctx *gin.Context) error
-	FindByDivisionID(divisionID int, ctx *gin.Context) ([]Employee, error)
-	FindByEmail(email string, ctx *gin.Context) (*Employee, error)
+	Create(employee *Employee, ctx context.Context) error
+	FindByID(id int, ctx context.Context) (*Employee, error)
+	FindAll(ctx context.Context) ([]Employee, error)
+	Update(employee *Employee, ctx context.Context) error
+	Delete(id int, ctx context.Context) error
+	FindByDivisionID(divisionID int, ctx context.Context) ([]Employee, error)
+	FindByEmail(email string, ctx context.Context) (*Employee, error)
 }

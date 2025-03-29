@@ -121,6 +121,9 @@
                         case 'role':
                             await this.loadRoleGrid();
                             break;
+                        case 'permission':
+                            await this.loadPermissionGrid();
+                            break;
                         case 'backup':
                             await this.loadBackupGrid();
                             break;
@@ -773,6 +776,63 @@
                     } catch (error) {
                         console.error('Failed to load product component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load product component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadPermissionGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.permissionPageInstance) {
+                window.permissionPageInstance.dispose();
+                window.permissionPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/permission.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="permission"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the permission.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/permission.js';
+                        script.setAttribute('data-page', 'permission');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the permission page instance
+                            if (!window.permissionPageInstance) {
+                                window.permissionPageInstance = new window.PermissionPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load permission module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load permission component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load permission component</div>');
                         reject(error);
                     }
                 });

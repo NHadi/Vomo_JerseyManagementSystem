@@ -1,6 +1,8 @@
 package application
 
 import (
+	"context"
+	"vomo/internal/domain/audit"
 	"vomo/internal/domain/office"
 	"vomo/internal/domain/region"
 	"vomo/internal/domain/zone"
@@ -13,24 +15,31 @@ type ZoneService struct {
 	repo       zone.Repository
 	regionRepo region.Repository
 	officeRepo office.Repository
+	auditSvc   *audit.Service
 }
 
 // NewZoneService creates a new zone service instance
-func NewZoneService(repo zone.Repository, regionRepo region.Repository, officeRepo office.Repository) *ZoneService {
+func NewZoneService(repo zone.Repository, regionRepo region.Repository, officeRepo office.Repository, auditSvc *audit.Service) *ZoneService {
 	return &ZoneService{
 		repo:       repo,
 		regionRepo: regionRepo,
 		officeRepo: officeRepo,
+		auditSvc:   auditSvc,
 	}
 }
 
 // Create creates a new zone
-func (s *ZoneService) Create(z *zone.Zone, ctx *gin.Context) error {
-	return s.repo.Create(z, ctx)
+func (s *ZoneService) Create(z *zone.Zone, ctx context.Context) error {
+	if err := s.repo.Create(z, ctx); err != nil {
+		return err
+	}
+
+	// Log the create action
+	return s.auditSvc.LogChange("zone", z.ID, audit.ActionCreate, nil, z, ctx)
 }
 
 // FindByID retrieves a zone by its ID
-func (s *ZoneService) FindByID(id int, ctx *gin.Context) (*zone.Zone, *region.Region, error) {
+func (s *ZoneService) FindByID(id int, ctx context.Context) (*zone.Zone, *region.Region, error) {
 	z, err := s.repo.FindByID(id, ctx)
 	if err != nil {
 		return nil, nil, err
@@ -50,7 +59,7 @@ func (s *ZoneService) FindByID(id int, ctx *gin.Context) (*zone.Zone, *region.Re
 }
 
 // FindAll retrieves all zones
-func (s *ZoneService) FindAll(ctx *gin.Context) ([]zone.Zone, []*region.Region, error) {
+func (s *ZoneService) FindAll(ctx context.Context) ([]zone.Zone, []*region.Region, error) {
 	zones, err := s.repo.FindAll(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -87,17 +96,39 @@ func (s *ZoneService) FindAll(ctx *gin.Context) ([]zone.Zone, []*region.Region, 
 }
 
 // Update updates an existing zone
-func (s *ZoneService) Update(z *zone.Zone, ctx *gin.Context) error {
-	return s.repo.Update(z, ctx)
+func (s *ZoneService) Update(z *zone.Zone, ctx context.Context) error {
+	// Get old data for audit
+	oldZone, err := s.repo.FindByID(z.ID, ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Update(z, ctx); err != nil {
+		return err
+	}
+
+	// Log the update action
+	return s.auditSvc.LogChange("zone", z.ID, audit.ActionUpdate, oldZone, z, ctx)
 }
 
 // Delete deletes a zone by its ID
-func (s *ZoneService) Delete(id int, ctx *gin.Context) error {
-	return s.repo.Delete(id, ctx)
+func (s *ZoneService) Delete(id int, ctx context.Context) error {
+	// Get zone data for audit
+	zone, err := s.repo.FindByID(id, ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Delete(id, ctx); err != nil {
+		return err
+	}
+
+	// Log the delete action
+	return s.auditSvc.LogChange("zone", id, audit.ActionDelete, zone, nil, ctx)
 }
 
 // FindByRegionID retrieves all zones for a specific region
-func (s *ZoneService) FindByRegionID(regionID int, ctx *gin.Context) ([]zone.Zone, []*region.Region, error) {
+func (s *ZoneService) FindByRegionID(regionID int, ctx context.Context) ([]zone.Zone, []*region.Region, error) {
 	zones, err := s.repo.FindByRegionID(regionID, ctx)
 	if err != nil {
 		return nil, nil, err
@@ -120,37 +151,39 @@ func (s *ZoneService) FindByRegionID(regionID int, ctx *gin.Context) ([]zone.Zon
 	return zones, regions, nil
 }
 
-func (s *ZoneService) AssignOffices(zoneID int, officeIDs []int, ctx *gin.Context) (*zone.Zone, *region.Region, error) {
+func (s *ZoneService) AssignOffices(zoneID int, officeIDs []int, ctx context.Context) (*zone.Zone, *region.Region, error) {
 	// Get the zone
-	zone, region, err := s.FindByID(zoneID, ctx)
+	z, r, err := s.FindByID(zoneID, ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Update each office's zone_id
+	ginCtx := ctx.Value("gin_context").(*gin.Context)
 	for _, id := range officeIDs {
-		office, err := s.officeRepo.FindByID(id, ctx)
+		office, err := s.officeRepo.FindByID(id, ginCtx)
 		if err != nil {
 			return nil, nil, err
 		}
 		office.ZoneID = &zoneID
-		if err := s.officeRepo.Update(office, ctx); err != nil {
+		if err := s.officeRepo.Update(office, ginCtx); err != nil {
 			return nil, nil, err
 		}
 	}
 
 	// Refresh the zone to get updated offices
-	zone, region, err = s.FindByID(zoneID, ctx)
+	z, r, err = s.FindByID(zoneID, ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return zone, region, nil
+	return z, r, nil
 }
 
-func (s *ZoneService) RemoveOffices(zoneID int, officeIDs []int, ctx *gin.Context) error {
+func (s *ZoneService) RemoveOffices(zoneID int, officeIDs []int, ctx context.Context) error {
 	// Get the offices for this zone
-	offices, err := s.officeRepo.FindByZoneID(zoneID, ctx)
+	ginCtx := ctx.Value("gin_context").(*gin.Context)
+	offices, err := s.officeRepo.FindByZoneID(zoneID, ginCtx)
 	if err != nil {
 		return err
 	}
@@ -165,7 +198,7 @@ func (s *ZoneService) RemoveOffices(zoneID int, officeIDs []int, ctx *gin.Contex
 	for _, office := range offices {
 		if removeIDs[office.ID] {
 			office.ZoneID = nil
-			if err := s.officeRepo.Update(&office, ctx); err != nil {
+			if err := s.officeRepo.Update(&office, ginCtx); err != nil {
 				return err
 			}
 		}

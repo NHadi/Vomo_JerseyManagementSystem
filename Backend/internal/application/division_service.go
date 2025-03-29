@@ -1,44 +1,73 @@
 package application
 
 import (
+	"context"
+	"vomo/internal/domain/audit"
 	"vomo/internal/domain/division"
-
-	"github.com/gin-gonic/gin"
 )
 
 // DivisionService handles business logic for division operations
 type DivisionService struct {
-	repo division.Repository
+	repo     division.Repository
+	auditSvc *audit.Service
 }
 
 // NewDivisionService creates a new division service instance
-func NewDivisionService(repo division.Repository) *DivisionService {
+func NewDivisionService(repo division.Repository, auditSvc *audit.Service) *DivisionService {
 	return &DivisionService{
-		repo: repo,
+		repo:     repo,
+		auditSvc: auditSvc,
 	}
 }
 
 // Create creates a new division
-func (s *DivisionService) Create(d *division.Division, ctx *gin.Context) error {
-	return s.repo.Create(d, ctx)
+func (s *DivisionService) Create(d *division.Division, ctx context.Context) error {
+	if err := s.repo.Create(d, ctx); err != nil {
+		return err
+	}
+
+	// Log the create action
+	return s.auditSvc.LogChange("division", d.ID, audit.ActionCreate, nil, d, ctx)
 }
 
 // FindByID retrieves a division by its ID
-func (s *DivisionService) FindByID(id int, ctx *gin.Context) (*division.Division, error) {
+func (s *DivisionService) FindByID(id int, ctx context.Context) (*division.Division, error) {
 	return s.repo.FindByID(id, ctx)
 }
 
 // FindAll retrieves all divisions
-func (s *DivisionService) FindAll(ctx *gin.Context) ([]division.Division, error) {
+func (s *DivisionService) FindAll(ctx context.Context) ([]division.Division, error) {
 	return s.repo.FindAll(ctx)
 }
 
 // Update updates an existing division
-func (s *DivisionService) Update(d *division.Division, ctx *gin.Context) error {
-	return s.repo.Update(d, ctx)
+func (s *DivisionService) Update(d *division.Division, ctx context.Context) error {
+	// Get old data for audit
+	oldDivision, err := s.repo.FindByID(d.ID, ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Update(d, ctx); err != nil {
+		return err
+	}
+
+	// Log the update action
+	return s.auditSvc.LogChange("division", d.ID, audit.ActionUpdate, oldDivision, d, ctx)
 }
 
 // Delete deletes a division by its ID
-func (s *DivisionService) Delete(id int, ctx *gin.Context) error {
-	return s.repo.Delete(id, ctx)
+func (s *DivisionService) Delete(id int, ctx context.Context) error {
+	// Get division data for audit
+	division, err := s.repo.FindByID(id, ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Delete(id, ctx); err != nil {
+		return err
+	}
+
+	// Log the delete action
+	return s.auditSvc.LogChange("division", id, audit.ActionDelete, division, nil, ctx)
 }

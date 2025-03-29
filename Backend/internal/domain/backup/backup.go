@@ -2,16 +2,14 @@ package backup
 
 import (
 	"context"
-	"time"
+	"vomo/internal/domain/common"
 )
 
 type Backup struct {
-	ID        int       `json:"id" gorm:"primaryKey;autoIncrement"`
-	FileName  string    `json:"file_name" gorm:"not null"`
-	Size      int64     `json:"size" gorm:"not null"`
-	CreatedAt time.Time `json:"created_at" gorm:"not null;default:CURRENT_TIMESTAMP"`
-	CreatedBy string    `json:"created_by" gorm:"not null"`
-	TenantID  int       `json:"tenant_id" gorm:"not null"`
+	ID       int    `json:"id" gorm:"primaryKey;autoIncrement"`
+	FileName string `json:"file_name" gorm:"not null"`
+	Size     int64  `json:"size" gorm:"not null"`
+	common.TenantModel
 }
 
 // TableName specifies the table name for the Backup entity

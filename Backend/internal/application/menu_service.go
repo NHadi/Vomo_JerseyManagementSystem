@@ -6,13 +6,80 @@ import (
 	"vomo/internal/domain/menu"
 )
 
+// MenuService handles business logic for menu operations
 type MenuService struct {
 	repo     menu.Repository
 	auditSvc *audit.Service
 }
 
+// NewMenuService creates a new menu service instance
 func NewMenuService(repo menu.Repository, auditSvc *audit.Service) *MenuService {
-	return &MenuService{repo: repo, auditSvc: auditSvc}
+	return &MenuService{
+		repo:     repo,
+		auditSvc: auditSvc,
+	}
+}
+
+// Create creates a new menu
+func (s *MenuService) Create(m *menu.Menu, ctx context.Context) error {
+	if err := s.repo.Create(m, ctx); err != nil {
+		return err
+	}
+
+	// Log the create action
+	return s.auditSvc.LogChange("menu", m.ID, audit.ActionCreate, nil, m, ctx)
+}
+
+// FindByID retrieves a menu by its ID
+func (s *MenuService) FindByID(id int, ctx context.Context) (*menu.Menu, error) {
+	return s.repo.FindByID(id, ctx)
+}
+
+// FindAll retrieves all menus
+func (s *MenuService) FindAll(ctx context.Context) ([]menu.Menu, error) {
+	return s.repo.FindAll(ctx)
+}
+
+// Update updates an existing menu
+func (s *MenuService) Update(m *menu.Menu, ctx context.Context) error {
+	// Get old data for audit
+	oldMenu, err := s.repo.FindByID(m.ID, ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Update(m, ctx); err != nil {
+		return err
+	}
+
+	// Log the update action
+	return s.auditSvc.LogChange("menu", m.ID, audit.ActionUpdate, oldMenu, m, ctx)
+}
+
+// Delete deletes a menu by its ID
+func (s *MenuService) Delete(id int, ctx context.Context) error {
+	// Get menu data for audit
+	menu, err := s.repo.FindByID(id, ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := s.repo.Delete(id, ctx); err != nil {
+		return err
+	}
+
+	// Log the delete action
+	return s.auditSvc.LogChange("menu", id, audit.ActionDelete, menu, nil, ctx)
+}
+
+// FindByRoleID retrieves all menus for a given role ID
+func (s *MenuService) FindByRoleID(roleID int, ctx context.Context) ([]menu.Menu, error) {
+	return s.repo.FindByRoleID(roleID, ctx)
+}
+
+// FindByUserID retrieves all menus for a given user ID
+func (s *MenuService) FindByUserID(userID string, ctx context.Context) ([]menu.Menu, error) {
+	return s.repo.FindByUserID(userID, ctx)
 }
 
 func (s *MenuService) GetAllMenus(ctx context.Context) ([]menu.Menu, error) {
@@ -121,29 +188,6 @@ func (s *MenuService) buildMenuTree(menus []menu.Menu) []menu.Menu {
 	}
 
 	return result
-}
-
-func (s *MenuService) Delete(id int, ctx context.Context) error {
-	// Get the menu before deletion for audit
-	menu, err := s.repo.FindByID(id, ctx)
-	if err != nil {
-		return err
-	}
-
-	if err := s.repo.Delete(id, ctx); err != nil {
-		return err
-	}
-
-	// Log the delete action
-	return s.auditSvc.LogChange("menu", id, audit.ActionDelete, menu, nil, ctx)
-}
-
-func (s *MenuService) Create(menu *menu.Menu, ctx context.Context) error {
-	return s.repo.Create(menu, ctx)
-}
-
-func (s *MenuService) Update(menu *menu.Menu, ctx context.Context) error {
-	return s.repo.Update(menu, ctx)
 }
 
 func (s *MenuService) GetByID(id int, ctx context.Context) (*menu.Menu, error) {
