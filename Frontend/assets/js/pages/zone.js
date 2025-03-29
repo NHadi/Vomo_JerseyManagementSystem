@@ -1,4 +1,5 @@
 import { vomoAPI } from '../api/index.js';
+import { gridUtils } from '../utils/gridUtils.js';
 
 // Define ZonePage
 window.ZonePage = class {
@@ -9,6 +10,7 @@ window.ZonePage = class {
         this.allOffices = [];
         this.officeFilter = '';
         this.regions = [];
+        this.exportButtonsAdded = false;
         
         // Initialize components
         if (typeof DevExpress !== 'undefined') {
@@ -244,6 +246,13 @@ window.ZonePage = class {
                     ]
                 }
             },
+            onContentReady: (e) => {
+                // Add export buttons after grid is fully loaded
+                if (this.grid && !this.exportButtonsAdded) {
+                    gridUtils.addExportButtons(this.grid, 'Zone_List');
+                    this.exportButtonsAdded = true;
+                }
+            },
             onInitialized: () => this.loadData(),
             onRowInserting: (e) => this.handleRowInserting(e),
             onRowUpdating: (e) => this.handleRowUpdating(e),
@@ -470,4 +479,4 @@ window.ZonePage = class {
 // Initialize only if DevExtreme is loaded
 if (typeof DevExpress !== 'undefined' && !window.zonePageInstance) {
     window.zonePageInstance = new window.ZonePage();
-} 
+}

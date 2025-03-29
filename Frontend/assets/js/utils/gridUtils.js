@@ -62,11 +62,8 @@ export const gridUtils = {
             // Get visible columns and data
             const columns = grid.getVisibleColumns()
                 .filter(col => {
-                    // Filter out zone-related columns and columns marked as not exportable
-                    return col.dataField && 
-                           col.allowExporting !== false && 
-                           !col.dataField.toLowerCase().includes('zone') &&
-                           !col.dataField.toLowerCase().includes('zones');
+                    // Only include columns that have a dataField and are exportable
+                    return col.dataField && col.allowExporting !== false;
                 });
             const data = grid.getDataSource().items();
 
@@ -101,10 +98,13 @@ export const gridUtils = {
                         return value.toLocaleString();
                     }
                     if (typeof value === 'object') {
-                        // Skip zone-related objects
-                        if (value.zones || value.zone) return '';
-                        // Handle nested objects (like division.name)
+                        // If it's an array, join the names or values
+                        if (Array.isArray(value)) {
+                            return value.map(v => v.name || v.value || JSON.stringify(v)).join(', ');
+                        }
+                        // For objects, try to get a meaningful string representation
                         if (value.name) return value.name;
+                        if (value.value) return value.value;
                         // For other objects, try to get a meaningful string representation
                         const objStr = JSON.stringify(value);
                         return objStr === '{}' ? '' : objStr;
@@ -171,11 +171,8 @@ export const gridUtils = {
 
             const columns = grid.getVisibleColumns()
                 .filter(col => {
-                    // Filter out zone-related columns and columns marked as not exportable
-                    return col.dataField && 
-                           col.allowExporting !== false && 
-                           !col.dataField.toLowerCase().includes('zone') &&
-                           !col.dataField.toLowerCase().includes('zones');
+                    // Only include columns that have a dataField and are exportable
+                    return col.dataField && col.allowExporting !== false;
                 });
             const data = grid.getDataSource().items();
 
@@ -232,10 +229,14 @@ export const gridUtils = {
                         if (value instanceof Date) {
                             text = value.toLocaleString();
                         } else if (typeof value === 'object') {
-                            // Skip zone-related objects
-                            if (value.zones || value.zone) text = '';
-                            // Handle nested objects
-                            else text = value.name || JSON.stringify(value);
+                            // If it's an array, join the names or values
+                            if (Array.isArray(value)) {
+                                text = value.map(v => v.name || v.value || JSON.stringify(v)).join(', ');
+                            }
+                            // For objects, try to get a meaningful string representation
+                            else if (value.name) text = value.name;
+                            else if (value.value) text = value.value;
+                            else text = JSON.stringify(value);
                         } else {
                             text = String(value);
                         }

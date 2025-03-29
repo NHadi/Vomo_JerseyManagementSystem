@@ -22,20 +22,20 @@ window.OfficePage = class {
 
     dispose() {
         // Clean up event listeners
-        $('#zoneModal').off('show.bs.modal');
-        $('#zoneModal').off('hide.bs.modal');
-        $('#zoneSearchBox').off('input');
+        $('#zoneModal').off('shown.bs.modal hidden.bs.modal');
         $('#saveZone').off('click');
+        $('#zoneSearchBox').off('input');
 
         // Dispose of the grid
         if (this.grid) {
             this.grid.dispose();
+            this.grid = null;
         }
     }
 
     bindEvents() {
         // Modal show event
-        $('#zoneModal').on('show.bs.modal', (e) => {
+        $('#zoneModal').on('shown.bs.modal', (e) => {
             const button = $(e.relatedTarget);
             this.currentOffice = {
                 id: button.data('office-id'),
@@ -52,7 +52,7 @@ window.OfficePage = class {
         });
 
         // Modal hide event
-        $('#zoneModal').on('hide.bs.modal', () => {
+        $('#zoneModal').on('hidden.bs.modal', () => {
             this.selectedZone = null;
             this.currentOffice = null;
             this.zoneFilter = '';
@@ -90,7 +90,6 @@ window.OfficePage = class {
                 }
             },
             remoteOperations: false,
-            ...gridUtils.getCommonGridConfig(),
             columns: [
                 {
                     dataField: 'name',
@@ -160,12 +159,12 @@ window.OfficePage = class {
                         
                         if (options.data.zone) {
                             $('<span>')
-                                .addClass('zone-badge')
+                                .addClass('zone-badge badge badge-soft-primary')
                                 .append(
-                                    $('<i>').addClass('fas fa-map-marker-alt')
+                                    $('<i>').addClass('fas fa-map-marker-alt mr-1')
                                 )
                                 .append(
-                                    $('<span>').text(' ' + options.data.zone.name)
+                                    $('<span>').text(options.data.zone.name)
                                 )
                                 .attr('title', options.data.zone.description || '')
                                 .appendTo($container);
@@ -192,19 +191,6 @@ window.OfficePage = class {
                         const $buttonContainer = $('<div>')
                             .addClass('d-flex justify-content-end align-items-center');
 
-                        // Manage Zone Button
-                        $('<button>')
-                            .addClass('btn btn-icon-only btn-sm btn-primary mr-2')
-                            .attr({
-                                'title': 'Manage Zone',
-                                'data-toggle': 'modal',
-                                'data-target': '#zoneModal',
-                                'data-office-id': options.row.data.id,
-                                'data-office-name': options.row.data.name
-                            })
-                            .append($('<i>').addClass('fas fa-map-marked-alt'))
-                            .appendTo($buttonContainer);
-
                         // Edit Button
                         $('<button>')
                             .addClass('btn btn-icon-only btn-sm btn-info mr-2')
@@ -217,7 +203,7 @@ window.OfficePage = class {
 
                         // Delete Button
                         $('<button>')
-                            .addClass('btn btn-icon-only btn-sm btn-danger')
+                            .addClass('btn btn-icon-only btn-sm btn-danger mr-2')
                             .attr('title', 'Delete Office')
                             .append($('<i>').addClass('fas fa-trash'))
                             .on('click', () => {
@@ -230,6 +216,19 @@ window.OfficePage = class {
                             })
                             .appendTo($buttonContainer);
 
+                        // Manage Zone Button
+                        $('<button>')
+                            .addClass('btn btn-icon-only btn-sm btn-primary')
+                            .attr({
+                                'title': 'Manage Zone',
+                                'data-toggle': 'modal',
+                                'data-target': '#zoneModal',
+                                'data-office-id': options.row.data.id,
+                                'data-office-name': options.row.data.name
+                            })
+                            .append($('<i>').addClass('fas fa-map-marked-alt'))
+                            .appendTo($buttonContainer);
+
                         container.append($buttonContainer);
                     }
                 }
@@ -238,7 +237,7 @@ window.OfficePage = class {
             filterRow: { visible: true },
             searchPanel: { visible: true },
             headerFilter: { visible: true },
-            groupPanel: { visible: false },
+            groupPanel: { visible: true },
             columnChooser: { enabled: false },
             paging: {
                 pageSize: 10
@@ -246,135 +245,60 @@ window.OfficePage = class {
             pager: {
                 showPageSizeSelector: true,
                 allowedPageSizes: [5, 10, 20],
-                showInfo: true,
-                showNavigationButtons: true
+                showInfo: true
             },
             editing: {
                 mode: 'popup',
                 allowUpdating: true,
                 allowDeleting: true,
                 allowAdding: true,
-                useIcons: true,
-                texts: {
-                    confirmDeleteMessage: 'Are you sure you want to delete this office?'
-                },
                 popup: {
                     title: 'Office Information',
                     showTitle: true,
                     width: 700,
-                    height: 525,
-                    position: { my: 'center', at: 'center', of: window },
-                    showCloseButton: true,
-                    toolbarItems: [{
-                        toolbar: 'bottom',
-                        location: 'after',
-                        widget: 'dxButton',
-                        options: {
-                            text: 'Save',
-                            type: 'success',
-                            stylingMode: 'contained',
-                            onClick: function(e) {
-                                const grid = $('#officeGrid').dxDataGrid('instance');
-                                grid.saveEditData();
-                            }
-                        }
-                    }, {
-                        toolbar: 'bottom',
-                        location: 'after',
-                        widget: 'dxButton',
-                        options: {
-                            text: 'Cancel',
-                            stylingMode: 'outlined',
-                            onClick: function(e) {
-                                const grid = $('#officeGrid').dxDataGrid('instance');
-                                grid.cancelEditData();
-                            }
-                        }
-                    }]
+                    height: 325
                 },
                 form: {
-                    labelLocation: 'top',
-                    colCount: 1,
                     items: [
                         {
                             itemType: 'group',
-                            caption: 'Basic Information',
-                            colCount: 2,
+                            colCount: 1,
                             items: [
                                 {
                                     dataField: 'name',
+                                    isRequired: true,
                                     editorOptions: {
-                                        stylingMode: 'filled',
-                                        placeholder: 'Enter office name',
-                                    },
-                                    validationRules: [{ 
-                                        type: 'required',
-                                        message: 'Office name is required'
-                                    }]
+                                        placeholder: 'Enter office name'
+                                    }
                                 },
                                 {
                                     dataField: 'code',
+                                    isRequired: true,
                                     editorOptions: {
-                                        stylingMode: 'filled',
-                                        placeholder: 'Enter office code',
-                                    },
-                                    validationRules: [{ 
-                                        type: 'required',
-                                        message: 'Office code is required'
-                                    }]
-                                }
-                            ]
-                        },
-                        {
-                            itemType: 'group',
-                            caption: 'Contact Information',
-                            colCount: 2,
-                            items: [
+                                        placeholder: 'Enter office code'
+                                    }
+                                },
                                 {
                                     dataField: 'email',
                                     editorOptions: {
-                                        stylingMode: 'filled',
-                                        placeholder: 'Enter email address',
-                                    },
-                                    validationRules: [
-                                        { 
-                                            type: 'required',
-                                            message: 'Email is required'
-                                        },
-                                        {
-                                            type: 'email',
-                                            message: 'Invalid email format'
-                                        }
-                                    ]
+                                        placeholder: 'Enter email address'
+                                    }
                                 },
                                 {
                                     dataField: 'phone',
                                     editorOptions: {
-                                        stylingMode: 'filled',
-                                        placeholder: 'Enter phone number',
-                                        mask: '+99 (999) 999-9999',
-                                        maskRules: {
-                                            "9": /[0-9]/
-                                        },
-                                        maskInvalidMessage: 'Please enter a valid phone number'
+                                        placeholder: 'Enter phone number'
+                                    }
+                                },
+                                {
+                                    dataField: 'address',
+                                    editorType: 'dxTextArea',
+                                    editorOptions: {
+                                        height: 100,
+                                        placeholder: 'Enter office address'
                                     }
                                 }
                             ]
-                        },
-                        {
-                            itemType: 'group',
-                            caption: 'Location',
-                            items: [{
-                                dataField: 'address',
-                                editorType: 'dxTextArea',
-                                editorOptions: {
-                                    stylingMode: 'filled',
-                                    placeholder: 'Enter office address',
-                                    height: 100,
-                                    maxLength: 500,
-                                    spellcheck: true
-                                }
-                            }]
                         }
                     ]
                 }
@@ -394,9 +318,6 @@ window.OfficePage = class {
                     'columnChooserButton'
                 ]
             },
-            onRowInserting: (e) => this.handleRowInserting(e),
-            onRowUpdating: (e) => this.handleRowUpdating(e),
-            onRowRemoving: (e) => this.handleRowRemoving(e),
             onContentReady: (e) => {
                 // Add export buttons after grid is fully loaded
                 if (this.grid && !this.exportButtonsAdded) {
@@ -408,8 +329,14 @@ window.OfficePage = class {
                 if (this.grid) {
                     this.loadData();
                 }
-            }
+            },
+            onRowInserting: (e) => this.handleRowInserting(e),
+            onRowUpdating: (e) => this.handleRowUpdating(e),
+            onRowRemoving: (e) => this.handleRowRemoving(e)
         }).dxDataGrid('instance');
+
+        // Initial data load
+        this.loadData();
     }
 
     async loadData() {
@@ -423,22 +350,31 @@ window.OfficePage = class {
             this.grid.beginCustomLoading('Loading offices...');
             
             const data = await vomoAPI.getOffices();
-            this.grid.option('dataSource', data);
-            
-            // Hide loading panel
-            this.grid.endCustomLoading();
+            if (Array.isArray(data)) {
+                this.grid.option('dataSource', data);
+            } else {
+                console.warn('Invalid data format received:', data);
+                this.grid.option('dataSource', []);
+            }
         } catch (error) {
+            console.error('Error loading offices:', error);
             gridUtils.handleGridError(error, 'loading offices');
+        } finally {
+            // Always hide loading panel
+            this.grid.endCustomLoading();
         }
     }
 
     async loadZones() {
         try {
+            // Show loading state
+            const $zoneList = $('.zone-list');
+            $zoneList.html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading zones...</div>');
+            
             this.allZones = await vomoAPI.getZones();
             this.renderZones();
         } catch (error) {
-            console.error('Error loading zones:', error);
-            DevExpress.ui.notify('Failed to load zones', 'error', 3000);
+            gridUtils.handleGridError(error, 'loading zones');
         }
     }
 
@@ -488,6 +424,10 @@ window.OfficePage = class {
 
     async saveZone() {
         try {
+            // Show loading state
+            const $saveBtn = $('#saveZone');
+            $saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Saving...');
+
             if (!this.selectedZone) {
                 DevExpress.ui.notify('Please select a zone', 'warning', 3000);
                 return;
@@ -499,6 +439,8 @@ window.OfficePage = class {
             gridUtils.showSuccess('Zone assigned successfully');
         } catch (error) {
             gridUtils.handleGridError(error, 'assigning zone');
+        } finally {
+            $('#saveZone').prop('disabled', false).html('Save Changes');
         }
     }
 
@@ -516,8 +458,7 @@ window.OfficePage = class {
     async handleRowUpdating(e) {
         try {
             const { zone, ...updatedData } = { ...e.oldData, ...e.newData };
-            const officeId = typeof e.key === 'object' ? e.key.id : e.key;
-            await vomoAPI.updateOffice(officeId, updatedData);
+            await vomoAPI.updateOffice(e.key.id, updatedData);
             gridUtils.showSuccess('Office updated successfully');
         } catch (error) {
             e.cancel = true;
@@ -527,21 +468,12 @@ window.OfficePage = class {
 
     async handleRowRemoving(e) {
         try {
-            const officeId = typeof e.key === 'object' ? e.key.id : e.key;
-            await vomoAPI.deleteOffice(officeId);
+            await vomoAPI.deleteOffice(e.key.id);
             gridUtils.showSuccess('Office deleted successfully');
         } catch (error) {
             e.cancel = true;
             gridUtils.handleGridError(error, 'deleting office');
         }
-    }
-
-    editOffice(office) {
-        this.grid.editRow(this.grid.getRowElement(office.id));
-    }
-
-    deleteOffice(office) {
-        this.grid.deleteRow(this.grid.getRowElement(office.id));
     }
 };
 
