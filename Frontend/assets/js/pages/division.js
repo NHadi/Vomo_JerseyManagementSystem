@@ -39,6 +39,20 @@ window.DivisionPage = class {
             const divisionId = button.data('division-id');
             const divisionName = button.data('division-name');
             this.currentDivision = { id: divisionId, name: divisionName };
+            
+            // Update modal title with division name
+            $('#employeeModalLabel').text(`Manage Employees - ${divisionName}`);
+            
+            // Show loading state
+            $('.employee-list').html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <div class="mt-2">Loading employees...</div>
+                </div>
+            `);
+            
             this.loadEmployees(divisionId);
         });
 
@@ -48,6 +62,7 @@ window.DivisionPage = class {
             this.employeeFilter = '';
             $('#employeeSearchBox').val('');
             $('.employee-list').empty();
+            $('#employeeModalLabel').text('Manage Division Employees');
         });
 
         // Employee search
@@ -57,7 +72,20 @@ window.DivisionPage = class {
         });
 
         // Save employees
-        $('#saveEmployees').on('click', () => this.saveEmployees());
+        $('#saveEmployees').on('click', () => {
+            const $saveBtn = $('#saveEmployees');
+            const originalText = $saveBtn.text();
+            
+            // Disable button and show loading state
+            $saveBtn.prop('disabled', true)
+                   .html('<span class="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>Saving...');
+            
+            this.saveEmployees()
+                .finally(() => {
+                    // Re-enable button and restore text
+                    $saveBtn.prop('disabled', false).text(originalText);
+                });
+        });
     }
 
     initialize() {
@@ -84,15 +112,27 @@ window.DivisionPage = class {
                 {
                     dataField: 'name',
                     caption: 'Division Name',
+                    width: 200,
                     validationRules: [{ type: 'required' }],
                     cellTemplate: (container, options) => {
                         $('<div>')
-                            .addClass('d-flex align-items-center')
+                            .addClass('d-flex align-items-center p-2')
                             .append(
-                                $('<i>').addClass('ni ni-building mr-2 text-primary')
+                                $('<div>')
+                                    .addClass('division-icon-wrapper mr-3')
+                                    .append($('<i>').addClass('ni ni-building text-primary'))
                             )
                             .append(
-                                $('<span>').text(options.data.name || '')
+                                $('<div>')
+                                    .addClass('division-info')
+                                    .append(
+                                        $('<div>').addClass('division-name font-weight-bold').text(options.data.name || '')
+                                    )
+                                    .append(
+                                        $('<div>')
+                                            .addClass('division-meta text-muted small')
+                                            .text(`ID: ${options.data.id}`)
+                                    )
                             )
                             .appendTo(container);
                     }
@@ -100,39 +140,109 @@ window.DivisionPage = class {
                 {
                     dataField: 'description',
                     caption: 'Description',
+                    width: 250,
                     validationRules: [{ type: 'required' }],
                     cellTemplate: (container, options) => {
                         $('<div>')
-                            .addClass('text-muted small')
-                            .text(options.data.description || 'No description provided')
+                            .addClass('description-cell p-2')
+                            .append(
+                                $('<div>')
+                                    .addClass('text-wrap')
+                                    .text(options.data.description || 'No description provided')
+                            )
                             .appendTo(container);
                     }
                 },
                 {
                     dataField: 'employees',
                     caption: 'Employees',
+                    minWidth: 300,
                     allowFiltering: false,
                     allowSorting: false,
                     cellTemplate: (container, options) => {
-                        const $container = $('<div>').addClass('employee-container');
+                        const $container = $('<div>').addClass('employee-container p-2');
                         
                         if (options.data.employees?.length) {
-                            options.data.employees.forEach(employee => {
-                                $('<span>')
-                                    .addClass('employee-badge')
+                            const $employeeList = $('<div>').addClass('d-flex flex-wrap gap-2');
+                            
+                            options.data.employees.slice(0, 3).forEach(employee => {
+                                $('<div>')
+                                    .addClass('employee-chip d-flex align-items-center bg-light rounded p-2 mr-2')
                                     .append(
-                                        $('<i>').addClass('ni ni-single-02')
+                                        $('<i>').addClass('ni ni-single-02 text-primary mr-2')
                                     )
                                     .append(
-                                        $('<span>').text(' ' + employee.name)
+                                        $('<span>').addClass('employee-name').text(employee.name)
                                     )
-                                    .appendTo($container);
+                                    .appendTo($employeeList);
                             });
+
+                            if (options.data.employees.length > 3) {
+                                const remainingCount = options.data.employees.length - 3;
+                                const remainingEmployees = options.data.employees.slice(3);
+                                
+                                // Create a unique ID for the modal
+                                const modalId = `employeeListModal-${options.data.id}`;
+                                
+                                // Create the modal if it doesn't exist
+                                if (!$(`#${modalId}`).length) {
+                                    $('body').append(`
+                                        <div class="modal fade" id="${modalId}" tabindex="-1" role="dialog" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">All Employees - ${options.data.name}</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body p-0">
+                                                        <div class="list-group list-group-flush">
+                                                            ${remainingEmployees.map(emp => `
+                                                                <div class="list-group-item">
+                                                                    <div class="d-flex align-items-center">
+                                                                        <div class="employee-avatar mr-3">
+                                                                            <i class="ni ni-single-02 text-primary"></i>
+                                                                        </div>
+                                                                        <div class="flex-grow-1">
+                                                                            <h6 class="mb-1">${emp.name}</h6>
+                                                                            ${emp.email ? `<div class="text-muted small">${emp.email}</div>` : ''}
+                                                                            ${emp.phone ? `<div class="text-muted small"><i class="ni ni-mobile-button mr-1"></i>${emp.phone}</div>` : ''}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            `).join('')}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `);
+                                }
+
+                                // Create the +X more chip that opens the modal
+                                $('<div>')
+                                    .addClass('employee-chip more-chip d-flex align-items-center bg-primary text-white rounded p-2')
+                                    .attr({
+                                        'data-toggle': 'modal',
+                                        'data-target': `#${modalId}`,
+                                        'role': 'button'
+                                    })
+                                    .append(
+                                        $('<i>').addClass('ni ni-users mr-1')
+                                    )
+                                    .append(
+                                        $('<span>').text(`+${remainingCount} more`)
+                                    )
+                                    .appendTo($employeeList);
+                            }
+
+                            $employeeList.appendTo($container);
                         } else {
                             $('<div>')
-                                .addClass('text-muted small')
+                                .addClass('text-muted d-flex align-items-center')
                                 .append(
-                                    $('<i>').addClass('ni ni-info-circle mr-1')
+                                    $('<i>').addClass('ni ni-user-run mr-2')
                                 )
                                 .append(
                                     $('<span>').text('No employees assigned')
@@ -145,11 +255,11 @@ window.DivisionPage = class {
                 },
                 {
                     type: 'buttons',
-                    width: 140,
+                    width: 150,
                     alignment: 'center',
                     cellTemplate: (container, options) => {
                         const $buttonContainer = $('<div>')
-                            .addClass('d-flex justify-content-end align-items-center');
+                            .addClass('d-flex justify-content-end align-items-center p-2');
 
                         // Manage Employees Button
                         $('<button>')
@@ -180,12 +290,18 @@ window.DivisionPage = class {
                             .attr('title', 'Delete Division')
                             .append($('<i>').addClass('ni ni-fat-remove'))
                             .on('click', () => {
-                                DevExpress.ui.dialog.confirm("Are you sure you want to delete this division?", "Confirm deletion")
-                                    .then((result) => {
-                                        if (result) {
-                                            this.grid.deleteRow(options.rowIndex);
-                                        }
-                                    });
+                                DevExpress.ui.dialog.confirm({
+                                    title: "Confirm Deletion",
+                                    message: "Are you sure you want to delete this division?",
+                                    buttons: [{
+                                        text: "Delete",
+                                        type: "danger",
+                                        onClick: () => this.grid.deleteRow(options.rowIndex)
+                                    }, {
+                                        text: "Cancel",
+                                        type: "normal"
+                                    }]
+                                });
                             })
                             .appendTo($buttonContainer);
 
@@ -195,10 +311,16 @@ window.DivisionPage = class {
             ],
             showBorders: true,
             filterRow: { visible: true },
-            searchPanel: { visible: true },
+            searchPanel: {
+                visible: true,
+                width: 300,
+                placeholder: "Search divisions..."
+            },
             headerFilter: { visible: true },
             groupPanel: { visible: false },
             columnChooser: { enabled: true },
+            rowAlternationEnabled: true,
+            hoverStateEnabled: true,
             paging: {
                 pageSize: 10
             },
@@ -214,14 +336,16 @@ window.DivisionPage = class {
                 allowDeleting: true,
                 allowAdding: true,
                 useIcons: true,
-                texts: {
-                    confirmDeleteMessage: 'Are you sure you want to delete this division?'
-                },
                 popup: {
                     title: 'Division Information',
                     showTitle: true,
                     width: 700,
-                    height: 325
+                    height: 400,
+                    position: {
+                        my: 'center',
+                        at: 'center',
+                        of: window
+                    }
                 },
                 form: {
                     items: [
@@ -231,13 +355,17 @@ window.DivisionPage = class {
                             items: [
                                 {
                                     dataField: 'name',
-                                    validationRules: [{ type: 'required', message: 'Division name is required' }]
+                                    validationRules: [{ type: 'required', message: 'Division name is required' }],
+                                    editorOptions: {
+                                        stylingMode: 'filled'
+                                    }
                                 },
                                 {
                                     dataField: 'description',
                                     editorType: 'dxTextArea',
                                     editorOptions: {
-                                        height: 100
+                                        height: 100,
+                                        stylingMode: 'filled'
                                     },
                                     validationRules: [{ type: 'required', message: 'Description is required' }]
                                 }
@@ -254,11 +382,21 @@ window.DivisionPage = class {
                         options: {
                             icon: 'plus',
                             text: 'Add Division',
+                            type: 'default',
+                            stylingMode: 'contained',
                             onClick: () => this.grid.addRow()
                         }
                     },
                     'searchPanel',
-                    'columnChooserButton'
+                    {
+                        location: 'after',
+                        widget: 'dxButton',
+                        options: {
+                            icon: 'columnchooser',
+                            hint: 'Column Chooser',
+                            onClick: () => this.grid.showColumnChooser()
+                        }
+                    }
                 ]
             },
             onRowInserting: (e) => this.handleRowInserting(e),
@@ -290,6 +428,12 @@ window.DivisionPage = class {
             this.renderEmployees();
         } catch (error) {
             console.error('Error loading employees:', error);
+            $('.employee-list').html(`
+                <div class="alert alert-danger m-3" role="alert">
+                    <i class="ni ni-support-16 mr-2"></i>
+                    Failed to load employees. Please try again.
+                </div>
+            `);
             DevExpress.ui.notify('Failed to load employees', 'error', 3000);
         }
     }
@@ -300,18 +444,55 @@ window.DivisionPage = class {
 
         const filteredEmployees = this.allEmployees.filter(employee => 
             employee.name.toLowerCase().includes(this.employeeFilter) ||
-            employee.email?.toLowerCase().includes(this.employeeFilter)
+            employee.email?.toLowerCase().includes(this.employeeFilter) ||
+            employee.phone?.toLowerCase().includes(this.employeeFilter)
         );
 
         if (filteredEmployees.length === 0) {
             $employeeList.html(`
                 <div class="no-employees">
-                    <i class="ni ni-search"></i>
-                    No employees found matching your search
+                    <i class="ni ni-zoom-split-in"></i>
+                    <div>No employees found matching your search</div>
+                    <div class="text-muted small mt-2">Try adjusting your search terms</div>
                 </div>
             `);
             return;
         }
+
+        // Add select all option if there are employees
+        const allSelected = filteredEmployees.every(emp => this.selectedEmployees.has(emp.id));
+        const $selectAll = $(`
+            <div class="employee-item select-all mb-3">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="selectAll"
+                           ${allSelected ? 'checked' : ''}>
+                    <label class="custom-control-label" for="selectAll"></label>
+                </div>
+                <div class="employee-info d-flex align-items-center">
+                    <div class="employee-details">
+                        <div class="employee-name font-weight-bold">Select All</div>
+                        <div class="employee-email text-muted small">
+                            ${filteredEmployees.length} employees
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).on('change', 'input[type="checkbox"]', (e) => {
+            const checked = e.target.checked;
+            filteredEmployees.forEach(emp => {
+                if (checked) {
+                    this.selectedEmployees.add(emp.id);
+                } else {
+                    this.selectedEmployees.delete(emp.id);
+                }
+            });
+            this.renderEmployees();
+        });
+
+        $employeeList.append($selectAll);
+        
+        // Add divider
+        $employeeList.append('<hr class="my-3">');
 
         filteredEmployees.forEach(employee => {
             const isSelected = this.selectedEmployees.has(employee.id);
@@ -328,47 +509,59 @@ window.DivisionPage = class {
                            ${isSelected ? 'checked' : ''}>
                     <label class="custom-control-label" for="employee-${employee.id}"></label>
                 </div>
-                <div class="employee-info">
-                    <div class="employee-name">${employee.name}</div>
-                    <div class="employee-details">${employee.email || 'No email provided'}</div>
+                <div class="employee-info d-flex align-items-center">
+                    <div class="employee-avatar mr-3">
+                        <i class="ni ni-single-02 text-primary"></i>
+                    </div>
+                    <div class="employee-details">
+                        <div class="employee-name font-weight-bold">${employee.name}</div>
+                        <div class="employee-email text-muted small">${employee.email || 'No email provided'}</div>
+                        ${employee.phone ? `<div class="employee-phone text-muted small"><i class="ni ni-mobile-button mr-1"></i>${employee.phone}</div>` : ''}
+                    </div>
                 </div>
             </div>
-        `).on('change', (e) => {
+        `).on('change', 'input[type="checkbox"]', (e) => {
             const checked = e.target.checked;
             if (checked) {
                 this.selectedEmployees.add(employee.id);
+                $(e.target).closest('.employee-item').addClass('selected');
             } else {
                 this.selectedEmployees.delete(employee.id);
+                $(e.target).closest('.employee-item').removeClass('selected');
             }
         });
     }
 
     async saveEmployees() {
         try {
-            // Get current division's employees
-            const currentDivision = this.grid.option('dataSource').find(d => d.id === this.currentDivision.id);
-            const currentEmployeeIds = currentDivision?.employees?.map(e => e.id) || [];
+            // Convert Set to Array for API call
+            const selectedEmployeeIds = Array.from(this.selectedEmployees);
             
-            // Calculate which employees to add and remove
-            const employeesToAdd = Array.from(this.selectedEmployees).filter(id => !currentEmployeeIds.includes(id));
-            const employeesToRemove = currentEmployeeIds.filter(id => !this.selectedEmployees.has(id));
-            
-            // Add new employees
-            if (employeesToAdd.length > 0) {
-                await vomoAPI.assignEmployees(this.currentDivision.id, employeesToAdd);
-            }
-            
-            // Remove unselected employees
-            if (employeesToRemove.length > 0) {
-                await vomoAPI.removeEmployees(this.currentDivision.id, employeesToRemove);
-            }
+            // Update division employees with the complete list of selected employees
+            await vomoAPI.updateDivisionEmployees(this.currentDivision.id, selectedEmployeeIds);
             
             $('#employeeModal').modal('hide');
-            this.loadData();
-            DevExpress.ui.notify('Employees assigned successfully', 'success', 3000);
+            await this.loadData();
+            DevExpress.ui.notify({
+                message: 'Employees updated successfully',
+                type: 'success',
+                displayTime: 3000,
+                animation: {
+                    show: { type: 'fade', duration: 400, from: 0, to: 1 },
+                    hide: { type: 'fade', duration: 400, from: 1, to: 0 }
+                }
+            });
         } catch (error) {
-            console.error('Error saving employees:', error);
-            DevExpress.ui.notify('Failed to assign employees', 'error', 3000);
+            console.error('Error updating employees:', error);
+            DevExpress.ui.notify({
+                message: 'Failed to update employees',
+                type: 'error',
+                displayTime: 3000,
+                animation: {
+                    show: { type: 'fade', duration: 400, from: 0, to: 1 },
+                    hide: { type: 'fade', duration: 400, from: 1, to: 0 }
+                }
+            });
         }
     }
 
@@ -377,6 +570,8 @@ window.DivisionPage = class {
             const result = await vomoAPI.createDivision(e.data);
             e.data.id = result.id;
             DevExpress.ui.notify('Division created successfully', 'success', 3000);
+            // Refresh the grid data
+            await this.loadData();
         } catch (error) {
             console.error('Error creating division:', error);
             e.cancel = true;
@@ -386,7 +581,9 @@ window.DivisionPage = class {
 
     async handleRowUpdating(e) {
         try {
-            await vomoAPI.updateDivision(e.key.id, {...e.oldData, ...e.newData});
+            // Ensure we're passing the numeric ID
+            const divisionId = typeof e.key === 'object' ? e.key.id : e.key;
+            await vomoAPI.updateDivision(divisionId, {...e.oldData, ...e.newData});
             DevExpress.ui.notify('Division updated successfully', 'success', 3000);
         } catch (error) {
             console.error('Error updating division:', error);
@@ -397,7 +594,9 @@ window.DivisionPage = class {
 
     async handleRowRemoving(e) {
         try {
-            await vomoAPI.deleteDivision(e.key.id);
+            // Ensure we're passing the numeric ID
+            const divisionId = typeof e.key === 'object' ? e.key.id : e.key;
+            await vomoAPI.deleteDivision(divisionId);
             DevExpress.ui.notify('Division deleted successfully', 'success', 3000);
         } catch (error) {
             console.error('Error deleting division:', error);

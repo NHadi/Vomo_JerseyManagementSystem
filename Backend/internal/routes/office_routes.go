@@ -17,5 +17,6 @@ func SetupOfficeRoutes(router *gin.RouterGroup, service *application.OfficeServi
 		offices.PUT("/:id", handlers.UpdateOffice(service))
 		offices.DELETE("/:id", handlers.DeleteOffice(service))
 		offices.GET("/by-zone", handlers.GetOfficesByZone(service))
+		offices.POST("/:id/zone", handlers.AssignZone(service))
 	}
 }

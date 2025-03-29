@@ -33,13 +33,26 @@ window.OfficePage = class {
 
     bindEvents() {
         // Modal show event
-        $('#zoneModal').on('show.bs.modal', () => {
+        $('#zoneModal').on('show.bs.modal', (e) => {
+            const button = $(e.relatedTarget);
+            this.currentOffice = {
+                id: button.data('office-id'),
+                name: button.data('office-name')
+            };
             this.loadZones();
+            
+            // Update modal title to include office name
+            const modal = $(e.target);
+            modal.find('.modal-title').html(`
+                <i class="ni ni-map-big mr-2"></i>
+                Manage Zone - ${this.currentOffice.name}
+            `);
         });
 
         // Modal hide event
         $('#zoneModal').on('hide.bs.modal', () => {
             this.selectedZone = null;
+            this.currentOffice = null;
             this.zoneFilter = '';
             $('#zoneSearchBox').val('');
             $('.zone-list').empty();
@@ -246,41 +259,119 @@ window.OfficePage = class {
                     title: 'Office Information',
                     showTitle: true,
                     width: 700,
-                    height: 525
+                    height: 525,
+                    position: { my: 'center', at: 'center', of: window },
+                    showCloseButton: true,
+                    toolbarItems: [{
+                        toolbar: 'bottom',
+                        location: 'after',
+                        widget: 'dxButton',
+                        options: {
+                            text: 'Save',
+                            type: 'success',
+                            stylingMode: 'contained',
+                            onClick: function(e) {
+                                const grid = $('#officeGrid').dxDataGrid('instance');
+                                grid.saveEditData();
+                            }
+                        }
+                    }, {
+                        toolbar: 'bottom',
+                        location: 'after',
+                        widget: 'dxButton',
+                        options: {
+                            text: 'Cancel',
+                            stylingMode: 'outlined',
+                            onClick: function(e) {
+                                const grid = $('#officeGrid').dxDataGrid('instance');
+                                grid.cancelEditData();
+                            }
+                        }
+                    }]
                 },
                 form: {
+                    labelLocation: 'top',
+                    colCount: 1,
                     items: [
                         {
                             itemType: 'group',
+                            caption: 'Basic Information',
                             colCount: 2,
                             items: [
                                 {
                                     dataField: 'name',
-                                    validationRules: [{ type: 'required', message: 'Office name is required' }]
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        placeholder: 'Enter office name',
+                                    },
+                                    validationRules: [{ 
+                                        type: 'required',
+                                        message: 'Office name is required'
+                                    }]
                                 },
                                 {
                                     dataField: 'code',
-                                    validationRules: [{ type: 'required', message: 'Office code is required' }]
-                                },
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        placeholder: 'Enter office code',
+                                    },
+                                    validationRules: [{ 
+                                        type: 'required',
+                                        message: 'Office code is required'
+                                    }]
+                                }
+                            ]
+                        },
+                        {
+                            itemType: 'group',
+                            caption: 'Contact Information',
+                            colCount: 2,
+                            items: [
                                 {
                                     dataField: 'email',
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        placeholder: 'Enter email address',
+                                    },
                                     validationRules: [
-                                        { type: 'required', message: 'Email is required' },
-                                        { type: 'email', message: 'Invalid email format' }
+                                        { 
+                                            type: 'required',
+                                            message: 'Email is required'
+                                        },
+                                        {
+                                            type: 'email',
+                                            message: 'Invalid email format'
+                                        }
                                     ]
                                 },
                                 {
-                                    dataField: 'phone'
-                                },
-                                {
-                                    dataField: 'address',
-                                    editorType: 'dxTextArea',
+                                    dataField: 'phone',
                                     editorOptions: {
-                                        height: 100
-                                    },
-                                    colSpan: 2
+                                        stylingMode: 'filled',
+                                        placeholder: 'Enter phone number',
+                                        mask: '+99 (999) 999-9999',
+                                        maskRules: {
+                                            "9": /[0-9]/
+                                        },
+                                        maskInvalidMessage: 'Please enter a valid phone number'
+                                    }
                                 }
                             ]
+                        },
+                        {
+                            itemType: 'group',
+                            caption: 'Location',
+                            items: [{
+                                dataField: 'address',
+                                editorType: 'dxTextArea',
+                                editorOptions: {
+                                    stylingMode: 'filled',
+                                    placeholder: 'Enter office address',
+                                    height: 100,
+                                    maxLength: 500,
+                                    spellcheck: true
+                                }
+                            }]
                         }
                     ]
                 }
@@ -402,8 +493,10 @@ window.OfficePage = class {
 
     async handleRowUpdating(e) {
         try {
-            const updatedData = { ...e.oldData, ...e.newData };
-            await vomoAPI.updateOffice(e.key, updatedData);
+            // Create updatedData without zone information
+            const { zone, ...updatedData } = { ...e.oldData, ...e.newData };
+            const officeId = typeof e.key === 'object' ? e.key.id : e.key;
+            await vomoAPI.updateOffice(officeId, updatedData);
             DevExpress.ui.notify('Office updated successfully', 'success', 3000);
         } catch (error) {
             console.error('Error updating office:', error);
@@ -414,7 +507,9 @@ window.OfficePage = class {
 
     async handleRowRemoving(e) {
         try {
-            await vomoAPI.deleteOffice(e.key);
+            // Ensure we're passing the numeric ID
+            const officeId = typeof e.key === 'object' ? e.key.id : e.key;
+            await vomoAPI.deleteOffice(officeId);
             DevExpress.ui.notify('Office deleted successfully', 'success', 3000);
         } catch (error) {
             console.error('Error deleting office:', error);

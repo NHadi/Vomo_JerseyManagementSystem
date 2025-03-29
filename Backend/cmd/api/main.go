@@ -102,7 +102,7 @@ func main() {
 	backupService := application.NewBackupService(backupRepo, cfg)
 	zoneService := application.NewZoneService(zoneRepo, regionRepo, officeRepo, auditService)
 	regionService := application.NewRegionService(regionRepo, zoneRepo, auditService)
-	officeService := application.NewOfficeService(officeRepo, auditService)
+	officeService := application.NewOfficeService(officeRepo, auditService, zoneRepo)
 	divisionService := application.NewDivisionService(divisionRepo, auditService)
 	employeeService := application.NewEmployeeService(employeeRepo, auditService)
 	productService := application.NewProductService(productRepo, auditService)

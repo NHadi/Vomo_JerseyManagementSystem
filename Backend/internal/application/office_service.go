@@ -3,21 +3,27 @@ package application
 import (
 	"context"
 	"errors"
+	"fmt"
 	"vomo/internal/domain/audit"
 	"vomo/internal/domain/office"
+	"vomo/internal/domain/zone"
+
+	"github.com/gin-gonic/gin"
 )
 
 // OfficeService handles business logic for office operations
 type OfficeService struct {
 	repo     office.Repository
 	auditSvc *audit.Service
+	zoneRepo zone.Repository
 }
 
 // NewOfficeService creates a new office service instance
-func NewOfficeService(repo office.Repository, auditSvc *audit.Service) *OfficeService {
+func NewOfficeService(repo office.Repository, auditSvc *audit.Service, zoneRepo zone.Repository) *OfficeService {
 	return &OfficeService{
 		repo:     repo,
 		auditSvc: auditSvc,
+		zoneRepo: zoneRepo,
 	}
 }
 
@@ -69,7 +75,11 @@ func (s *OfficeService) Update(o *office.Office, ctx context.Context) error {
 		return err
 	}
 
-	if err := s.repo.Update(o, ctx); err != nil {
+	// Create a copy of the office without zone relationship
+	updateData := *o
+	updateData.Zone = nil // Explicitly set zone to nil to prevent GORM from updating it
+
+	if err := s.repo.Update(&updateData, ctx); err != nil {
 		return err
 	}
 
@@ -106,4 +116,52 @@ func (s *OfficeService) FindByCode(code string, ctx context.Context) (*office.Of
 // FindByEmail retrieves an office by its email
 func (s *OfficeService) FindByEmail(email string, ctx context.Context) (*office.Office, error) {
 	return s.repo.FindByEmail(email, ctx)
+}
+
+// getTenantID extracts tenant ID from gin context
+func getTenantID(c *gin.Context) int {
+	tenantID, _ := c.Get("tenant_id")
+	return tenantID.(int)
+}
+
+// AssignZone assigns a zone to an office
+func (s *OfficeService) AssignZone(officeID int, zoneID int, c *gin.Context) (*office.Office, error) {
+	// Get the office
+	office, err := s.FindByID(officeID, c)
+	if err != nil {
+		return nil, fmt.Errorf("office not found: %w", err)
+	}
+
+	// Verify zone exists
+	zoneEntity, err := s.zoneRepo.FindByID(zoneID, c)
+	if err != nil {
+		return nil, fmt.Errorf("zone not found: %w", err)
+	}
+
+	// Update office with new zone ID only
+	office.ZoneID = &zoneEntity.ID
+
+	// Get old data for audit
+	oldOffice, err := s.repo.FindByID(officeID, c)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get old office data: %w", err)
+	}
+
+	// Save the changes
+	if err := s.repo.Update(office, c); err != nil {
+		return nil, fmt.Errorf("failed to update office: %w", err)
+	}
+
+	// Log the update action
+	if err := s.auditSvc.LogChange("office", office.ID, audit.ActionUpdate, oldOffice, office, c); err != nil {
+		return nil, fmt.Errorf("failed to log change: %w", err)
+	}
+
+	// Reload office to get updated data with zone info
+	updatedOffice, err := s.FindByID(officeID, c)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reload office data: %w", err)
+	}
+
+	return updatedOffice, nil
 }

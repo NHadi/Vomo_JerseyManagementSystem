@@ -42,7 +42,10 @@ export const officeAPI = {
 
     async updateOffice(officeId, officeData) {
         try {
-            const response = await fetch(`${config.baseUrl}/offices/${officeId}`, {
+            // Ensure officeId is properly handled
+            const id = officeId?.id || officeId;
+            
+            const response = await fetch(`${config.baseUrl}/offices/${id}`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
                 body: JSON.stringify(officeData)
@@ -84,7 +87,7 @@ export const officeAPI = {
             const response = await fetch(`${config.baseUrl}/offices/${officeId}/zone`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ zoneId })
+                body: JSON.stringify({ zone_id: zoneId })
             });
 
             if (!response.ok) {

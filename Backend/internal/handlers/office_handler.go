@@ -56,6 +56,11 @@ type UpdateOfficeRequest struct {
 	ZoneID  *int   `json:"zone_id" example:"1"`
 }
 
+// AssignZoneRequest represents the request structure for assigning a zone to an office
+type AssignZoneRequest struct {
+	ZoneID int `json:"zone_id" binding:"required" example:"1"`
+}
+
 func toOfficeResponse(o *office.Office) OfficeResponse {
 	response := OfficeResponse{
 		ID:        o.ID,
@@ -300,5 +305,45 @@ func GetOfficesByZone(service *application.OfficeService) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, response)
+	}
+}
+
+// @Summary Assign zone to an office
+// @Description Assign a zone to an existing office
+// @Tags Office
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param id path int true "Office ID"
+// @Param request body AssignZoneRequest true "Zone ID"
+// @Success 200 {object} OfficeResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "Office not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /offices/{id}/zone [post]
+func AssignZone(service *application.OfficeService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid office ID"})
+			return
+		}
+
+		var req AssignZoneRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		office, err := service.AssignZone(id, req.ZoneID, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, toOfficeResponse(office))
 	}
 }

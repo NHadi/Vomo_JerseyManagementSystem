@@ -15,6 +15,6 @@ func SetupDivisionRoutes(router *gin.RouterGroup, divisionService *application.D
 		divisions.DELETE("/:id", handlers.DeleteDivision(divisionService))
 		divisions.GET("/:id", handlers.GetDivision(divisionService))
 		divisions.GET("", handlers.GetAllDivisions(divisionService))
-
+		divisions.POST("/:id/employees", handlers.UpdateDivisionEmployees(divisionService))
 	}
 }

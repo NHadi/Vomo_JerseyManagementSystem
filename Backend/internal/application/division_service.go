@@ -71,3 +71,26 @@ func (s *DivisionService) Delete(id int, ctx context.Context) error {
 	// Log the delete action
 	return s.auditSvc.LogChange("division", id, audit.ActionDelete, division, nil, ctx)
 }
+
+// UpdateEmployees updates the employees assigned to a division
+func (s *DivisionService) UpdateEmployees(divisionID int, employeeIDs []int, ctx context.Context) error {
+	// Get old data for audit
+	oldDivision, err := s.repo.FindByID(divisionID, ctx)
+	if err != nil {
+		return err
+	}
+
+	// Update employees
+	if err := s.repo.UpdateEmployees(divisionID, employeeIDs, ctx); err != nil {
+		return err
+	}
+
+	// Get updated data for audit
+	updatedDivision, err := s.repo.FindByID(divisionID, ctx)
+	if err != nil {
+		return err
+	}
+
+	// Log the update action
+	return s.auditSvc.LogChange("division", divisionID, audit.ActionUpdate, oldDivision, updatedDivision, ctx)
+}

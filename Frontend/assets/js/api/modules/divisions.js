@@ -25,11 +25,7 @@ export const divisionAPI = {
             const response = await fetch(`${config.baseUrl}/divisions`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({
-                    name: divisionData.name,
-                    description: divisionData.description,
-                    tenant_id: divisionData.tenant_id
-                })
+                body: JSON.stringify(divisionData)
             });
 
             if (!response.ok) {
@@ -49,11 +45,7 @@ export const divisionAPI = {
             const response = await fetch(`${config.baseUrl}/divisions/${divisionId}`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({
-                    name: divisionData.name,
-                    description: divisionData.description,
-                    tenant_id: divisionData.tenant_id
-                })
+                body: JSON.stringify(divisionData)
             });
 
             if (!response.ok) {
@@ -87,7 +79,25 @@ export const divisionAPI = {
         }
     },
 
-    async assignEmployees(divisionId, employeeIds) {
+    async getEmployees() {
+        try {
+            const response = await fetch(`${config.baseUrl}/employees`, {
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to fetch employees');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Get employees error:', error);
+            throw error;
+        }
+    },
+
+    async updateDivisionEmployees(divisionId, employeeIds) {
         try {
             const response = await fetch(`${config.baseUrl}/divisions/${divisionId}/employees`, {
                 method: 'POST',
@@ -97,32 +107,12 @@ export const divisionAPI = {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Failed to assign employees to division');
+                throw new Error(error.error || 'Failed to update division employees');
             }
 
             return await response.json();
         } catch (error) {
-            console.error('Assign employees error:', error);
-            throw error;
-        }
-    },
-
-    async removeEmployees(divisionId, employeeIds) {
-        try {
-            const response = await fetch(`${config.baseUrl}/divisions/${divisionId}/employees`, {
-                method: 'DELETE',
-                headers: getAuthHeaders(),
-                body: JSON.stringify({ employee_ids: employeeIds })
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Failed to remove employees from division');
-            }
-
-            return true;
-        } catch (error) {
-            console.error('Remove employees error:', error);
+            console.error('Update division employees error:', error);
             throw error;
         }
     }

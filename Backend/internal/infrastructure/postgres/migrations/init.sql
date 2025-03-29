@@ -24,9 +24,16 @@ CREATE TABLE IF NOT EXISTS public.master_division
     id integer NOT NULL DEFAULT nextval('master_division_id_seq'::regclass),
     name character varying(100) COLLATE pg_catalog."default" NOT NULL,
     description text COLLATE pg_catalog."default",
+    tenant_id integer NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT master_division_pkey PRIMARY KEY (id)
+    created_by character varying(50) COLLATE pg_catalog."default",
+    updated_by character varying(50) COLLATE pg_catalog."default",
+    CONSTRAINT master_division_pkey PRIMARY KEY (id),
+    CONSTRAINT master_division_tenant_id_fkey FOREIGN KEY (tenant_id)
+        REFERENCES public.master_tenant (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
 )
 
 TABLESPACE pg_default;
@@ -34,6 +41,11 @@ TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public.master_division
     OWNER to vomo_admin;
 
+-- Set sequence owner
+ALTER SEQUENCE master_division_id_seq OWNED BY master_division.id;
+
+-- Create index for tenant_id
+CREATE INDEX IF NOT EXISTS idx_division_tenant ON master_division(tenant_id);
 
 -- Table: public.master_employee
 

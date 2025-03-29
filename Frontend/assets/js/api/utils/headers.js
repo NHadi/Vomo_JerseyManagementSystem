@@ -1,9 +1,11 @@
 // Header management utilities
-export const getAuthHeaders = () => {
+export function getAuthHeaders() {
     const token = localStorage.getItem('token');
+    const tenantId = localStorage.getItem('tenant_id');
+    
     return {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
-        'X-Tenant-ID': localStorage.getItem('tenant_id')
+        'X-Tenant-ID': tenantId
     };
-}; 
+} 
