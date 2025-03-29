@@ -18,6 +18,10 @@
         // Handle all navigation clicks in one handler
         $(document).on('click', '.nav-link[href], a[href]:not(.nav-link)', function(e) {
             const href = $(this).attr('href');
+            // Skip if link has data-no-route attribute
+            if ($(this).attr('data-no-route')) {
+                return;
+            }
             if (href && href !== '#' && !href.startsWith('http') && !href.startsWith('mailto:')) {
                 e.preventDefault();
                 e.stopPropagation();

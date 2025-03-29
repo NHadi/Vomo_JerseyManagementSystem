@@ -1,4 +1,5 @@
 import { vomoAPI } from '../api/index.js';
+import { gridUtils } from '../utils/gridUtils.js';
 
 // Define OfficePage
 window.OfficePage = class {
@@ -8,6 +9,7 @@ window.OfficePage = class {
         this.currentOffice = null;
         this.allZones = [];
         this.zoneFilter = '';
+        this.exportButtonsAdded = false;
         
         // Initialize components
         if (typeof DevExpress !== 'undefined') {
@@ -88,6 +90,7 @@ window.OfficePage = class {
                 }
             },
             remoteOperations: false,
+            ...gridUtils.getCommonGridConfig(),
             columns: [
                 {
                     dataField: 'name',
@@ -394,17 +397,38 @@ window.OfficePage = class {
             onRowInserting: (e) => this.handleRowInserting(e),
             onRowUpdating: (e) => this.handleRowUpdating(e),
             onRowRemoving: (e) => this.handleRowRemoving(e),
-            onInitialized: () => this.loadData()
+            onContentReady: (e) => {
+                // Add export buttons after grid is fully loaded
+                if (this.grid && !this.exportButtonsAdded) {
+                    gridUtils.addExportButtons(this.grid, 'Office_List');
+                    this.exportButtonsAdded = true;
+                }
+            },
+            onInitialized: () => {
+                if (this.grid) {
+                    this.loadData();
+                }
+            }
         }).dxDataGrid('instance');
     }
 
     async loadData() {
         try {
+            if (!this.grid) {
+                console.warn('Grid instance is not available');
+                return;
+            }
+
+            // Show loading panel
+            this.grid.beginCustomLoading('Loading offices...');
+            
             const data = await vomoAPI.getOffices();
             this.grid.option('dataSource', data);
+            
+            // Hide loading panel
+            this.grid.endCustomLoading();
         } catch (error) {
-            console.error('Error loading offices:', error);
-            DevExpress.ui.notify('Failed to load offices', 'error', 3000);
+            gridUtils.handleGridError(error, 'loading offices');
         }
     }
 
@@ -472,10 +496,9 @@ window.OfficePage = class {
             await vomoAPI.assignZone(this.currentOffice.id, this.selectedZone.id);
             $('#zoneModal').modal('hide');
             await this.loadData();
-            DevExpress.ui.notify('Zone assigned successfully', 'success', 3000);
+            gridUtils.showSuccess('Zone assigned successfully');
         } catch (error) {
-            console.error('Error saving zone:', error);
-            DevExpress.ui.notify('Failed to assign zone', 'error', 3000);
+            gridUtils.handleGridError(error, 'assigning zone');
         }
     }
 
@@ -483,38 +506,33 @@ window.OfficePage = class {
         try {
             const result = await vomoAPI.createOffice(e.data);
             e.data.id = result.id;
-            DevExpress.ui.notify('Office created successfully', 'success', 3000);
+            gridUtils.showSuccess('Office created successfully');
         } catch (error) {
-            console.error('Error creating office:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to create office', 'error', 3000);
+            gridUtils.handleGridError(error, 'creating office');
         }
     }
 
     async handleRowUpdating(e) {
         try {
-            // Create updatedData without zone information
             const { zone, ...updatedData } = { ...e.oldData, ...e.newData };
             const officeId = typeof e.key === 'object' ? e.key.id : e.key;
             await vomoAPI.updateOffice(officeId, updatedData);
-            DevExpress.ui.notify('Office updated successfully', 'success', 3000);
+            gridUtils.showSuccess('Office updated successfully');
         } catch (error) {
-            console.error('Error updating office:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to update office', 'error', 3000);
+            gridUtils.handleGridError(error, 'updating office');
         }
     }
 
     async handleRowRemoving(e) {
         try {
-            // Ensure we're passing the numeric ID
             const officeId = typeof e.key === 'object' ? e.key.id : e.key;
             await vomoAPI.deleteOffice(officeId);
-            DevExpress.ui.notify('Office deleted successfully', 'success', 3000);
+            gridUtils.showSuccess('Office deleted successfully');
         } catch (error) {
-            console.error('Error deleting office:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to delete office', 'error', 3000);
+            gridUtils.handleGridError(error, 'deleting office');
         }
     }
 

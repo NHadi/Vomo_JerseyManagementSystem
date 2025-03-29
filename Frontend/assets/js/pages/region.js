@@ -1,4 +1,5 @@
 import { vomoAPI } from '../api/index.js';
+import { gridUtils } from '../utils/gridUtils.js';
 
 // Define RegionPage
 window.RegionPage = class {
@@ -8,6 +9,7 @@ window.RegionPage = class {
         this.currentRegion = null;
         this.allZones = [];
         this.zoneFilter = '';
+        this.exportButtonsAdded = false;
         
         // Initialize components
         if (typeof DevExpress !== 'undefined') {
@@ -80,6 +82,7 @@ window.RegionPage = class {
                 }
             },
             remoteOperations: false,
+            ...gridUtils.getCommonGridConfig(),
             columns: [
                 {
                     dataField: 'name',
@@ -151,6 +154,18 @@ window.RegionPage = class {
                         const $buttonContainer = $('<div>')
                             .addClass('d-flex justify-content-end align-items-center');
 
+                        // Manage Zones Button
+                        $('<button>')
+                            .addClass('btn btn-icon-only btn-sm btn-primary mr-2')
+                            .attr({
+                                'title': 'Manage Zones',
+                                'data-toggle': 'modal',
+                                'data-target': '#zoneModal',
+                                'data-region-id': options.data.id,
+                                'data-region-name': options.data.name
+                            })
+                            .append($('<i>').addClass('fas fa-map-marked-alt'))
+                            .appendTo($buttonContainer);
 
                         // Edit Button
                         $('<button>')
@@ -185,7 +200,7 @@ window.RegionPage = class {
             filterRow: { visible: true },
             searchPanel: { visible: true },
             headerFilter: { visible: true },
-            groupPanel: { visible: false },
+            groupPanel: { visible: true },
             columnChooser: { enabled: false },
             paging: {
                 pageSize: 10
@@ -193,18 +208,13 @@ window.RegionPage = class {
             pager: {
                 showPageSizeSelector: true,
                 allowedPageSizes: [5, 10, 20],
-                showInfo: true,
-                showNavigationButtons: true
+                showInfo: true
             },
             editing: {
                 mode: 'popup',
                 allowUpdating: true,
                 allowDeleting: true,
                 allowAdding: true,
-                useIcons: true,
-                texts: {
-                    confirmDeleteMessage: 'Are you sure you want to delete this region?'
-                },
                 popup: {
                     title: 'Region Information',
                     showTitle: true,
@@ -219,15 +229,18 @@ window.RegionPage = class {
                             items: [
                                 {
                                     dataField: 'name',
-                                    validationRules: [{ type: 'required', message: 'Region name is required' }]
+                                    isRequired: true,
+                                    editorOptions: {
+                                        placeholder: 'Enter region name'
+                                    }
                                 },
                                 {
                                     dataField: 'description',
                                     editorType: 'dxTextArea',
                                     editorOptions: {
-                                        height: 100
-                                    },
-                                    validationRules: [{ type: 'required', message: 'Description is required' }]
+                                        height: 100,
+                                        placeholder: 'Enter region description'
+                                    }
                                 }
                             ]
                         }
@@ -249,30 +262,58 @@ window.RegionPage = class {
                     'columnChooserButton'
                 ]
             },
+            onContentReady: (e) => {
+                // Add export buttons after grid is fully loaded
+                if (this.grid && !this.exportButtonsAdded) {
+                    gridUtils.addExportButtons(this.grid, 'Region_List');
+                    this.exportButtonsAdded = true;
+                }
+            },
+            onInitialized: () => {
+                if (this.grid) {
+                    this.loadData();
+                }
+            },
             onRowInserting: (e) => this.handleRowInserting(e),
             onRowUpdating: (e) => this.handleRowUpdating(e),
-            onRowRemoving: (e) => this.handleRowRemoving(e),
-            onInitialized: () => this.loadData()
+            onRowRemoving: (e) => this.handleRowRemoving(e)
         }).dxDataGrid('instance');
+
+        // Initial data load
+        this.loadData();
     }
 
     async loadData() {
         try {
+            if (!this.grid) {
+                console.warn('Grid instance is not available');
+                return;
+            }
+
+            // Show loading panel
+            this.grid.beginCustomLoading('Loading regions...');
+            
             const data = await vomoAPI.getRegions();
             this.grid.option('dataSource', data);
+            
+            // Hide loading panel
+            this.grid.endCustomLoading();
         } catch (error) {
-            console.error('Error loading regions:', error);
-            DevExpress.ui.notify('Failed to load regions', 'error', 3000);
+            gridUtils.handleGridError(error, 'loading regions');
         }
     }
 
     async loadZones(regionId) {
         try {
+            // Show loading state
+            const $modal = $('#zoneModal');
+            const $zoneList = $('.zone-list');
+            $zoneList.html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading zones...</div>');
+            
             this.allZones = await vomoAPI.getZones();
             this.renderZones();
         } catch (error) {
-            console.error('Error loading zones:', error);
-            DevExpress.ui.notify('Failed to load zones', 'error', 3000);
+            gridUtils.handleGridError(error, 'loading zones');
         }
     }
 
@@ -327,13 +368,18 @@ window.RegionPage = class {
 
     async saveZones() {
         try {
+            // Show loading state
+            const $saveBtn = $('#saveZones');
+            $saveBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Saving...');
+
             await vomoAPI.assignZones(this.currentRegion.id, Array.from(this.selectedZones));
             $('#zoneModal').modal('hide');
-            this.loadData();
-            DevExpress.ui.notify('Zones assigned successfully', 'success', 3000);
+            await this.loadData();
+            gridUtils.showSuccess('Zones assigned successfully');
         } catch (error) {
-            console.error('Error saving zones:', error);
-            DevExpress.ui.notify('Failed to assign zones', 'error', 3000);
+            gridUtils.handleGridError(error, 'assigning zones');
+        } finally {
+            $('#saveZones').prop('disabled', false).html('Save Changes');
         }
     }
 
@@ -341,33 +387,30 @@ window.RegionPage = class {
         try {
             const result = await vomoAPI.createRegion(e.data);
             e.data.id = result.id;
-            DevExpress.ui.notify('Region created successfully', 'success', 3000);
+            gridUtils.showSuccess('Region created successfully');
         } catch (error) {
-            console.error('Error creating region:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to create region', 'error', 3000);
+            gridUtils.handleGridError(error, 'creating region');
         }
     }
 
     async handleRowUpdating(e) {
         try {
             await vomoAPI.updateRegion(e.key.id, {...e.oldData, ...e.newData});
-            DevExpress.ui.notify('Region updated successfully', 'success', 3000);
+            gridUtils.showSuccess('Region updated successfully');
         } catch (error) {
-            console.error('Error updating region:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to update region', 'error', 3000);
+            gridUtils.handleGridError(error, 'updating region');
         }
     }
 
     async handleRowRemoving(e) {
         try {
             await vomoAPI.deleteRegion(e.key.id);
-            DevExpress.ui.notify('Region deleted successfully', 'success', 3000);
+            gridUtils.showSuccess('Region deleted successfully');
         } catch (error) {
-            console.error('Error deleting region:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to delete region', 'error', 3000);
+            gridUtils.handleGridError(error, 'deleting region');
         }
     }
 

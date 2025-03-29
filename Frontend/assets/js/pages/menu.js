@@ -1,9 +1,11 @@
 import { vomoAPI } from '../api/index.js';
+import { gridUtils } from '../utils/gridUtils.js';
 
 // Define MenuPage
 window.MenuPage = class {
     constructor() {
         this.grid = null;
+        this.exportButtonsAdded = false;
         // Check if DevExtreme is already loaded
         if (typeof DevExpress !== 'undefined') {
             this.initialize();
@@ -70,6 +72,7 @@ window.MenuPage = class {
                 }
             },
             remoteOperations: false,
+            ...gridUtils.getCommonGridConfig(),
             columns: [                
                 {
                     dataField: 'name',
@@ -207,17 +210,38 @@ window.MenuPage = class {
             onRowInserting: (e) => this.handleRowInserting(e),
             onRowUpdating: (e) => this.handleRowUpdating(e),
             onRowRemoving: (e) => this.handleRowRemoving(e),
-            onInitialized: () => this.loadData()
+            onContentReady: (e) => {
+                // Add export buttons after grid is fully loaded
+                if (this.grid && !this.exportButtonsAdded) {
+                    gridUtils.addExportButtons(this.grid, 'Menu_List');
+                    this.exportButtonsAdded = true;
+                }
+            },
+            onInitialized: () => {
+                if (this.grid) {
+                    this.loadData();
+                }
+            }
         }).dxDataGrid('instance');
     }
 
     async loadData() {
         try {
+            if (!this.grid) {
+                console.warn('Grid instance is not available');
+                return;
+            }
+
+            // Show loading panel
+            this.grid.beginCustomLoading('Loading menus...');
+            
             const data = await vomoAPI.getMenus();
             this.grid.option('dataSource', data);
+            
+            // Hide loading panel
+            this.grid.endCustomLoading();
         } catch (error) {
-            console.error('Error loading menus:', error);
-            DevExpress.ui.notify('Failed to load menus', 'error', 3000);
+            gridUtils.handleGridError(error, 'loading menus');
         }
     }
 
@@ -225,33 +249,30 @@ window.MenuPage = class {
         try {
             const result = await vomoAPI.createMenu(e.data);
             e.data.id = result.id;
-            DevExpress.ui.notify('Menu created successfully', 'success', 3000);
+            gridUtils.showSuccess('Menu created successfully');
         } catch (error) {
-            console.error('Error creating menu:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to create menu', 'error', 3000);
+            gridUtils.handleGridError(error, 'creating menu');
         }
     }
 
     async handleRowUpdating(e) {
         try {
             await vomoAPI.updateMenu(e.key.id, {...e.oldData, ...e.newData});
-            DevExpress.ui.notify('Menu updated successfully', 'success', 3000);
+            gridUtils.showSuccess('Menu updated successfully');
         } catch (error) {
-            console.error('Error updating menu:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to update menu', 'error', 3000);
+            gridUtils.handleGridError(error, 'updating menu');
         }
     }
 
     async handleRowRemoving(e) {
         try {
             await vomoAPI.deleteMenu(e.key.id);
-            DevExpress.ui.notify('Menu deleted successfully', 'success', 3000);
+            gridUtils.showSuccess('Menu deleted successfully');
         } catch (error) {
-            console.error('Error deleting menu:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to delete menu', 'error', 3000);
+            gridUtils.handleGridError(error, 'deleting menu');
         }
     }
 };

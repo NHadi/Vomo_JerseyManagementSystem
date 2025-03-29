@@ -1,4 +1,5 @@
 import { vomoAPI } from '../api/index.js';
+import { gridUtils } from '../utils/gridUtils.js';
 
 // Define EmployeePage
 window.EmployeePage = class {
@@ -8,6 +9,7 @@ window.EmployeePage = class {
         this.currentEmployee = null;
         this.allDivisions = [];
         this.divisionFilter = '';
+        this.exportButtonsAdded = false;
         
         // Initialize components
         if (typeof DevExpress !== 'undefined') {
@@ -71,13 +73,16 @@ window.EmployeePage = class {
             this.grid.dispose();
         }
 
+        // Create a custom store for better data handling
+        const dataStore = new DevExpress.data.ArrayStore({
+            key: 'id',
+            data: []
+        });
+
         this.grid = $('#employeeGrid').dxDataGrid({
             dataSource: {
-                store: {
-                    type: 'array',
-                    key: 'id',
-                    data: []
-                }
+                store: dataStore,
+                reshapeOnPush: true
             },
             remoteOperations: false,
             columns: [
@@ -241,150 +246,178 @@ window.EmployeePage = class {
                 showInfo: true,
                 showNavigationButtons: true
             },
-            editing: {
-                mode: 'popup',
-                allowUpdating: true,
-                allowDeleting: true,
-                allowAdding: true,
-                useIcons: true,
-                texts: {
-                    confirmDeleteMessage: 'Are you sure you want to delete this employee?',
-                    saveRowChanges: 'Save Changes',
-                    cancelRowChanges: 'Cancel',
-                    deleteRow: 'Delete',
-                    editRow: 'Edit',
-                    addRow: 'New Employee'
-                },
-                popup: {
-                    title: 'Employee Information',
-                    showTitle: true,
-                    width: 800,
-                    height: 'auto',
-                    position: { my: 'center', at: 'center', of: window },
-                    showCloseButton: true,
-                    toolbarItems: [{
-                        toolbar: 'bottom',
-                        location: 'after',
-                        widget: 'dxButton',
-                        options: {
-                            text: 'Save',
-                            type: 'success',
-                            stylingMode: 'contained',
-                            onClick: () => {
-                                this.grid.saveEditData();
-                            }
-                        }
-                    }, {
-                        toolbar: 'bottom',
-                        location: 'after',
-                        widget: 'dxButton',
-                        options: {
-                            text: 'Cancel',
-                            stylingMode: 'outlined',
-                            onClick: () => {
-                                this.grid.cancelEditData();
-                            }
-                        }
-                    }]
-                },
-                form: {
-                    labelLocation: 'top',
-                    colCount: 1,
+            ...gridUtils.getCommonGridConfig({
+                toolbar: {
                     items: [
                         {
-                            itemType: 'group',
-                            caption: 'Basic Information',
-                            colCount: 2,
-                            items: [
-                                {
-                                    dataField: 'name',
-                                    label: { text: 'Full Name' },
-                                    validationRules: [{ type: 'required', message: 'Full name is required' }],
-                                    editorOptions: {
-                                        placeholder: 'Enter employee full name',
-                                        mode: 'text',
-                                        stylingMode: 'filled',
-                                        showClearButton: true,
-                                        valueChangeEvent: 'keyup change'
-                                    }
-                                },
-                                {
-                                    dataField: 'email',
-                                    label: { text: 'Email Address' },
-                                    validationRules: [
-                                        { type: 'required', message: 'Email address is required' },
-                                        { type: 'email', message: 'Please enter a valid email address' }
-                                    ],
-                                    editorOptions: {
-                                        placeholder: 'Enter work email address',
-                                        mode: 'email',
-                                        stylingMode: 'filled',
-                                        showClearButton: true,
-                                        valueChangeEvent: 'keyup change'
-                                    }
-                                }
-                            ]
+                            location: 'before',
+                            widget: 'dxButton',
+                            options: {
+                                icon: 'plus',
+                                text: 'Add Employee',
+                                onClick: () => this.grid.addRow()
+                            }
                         },
-                        {
-                            itemType: 'group',
-                            caption: 'Contact Details',
-                            colCount: 2,
-                            items: [
-                                {
-                                    dataField: 'phone',
-                                    label: { text: 'Phone Number' },
-                                    validationRules: [
-                                        { type: 'required', message: 'Phone number is required' },
-                                        { 
-                                            type: 'pattern',
-                                            pattern: /^\+1 \(\d{3}\) \d{3}-\d{4}$/,
-                                            message: 'Please enter a valid phone number'
-                                        }
-                                    ],
-                                    editorOptions: {
-                                        placeholder: 'Enter phone number',
-                                        mask: '+1 (000) 000-0000',
-                                        maskRules: {"0": /[0-9]/},
-                                        maskInvalidMessage: 'Please enter a valid phone number',
-                                        stylingMode: 'filled',
-                                        showClearButton: true,
-                                        valueChangeEvent: 'keyup change'
-                                    }
-                                }
-                            ]
-                        }
+                        'searchPanel',
+                        'columnChooserButton'
                     ]
+                },
+                editing: {
+                    mode: 'popup',
+                    allowUpdating: true,
+                    allowDeleting: true,
+                    allowAdding: true,
+                    useIcons: true,
+                    texts: {
+                        confirmDeleteMessage: 'Are you sure you want to delete this employee?',
+                        saveRowChanges: 'Save Changes',
+                        cancelRowChanges: 'Cancel',
+                        deleteRow: 'Delete',
+                        editRow: 'Edit',
+                        addRow: 'New Employee'
+                    },
+                    popup: {
+                        title: 'Employee Information',
+                        showTitle: true,
+                        width: 800,
+                        height: 'auto',
+                        position: { my: 'center', at: 'center', of: window },
+                        showCloseButton: true,
+                        toolbarItems: [{
+                            toolbar: 'bottom',
+                            location: 'after',
+                            widget: 'dxButton',
+                            options: {
+                                text: 'Save',
+                                type: 'success',
+                                stylingMode: 'contained',
+                                onClick: () => {
+                                    this.grid.saveEditData();
+                                }
+                            }
+                        }, {
+                            toolbar: 'bottom',
+                            location: 'after',
+                            widget: 'dxButton',
+                            options: {
+                                text: 'Cancel',
+                                stylingMode: 'outlined',
+                                onClick: () => {
+                                    this.grid.cancelEditData();
+                                }
+                            }
+                        }]
+                    },
+                    form: {
+                        labelLocation: 'top',
+                        colCount: 1,
+                        items: [
+                            {
+                                itemType: 'group',
+                                caption: 'Basic Information',
+                                colCount: 2,
+                                items: [
+                                    {
+                                        dataField: 'name',
+                                        label: { text: 'Full Name' },
+                                        validationRules: [{ type: 'required', message: 'Full name is required' }],
+                                        editorOptions: {
+                                            placeholder: 'Enter employee full name',
+                                            mode: 'text',
+                                            stylingMode: 'filled',
+                                            showClearButton: true,
+                                            valueChangeEvent: 'keyup change'
+                                        }
+                                    },
+                                    {
+                                        dataField: 'email',
+                                        label: { text: 'Email Address' },
+                                        validationRules: [
+                                            { type: 'required', message: 'Email address is required' },
+                                            { type: 'email', message: 'Please enter a valid email address' }
+                                        ],
+                                        editorOptions: {
+                                            placeholder: 'Enter work email address',
+                                            mode: 'email',
+                                            stylingMode: 'filled',
+                                            showClearButton: true,
+                                            valueChangeEvent: 'keyup change'
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                itemType: 'group',
+                                caption: 'Contact Details',
+                                colCount: 2,
+                                items: [
+                                    {
+                                        dataField: 'phone',
+                                        label: { text: 'Phone Number' },
+                                        validationRules: [
+                                            { type: 'required', message: 'Phone number is required' },
+                                            { 
+                                                type: 'pattern',
+                                                pattern: /^\+1 \(\d{3}\) \d{3}-\d{4}$/,
+                                                message: 'Please enter a valid phone number'
+                                            }
+                                        ],
+                                        editorOptions: {
+                                            placeholder: 'Enter phone number',
+                                            mask: '+1 (000) 000-0000',
+                                            maskRules: {"0": /[0-9]/},
+                                            maskInvalidMessage: 'Please enter a valid phone number',
+                                            stylingMode: 'filled',
+                                            showClearButton: true,
+                                            valueChangeEvent: 'keyup change'
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }),
+            onContentReady: (e) => {
+                // Add export buttons after grid is fully loaded
+                if (this.grid && !this.exportButtonsAdded) {
+                    gridUtils.addExportButtons(this.grid, 'Employees');
+                    this.exportButtonsAdded = true;
                 }
             },
-            toolbar: {
-                items: [
-                    {
-                        location: 'before',
-                        widget: 'dxButton',
-                        options: {
-                            icon: 'plus',
-                            text: 'Add Employee',
-                            onClick: () => this.grid.addRow()
-                        }
-                    },
-                    'searchPanel',
-                    'columnChooserButton'
-                ]
+            onInitialized: () => {
+                if (this.grid) {
+                    this.loadData();
+                }
             },
             onRowInserting: (e) => this.handleRowInserting(e),
             onRowUpdating: (e) => this.handleRowUpdating(e),
-            onRowRemoving: (e) => this.handleRowRemoving(e),
-            onInitialized: () => this.loadData()
+            onRowRemoving: (e) => this.handleRowRemoving(e)
         }).dxDataGrid('instance');
     }
 
     async loadData() {
         try {
+            if (!this.grid) {
+                console.warn('Grid instance is not available');
+                return;
+            }
+
+            // Show loading panel
+            this.grid.beginCustomLoading('Loading employees...');
+
             const data = await vomoAPI.getEmployees();
+            
+            // Update the data source
             this.grid.option('dataSource', data);
+            
+            // Refresh the grid
+            this.grid.refresh();
+
+            // Hide loading panel
+            this.grid.endCustomLoading();
         } catch (error) {
-            console.error('Error loading employees:', error);
-            DevExpress.ui.notify('Failed to load employees', 'error', 3000);
+            gridUtils.handleGridError(error, 'loading employees');
         }
     }
 
@@ -519,33 +552,30 @@ window.EmployeePage = class {
         try {
             const result = await vomoAPI.createEmployee(e.data);
             e.data.id = result.id;
-            this.showNotification('Employee created successfully');
+            gridUtils.showSuccess('Employee created successfully');
         } catch (error) {
-            console.error('Error creating employee:', error);
+            gridUtils.handleGridError(error, 'creating employee');
             e.cancel = true;
-            this.showNotification('Failed to create employee', 'error');
         }
     }
 
     async handleRowUpdating(e) {
         try {
             await vomoAPI.updateEmployee(e.key.id, {...e.oldData, ...e.newData});
-            this.showNotification('Employee updated successfully');
+            gridUtils.showSuccess('Employee updated successfully');
         } catch (error) {
-            console.error('Error updating employee:', error);
+            gridUtils.handleGridError(error, 'updating employee');
             e.cancel = true;
-            this.showNotification('Failed to update employee', 'error');
         }
     }
 
     async handleRowRemoving(e) {
         try {
             await vomoAPI.deleteEmployee(e.key.id);
-            this.showNotification('Employee deleted successfully');
+            gridUtils.showSuccess('Employee deleted successfully');
         } catch (error) {
-            console.error('Error deleting employee:', error);
+            gridUtils.handleGridError(error, 'deleting employee');
             e.cancel = true;
-            this.showNotification('Failed to delete employee', 'error');
         }
     }
 

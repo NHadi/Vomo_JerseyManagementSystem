@@ -1,4 +1,5 @@
 import { vomoAPI } from '../api/index.js';
+import { gridUtils } from '../utils/gridUtils.js';
 
 // Define AuditPage
 window.AuditPage = class {
@@ -9,6 +10,7 @@ window.AuditPage = class {
         this.entityTypeFilter = null;
         this.actionFilter = null;
         this.isInitialLoad = true;
+        this.exportButtonsAdded = false;
         
         // Add debounce mechanism
         this.debouncedLoadData = this.debounce(this.loadData.bind(this), 300);
@@ -164,6 +166,7 @@ window.AuditPage = class {
             showBorders: true,
             rowAlternationEnabled: true,
             hoverStateEnabled: true,
+            ...gridUtils.getCommonGridConfig(),
             columns: [
                 {
                     dataField: 'created_at',
@@ -316,6 +319,18 @@ window.AuditPage = class {
                 showPageSizeSelector: true,
                 allowedPageSizes: [10, 20, 50, 100],
                 showInfo: true
+            },
+            onContentReady: (e) => {
+                // Add export buttons after grid is fully loaded
+                if (this.grid && !this.exportButtonsAdded) {
+                    gridUtils.addExportButtons(this.grid, 'Audit_Log');
+                    this.exportButtonsAdded = true;
+                }
+            },
+            onInitialized: () => {
+                if (this.grid) {
+                    this.loadData();
+                }
             }
         }).dxDataGrid('instance');
 
@@ -385,8 +400,7 @@ window.AuditPage = class {
                 this.grid.option('dataSource', data);
             }
         } catch (error) {
-            console.error('Error loading audit data:', error);
-            DevExpress.ui.notify('Failed to load audit data: ' + error.message, 'error', 3000);
+            gridUtils.handleGridError(error, 'loading audit data');
         }
     }
 

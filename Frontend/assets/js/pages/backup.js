@@ -1,10 +1,12 @@
 import { vomoAPI } from '../api/index.js';
+import { gridUtils } from '../utils/gridUtils.js';
 
 // Define BackupPage
 window.BackupPage = class {
     constructor() {
         this.grid = null;
         this.selectedBackup = null;
+        this.exportButtonsAdded = false;
         
         // Initialize components
         if (typeof DevExpress !== 'undefined') {
@@ -64,6 +66,7 @@ window.BackupPage = class {
                 }
             },
             remoteOperations: false,
+            ...gridUtils.getCommonGridConfig(),
             columns: [
                 {
                     dataField: 'file_name',
@@ -163,7 +166,18 @@ window.BackupPage = class {
                     'columnChooserButton'
                 ]
             },
-            onInitialized: () => this.loadData(),
+            onContentReady: (e) => {
+                // Add export buttons after grid is fully loaded
+                if (this.grid && !this.exportButtonsAdded) {
+                    gridUtils.addExportButtons(this.grid, 'Backup_List');
+                    this.exportButtonsAdded = true;
+                }
+            },
+            onInitialized: () => {
+                if (this.grid) {
+                    this.loadData();
+                }
+            },
             onRowRemoving: (e) => this.handleRowRemoving(e)
         }).dxDataGrid('instance');
     }
@@ -173,8 +187,7 @@ window.BackupPage = class {
             const data = await vomoAPI.getBackups();
             this.grid.option('dataSource', data);
         } catch (error) {
-            console.error('Error loading backups:', error);
-            DevExpress.ui.notify('Failed to load backups', 'error', 3000);
+            gridUtils.handleGridError(error, 'loading backups');
         }
     }
 
@@ -190,10 +203,9 @@ window.BackupPage = class {
             // Refresh grid data
             await this.loadData();
             
-            DevExpress.ui.notify('Backup created successfully', 'success', 3000);
+            gridUtils.showSuccess('Backup created successfully');
         } catch (error) {
-            console.error('Error creating backup:', error);
-            DevExpress.ui.notify('Failed to create backup', 'error', 3000);
+            gridUtils.handleGridError(error, 'creating backup');
         } finally {
             $('#backupGrid').removeClass('loading');
         }
@@ -213,13 +225,12 @@ window.BackupPage = class {
             
             // Close modal and show success message
             $modal.modal('hide');
-            DevExpress.ui.notify('Backup restored successfully', 'success', 3000);
+            gridUtils.showSuccess('Backup restored successfully');
             
             // Refresh grid data
             await this.loadData();
         } catch (error) {
-            console.error('Error restoring backup:', error);
-            DevExpress.ui.notify('Failed to restore backup', 'error', 3000);
+            gridUtils.handleGridError(error, 'restoring backup');
         } finally {
             $('#confirmRestore').prop('disabled', false).html('<i class="ni ni-refresh-02 mr-1"></i> Restore Backup');
         }
@@ -228,11 +239,10 @@ window.BackupPage = class {
     async handleRowRemoving(e) {
         try {
             await vomoAPI.deleteBackup(e.key.id);
-            DevExpress.ui.notify('Backup deleted successfully', 'success', 3000);
+            gridUtils.showSuccess('Backup deleted successfully');
         } catch (error) {
-            console.error('Error deleting backup:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to delete backup', 'error', 3000);
+            gridUtils.handleGridError(error, 'deleting backup');
         }
     }
 };

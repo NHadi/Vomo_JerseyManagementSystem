@@ -1,9 +1,11 @@
 import { vomoAPI } from '../api/index.js';
+import { gridUtils } from '../utils/gridUtils.js';
 
 // Define PermissionPage
 window.PermissionPage = class {
     constructor() {
         this.grid = null;
+        this.exportButtonsAdded = false;
         
         // Initialize components
         if (typeof DevExpress !== 'undefined') {
@@ -38,6 +40,7 @@ window.PermissionPage = class {
                 }
             },
             remoteOperations: false,
+            ...gridUtils.getCommonGridConfig(),
             columns: [
                 {
                     dataField: 'name',
@@ -138,7 +141,18 @@ window.PermissionPage = class {
                     ]
                 }
             },
-            onInitialized: () => this.loadData(),
+            onContentReady: (e) => {
+                // Add export buttons after grid is fully loaded
+                if (this.grid && !this.exportButtonsAdded) {
+                    gridUtils.addExportButtons(this.grid, 'Permissions');
+                    this.exportButtonsAdded = true;
+                }
+            },
+            onInitialized: () => {
+                if (this.grid) {
+                    this.loadData();
+                }
+            },
             onRowInserting: (e) => this.handleRowInserting(e),
             onRowUpdating: (e) => this.handleRowUpdating(e),
             onRowRemoving: (e) => this.handleRowRemoving(e)
@@ -147,11 +161,21 @@ window.PermissionPage = class {
 
     async loadData() {
         try {
+            if (!this.grid) {
+                console.warn('Grid instance is not available');
+                return;
+            }
+
+            // Show loading panel
+            this.grid.beginCustomLoading('Loading permissions...');
+            
             const data = await vomoAPI.getPermissions();
             this.grid.option('dataSource', data);
+            
+            // Hide loading panel
+            this.grid.endCustomLoading();
         } catch (error) {
-            console.error('Error loading permissions:', error);
-            DevExpress.ui.notify('Failed to load permissions', 'error', 3000);
+            gridUtils.handleGridError(error, 'loading permissions');
         }
     }
 
@@ -159,33 +183,30 @@ window.PermissionPage = class {
         try {
             const result = await vomoAPI.createPermission(e.data);
             e.data.id = result.id;
-            DevExpress.ui.notify('Permission created successfully', 'success', 3000);
+            gridUtils.showSuccess('Permission created successfully');
         } catch (error) {
-            console.error('Error creating permission:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to create permission', 'error', 3000);
+            gridUtils.handleGridError(error, 'creating permission');
         }
     }
 
     async handleRowUpdating(e) {
         try {
             await vomoAPI.updatePermission(e.key.id, {...e.oldData, ...e.newData});
-            DevExpress.ui.notify('Permission updated successfully', 'success', 3000);
+            gridUtils.showSuccess('Permission updated successfully');
         } catch (error) {
-            console.error('Error updating permission:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to update permission', 'error', 3000);
+            gridUtils.handleGridError(error, 'updating permission');
         }
     }
 
     async handleRowRemoving(e) {
         try {
             await vomoAPI.deletePermission(e.key.id);
-            DevExpress.ui.notify('Permission deleted successfully', 'success', 3000);
+            gridUtils.showSuccess('Permission deleted successfully');
         } catch (error) {
-            console.error('Error deleting permission:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to delete permission', 'error', 3000);
+            gridUtils.handleGridError(error, 'deleting permission');
         }
     }
 };
