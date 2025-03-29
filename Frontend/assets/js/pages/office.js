@@ -102,7 +102,13 @@ window.OfficePage = class {
                                 $('<i>').addClass('ni ni-building mr-2 text-primary')
                             )
                             .append(
-                                $('<span>').text(options.data.name || '')
+                                $('<div>').addClass('d-flex flex-column')
+                                    .append(
+                                        $('<span>').addClass('font-weight-bold').text(options.data.name || '')
+                                    )
+                                    .append(
+                                        $('<small>').addClass('text-muted').text(options.data.code || '')
+                                    )
                             )
                             .appendTo(container);
                     }
@@ -111,76 +117,121 @@ window.OfficePage = class {
                     dataField: 'code',
                     caption: 'Office Code',
                     validationRules: [{ type: 'required' }],
-                    cellTemplate: (container, options) => {
-                        $('<div>')
-                            .addClass('text-muted small')
-                            .text(options.data.code || '')
-                            .appendTo(container);
-                    }
+                    visible: false
+                },
+                {
+                    dataField: 'email',
+                    caption: 'Email',
+                    validationRules: [{ type: 'required' }],
+                    visible: false
                 },
                 {
                     dataField: 'address',
-                    caption: 'Address',
+                    caption: 'Location',
                     cellTemplate: (container, options) => {
                         $('<div>')
-                            .addClass('text-muted small')
-                            .text(options.data.address || 'No address provided')
+                            .addClass('d-flex align-items-center')
+                            .append(
+                                $('<i>').addClass('ni ni-pin-3 mr-2 text-info')
+                            )
+                            .append(
+                                $('<div>').addClass('text-wrap small')
+                                    .text(options.data.address || 'No address provided')
+                            )
                             .appendTo(container);
                     }
                 },
                 {
                     dataField: 'phone',
-                    caption: 'Phone',
+                    caption: 'Contact',
+                    width: 200,
                     cellTemplate: (container, options) => {
-                        $('<div>')
-                            .addClass('text-muted small')
-                            .text(options.data.phone || 'No phone provided')
-                            .appendTo(container);
-                    }
-                },
-                {
-                    dataField: 'email',
-                    caption: 'Email',
-                    validationRules: [{ type: 'email' }],
-                    cellTemplate: (container, options) => {
-                        $('<div>')
-                            .addClass('text-muted small')
-                            .text(options.data.email || 'No email provided')
-                            .appendTo(container);
+                        const $container = $('<div>').addClass('d-flex flex-column');
+
+                        // Phone number
+                        if (options.data.phone) {
+                            $('<div>')
+                                .addClass('d-flex align-items-center mb-1')
+                                .append(
+                                    $('<i>').addClass('fas fa-phone-alt mr-2 text-success')
+                                )
+                                .append(
+                                    $('<a>')
+                                        .addClass('text-muted small')
+                                        .attr('href', `tel:${options.data.phone}`)
+                                        .text(options.data.phone)
+                                )
+                                .appendTo($container);
+                        }
+
+                        // Email
+                        if (options.data.email) {
+                            $('<div>')
+                                .addClass('d-flex align-items-center')
+                                .append(
+                                    $('<i>').addClass('fas fa-envelope mr-2 text-warning')
+                                )
+                                .append(
+                                    $('<a>')
+                                        .addClass('text-muted small')
+                                        .attr('href', `mailto:${options.data.email}`)
+                                        .text(options.data.email)
+                                )
+                                .appendTo($container);
+                        }
+
+                        if (!options.data.phone && !options.data.email) {
+                            $('<div>')
+                                .addClass('text-muted small font-italic')
+                                .append(
+                                    $('<i>').addClass('fas fa-info-circle mr-1')
+                                )
+                                .append('No contact info')
+                                .appendTo($container);
+                        }
+
+                        container.append($container);
                     }
                 },
                 {
                     dataField: 'zone',
                     caption: 'Zone',
+                    width: 180,
                     allowFiltering: false,
                     allowSorting: false,
                     cellTemplate: (container, options) => {
-                        const $container = $('<div>').addClass('zone-container');
+                        const $container = $('<div>').addClass('zone-container d-flex align-items-center');
                         
                         if (options.data.zone) {
-                            $('<span>')
-                                .addClass('zone-badge badge badge-soft-primary')
+                            $('<div>')
+                                .addClass('d-flex align-items-center')
                                 .append(
-                                    $('<i>').addClass('fas fa-map-marker-alt mr-1')
+                                    $('<i>').addClass('fas fa-map-marker-alt mr-2 text-danger')
                                 )
                                 .append(
-                                    $('<span>').text(options.data.zone.name)
+                                    $('<div>').addClass('d-flex flex-column')
+                                        .append(
+                                            $('<span>').addClass('font-weight-bold small').text(options.data.zone.name)
+                                        )
+                                        .append(
+                                            $('<small>').addClass('text-muted')
+                                                .text(options.data.zone.description || 'No description')
+                                        )
                                 )
-                                .attr('title', options.data.zone.description || '')
                                 .appendTo($container);
                         } else {
                             $('<div>')
-                                .addClass('text-muted small')
+                                .addClass('d-flex align-items-center text-muted')
                                 .append(
-                                    $('<i>').addClass('fas fa-info-circle mr-1')
+                                    $('<i>').addClass('fas fa-map mr-2')
                                 )
                                 .append(
-                                    $('<span>').text('No zone assigned')
+                                    $('<span>').addClass('small font-italic').text('No zone assigned')
                                 )
                                 .appendTo($container);
                         }
                         
-                        $container.appendTo(container);
+                        container.append($container);
                     }
                 },
                 {
@@ -256,51 +307,112 @@ window.OfficePage = class {
                     title: 'Office Information',
                     showTitle: true,
                     width: 700,
-                    height: 325
+                    height: 525,
+                    position: { my: 'center', at: 'center', of: window },
+                    showCloseButton: true
                 },
                 form: {
+                    colCount: 2,
+                    labelLocation: 'top',
                     items: [
                         {
                             itemType: 'group',
-                            colCount: 1,
+                            caption: 'Basic Information',
+                            colSpan: 2,
                             items: [
                                 {
                                     dataField: 'name',
+                                    label: { text: 'Office Name', showColon: true },
                                     isRequired: true,
                                     editorOptions: {
-                                        placeholder: 'Enter office name'
-                                    }
+                                        placeholder: 'Enter office name',
+                                        stylingMode: 'filled',
+                                        showClearButton: true,
+                                        mode: 'text',
+                                        inputAttr: {
+                                            'aria-label': 'Office Name'
+                                        }
+                                    },
+                                    validationRules: [{ type: 'required', message: 'Office name is required' }]
                                 },
                                 {
                                     dataField: 'code',
+                                    label: { text: 'Office Code', showColon: true },
                                     isRequired: true,
                                     editorOptions: {
-                                        placeholder: 'Enter office code'
-                                    }
-                                },
+                                        placeholder: 'Enter office code',
+                                        stylingMode: 'filled',
+                                        showClearButton: true,
+                                        mode: 'text',
+                                        inputAttr: {
+                                            'aria-label': 'Office Code'
+                                        }
+                                    },
+                                    validationRules: [{ type: 'required', message: 'Office code is required' }]
+                                }
+                            ]
+                        },
+                        {
+                            itemType: 'group',
+                            caption: 'Contact Information',
+                            colSpan: 2,
+                            items: [
                                 {
                                     dataField: 'email',
+                                    label: { text: 'Email Address', showColon: true },
                                     editorOptions: {
-                                        placeholder: 'Enter email address'
+                                        placeholder: 'Enter email address',
+                                        stylingMode: 'filled',
+                                        showClearButton: true,
+                                        valueChangeEvent: 'change'
                                     }
                                 },
                                 {
                                     dataField: 'phone',
+                                    label: { text: 'Phone Number', showColon: true },
                                     editorOptions: {
-                                        placeholder: 'Enter phone number'
+                                        placeholder: 'Enter phone number',
+                                        stylingMode: 'filled',
+                                        showClearButton: true,
+                                        mask: '+99 (999) 999-9999',
+                                        maskRules: { "9": /[0-9]/ },
+                                        maskInvalidMessage: 'Please enter a valid phone number',
+                                        inputAttr: {
+                                            'aria-label': 'Phone Number'
+                                        }
                                     }
-                                },
+                                }
+                            ]
+                        },
+                        {
+                            itemType: 'group',
+                            caption: 'Location Details',
+                            colSpan: 2,
+                            items: [
                                 {
                                     dataField: 'address',
+                                    label: { text: 'Office Address', showColon: true },
                                     editorType: 'dxTextArea',
+                                    colSpan: 2,
                                     editorOptions: {
+                                        placeholder: 'Enter complete office address',
+                                        stylingMode: 'filled',
                                         height: 100,
-                                        placeholder: 'Enter office address'
+                                        maxLength: 500,
+                                        showClearButton: true,
+                                        inputAttr: {
+                                            'aria-label': 'Office Address'
+                                        }
                                     }
                                 }
                             ]
                         }
                     ]
+                },
+                useIcons: true,
+                texts: {
+                    saveRowChanges: 'Save',
+                    cancelRowChanges: 'Cancel'
                 }
             },
             toolbar: {
@@ -446,7 +558,36 @@ window.OfficePage = class {
 
     async handleRowInserting(e) {
         try {
-            const result = await vomoAPI.createOffice(e.data);
+            // Debug logging
+            console.log('Raw Form Data:', e.data);
+
+            // Validate required fields
+            if (!e.data.name || !e.data.code) {
+                e.cancel = true;
+                DevExpress.ui.notify('Office name and code are required', 'error', 3000);
+                return;
+            }
+
+            // Create office data with all fields
+            const officeData = {
+                name: e.data.name.trim(),
+                code: e.data.code.trim(),
+                email: e.data.email || null,  // Changed to directly use the email value
+                phone: e.data.phone || null,
+                address: e.data.address || null
+            };
+
+            // Debug logging
+            console.log('Processed Data:', officeData);
+
+            // Validate email format if provided
+            if (officeData.email && !this.isValidEmail(officeData.email)) {
+                e.cancel = true;
+                DevExpress.ui.notify('Please enter a valid email address', 'error', 3000);
+                return;
+            }
+
+            const result = await vomoAPI.createOffice(officeData);
             e.data.id = result.id;
             gridUtils.showSuccess('Office created successfully');
         } catch (error) {
@@ -455,9 +596,26 @@ window.OfficePage = class {
         }
     }
 
+    isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
     async handleRowUpdating(e) {
         try {
-            const { zone, ...updatedData } = { ...e.oldData, ...e.newData };
+            // Combine old and new data, excluding zone
+            const { zone, ...oldData } = e.oldData;
+            const updatedData = {
+                ...oldData,
+                ...e.newData,
+                // Ensure these fields are always included
+                name: e.newData.name || oldData.name,
+                code: e.newData.code || oldData.code,
+                email: e.newData.email || oldData.email || null,
+                phone: e.newData.phone || oldData.phone || null,
+                address: e.newData.address || oldData.address || null
+            };
+
             await vomoAPI.updateOffice(e.key.id, updatedData);
             gridUtils.showSuccess('Office updated successfully');
         } catch (error) {
