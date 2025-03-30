@@ -86,22 +86,23 @@ func (Product) TableName() string {
 
 // Product represents a product
 type Product struct {
-	ID                   int         `json:"id" gorm:"primaryKey;table:master_product"`
-	Name                 string      `json:"name"`
-	Code                 string      `json:"code"`
-	CategoryID           int         `json:"category_id"`
-	Description          string      `json:"description"`
-	Material             string      `json:"material"`
-	SizeAvailable        StringArray `json:"size_available" gorm:"type:jsonb"`
-	ColorOptions         StringArray `json:"color_options" gorm:"type:jsonb"`
-	CustomizationOptions BoolMap     `json:"customization_options" gorm:"type:jsonb"`
-	ProductionTime       int         `json:"production_time"`
-	MinOrderQuantity     int         `json:"min_order_quantity"`
-	BasePrice            float64     `json:"base_price"`
-	BulkDiscountRules    IntMap      `json:"bulk_discount_rules" gorm:"type:jsonb"`
-	Weight               float64     `json:"weight"`
-	IsActive             bool        `json:"is_active"`
-	StockStatus          string      `json:"stock_status"`
+	ID                   int            `json:"id" gorm:"primaryKey;table:master_product"`
+	Name                 string         `json:"name"`
+	Code                 string         `json:"code"`
+	CategoryID           int            `json:"category_id"`
+	Description          string         `json:"description"`
+	Material             string         `json:"material"`
+	SizeAvailable        StringArray    `json:"size_available" gorm:"type:jsonb"`
+	ColorOptions         StringArray    `json:"color_options" gorm:"type:jsonb"`
+	CustomizationOptions BoolMap        `json:"customization_options" gorm:"type:jsonb"`
+	ProductionTime       int            `json:"production_time"`
+	MinOrderQuantity     int            `json:"min_order_quantity"`
+	BasePrice            float64        `json:"base_price"`
+	BulkDiscountRules    IntMap         `json:"bulk_discount_rules" gorm:"type:jsonb"`
+	Weight               float64        `json:"weight"`
+	IsActive             bool           `json:"is_active"`
+	StockStatus          string         `json:"stock_status"`
+	Images               []ProductImage `json:"images" gorm:"foreignKey:ProductID"`
 	common.TenantModel
 }
 

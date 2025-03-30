@@ -34,7 +34,12 @@ func (r *ProductRepository) Create(product *product.Product, ctx context.Context
 func (r *ProductRepository) FindByID(id int, ctx context.Context) (*product.Product, error) {
 	var product product.Product
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	if err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).First(&product).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Preload("Images", func(db *gorm.DB) *gorm.DB {
+			return db.Order("sort_order, id")
+		}).
+		Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).
+		First(&product).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("product not found")
 		}
@@ -60,7 +65,12 @@ func (r *ProductRepository) FindByCode(code string, ctx context.Context) (*produ
 func (r *ProductRepository) FindAll(ctx context.Context) ([]product.Product, error) {
 	var products []product.Product
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	if err := r.db.WithContext(ctx).Where("tenant_id = ?", userCtx.TenantID).Find(&products).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Preload("Images", func(db *gorm.DB) *gorm.DB {
+			return db.Order("sort_order, id")
+		}).
+		Where("tenant_id = ?", userCtx.TenantID).
+		Find(&products).Error; err != nil {
 		return nil, err
 	}
 	return products, nil

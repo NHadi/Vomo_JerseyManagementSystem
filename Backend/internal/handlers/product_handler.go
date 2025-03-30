@@ -29,6 +29,7 @@ type ProductResponse struct {
 	Weight               float64         `json:"weight" example:"180"`
 	IsActive             bool            `json:"is_active" example:"true"`
 	StockStatus          string          `json:"stock_status" example:"in_stock"`
+	Images               []ImageInfo     `json:"images,omitempty"`
 	CreatedAt            string          `json:"created_at" example:"2024-03-24T21:41:49Z"`
 	CreatedBy            string          `json:"created_by" example:"admin"`
 	UpdatedAt            string          `json:"updated_at" example:"2024-03-24T21:41:49Z"`
@@ -42,6 +43,15 @@ type CategoryInfo struct {
 	Name        string `json:"name" example:"Soccer Jersey"`
 	Code        string `json:"code" example:"SOCCER"`
 	Description string `json:"description" example:"Soccer team jerseys and uniforms"`
+}
+
+// ImageInfo represents the image information in product response
+type ImageInfo struct {
+	ID        int    `json:"id" example:"1"`
+	ProductID int    `json:"product_id" example:"1"`
+	ImageURL  string `json:"image_url" example:"/uploads/products/image.jpg"`
+	SortOrder int    `json:"sort_order" example:"1"`
+	IsPrimary bool   `json:"is_primary" example:"true"`
 }
 
 // CreateProductRequest represents the request structure for creating a product
@@ -113,6 +123,20 @@ func toProductResponse(p *product.Product, c *product.Category) ProductResponse 
 			Name:        c.Name,
 			Code:        c.Code,
 			Description: c.Description,
+		}
+	}
+
+	// Add images to response
+	if len(p.Images) > 0 {
+		response.Images = make([]ImageInfo, len(p.Images))
+		for i, img := range p.Images {
+			response.Images[i] = ImageInfo{
+				ID:        img.ID,
+				ProductID: img.ProductID,
+				ImageURL:  img.ImageURL,
+				SortOrder: img.SortOrder,
+				IsPrimary: img.IsPrimary,
+			}
 		}
 	}
 
