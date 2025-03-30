@@ -3,6 +3,10 @@ package services
 import (
 	"vomo/internal/application"
 	"vomo/internal/domain/audit"
+	"vomo/internal/domain/product"
+	"vomo/internal/infrastructure/postgres"
+
+	"gorm.io/gorm"
 )
 
 // Type aliases for services
@@ -30,4 +34,34 @@ type Services struct {
 	EmployeeService        *application.EmployeeService
 	ProductService         *application.ProductService
 	ProductCategoryService *application.ProductCategoryService
+	ProductImageService    product.ProductImageService
+}
+
+func NewServices(db *gorm.DB) *Services {
+	productRepo := postgres.NewProductRepository(db)
+	productCategoryRepo := postgres.NewProductCategoryRepository(db)
+	productImageRepo := postgres.NewProductImageRepository(db)
+	auditRepo := postgres.NewAuditRepository(db)
+	auditService := audit.NewService(auditRepo)
+
+	productService := application.NewProductService(productRepo, auditService)
+	productCategoryService := application.NewProductCategoryService(productCategoryRepo, auditService)
+	productImageService := application.NewProductImageService(productImageRepo, productRepo)
+
+	return &Services{
+		MenuService:            nil,
+		UserService:            nil,
+		RoleService:            nil,
+		PermissionService:      nil,
+		AuditService:           auditService,
+		BackupService:          nil,
+		ZoneService:            nil,
+		RegionService:          nil,
+		OfficeService:          nil,
+		DivisionService:        nil,
+		EmployeeService:        nil,
+		ProductService:         productService,
+		ProductCategoryService: productCategoryService,
+		ProductImageService:    productImageService,
+	}
 }

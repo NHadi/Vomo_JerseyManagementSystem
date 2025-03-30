@@ -61,6 +61,30 @@ window.ProductPage = class {
     }
 
     initialize() {
+        // Load categories first and wait for them to be loaded
+        this.loadCategories().then(() => {
+            // Initialize grid after categories are loaded
+            this.initializeGrid();
+        }).catch(error => {
+            console.error('Failed to initialize categories:', error);
+            DevExpress.ui.notify('Failed to load categories. Please refresh the page.', 'error', 5000);
+        });
+    }
+
+    async loadCategories(productId) {
+        try {
+            const categories = await vomoAPI.getCategories();
+            console.log('Categories loaded:', categories);
+            this.allCategories = categories;
+            return categories;
+        } catch (error) {
+            console.error('Error loading categories:', error);
+            DevExpress.ui.notify('Failed to load categories', 'error', 3000);
+            throw error;
+        }
+    }
+
+    initializeGrid() {
         const gridElement = $('#productGrid');
         if (!gridElement.length) {
             console.error('Product grid element not found');
@@ -70,6 +94,12 @@ window.ProductPage = class {
         if (this.grid) {
             this.grid.dispose();
         }
+
+        // Create a simple array for the category lookup
+        const categoryLookup = this.allCategories.map(cat => ({
+            id: cat.id,
+            name: cat.name
+        }));
 
         this.grid = $('#productGrid').dxDataGrid({
             dataSource: {
@@ -86,22 +116,42 @@ window.ProductPage = class {
                     caption: 'Product Name',
                     validationRules: [{ type: 'required' }],
                     cellTemplate: (container, options) => {
+                        const $container = $('<div>')
+                            .addClass('d-flex align-items-center');
+
+                        // Add product image thumbnail if available
+                        if (options.data.images && options.data.images.length > 0) {
+                            $('<div>')
+                                .addClass('product-thumbnail mr-3')
+                                .append(
+                                    $('<img>')
+                                        .attr('src', options.data.images[0].url)
+                                        .attr('alt', options.data.name)
+                                        .addClass('img-fluid rounded')
+                                )
+                                .appendTo($container);
+                        } else {
+                            $('<div>')
+                                .addClass('product-thumbnail mr-3')
+                                .append(
+                                    $('<div>')
+                                        .addClass('no-image-placeholder')
+                                        .append($('<i>').addClass('fas fa-tshirt'))
+                                )
+                                .appendTo($container);
+                        }
+
                         $('<div>')
-                            .addClass('d-flex align-items-center')
+                            .addClass('d-flex flex-column')
                             .append(
-                                $('<i>').addClass('ni ni-box mr-2 text-primary')
+                                $('<span>').addClass('font-weight-bold').text(options.data.name || '')
                             )
                             .append(
-                                $('<div>')
-                                    .addClass('d-flex flex-column')
-                                    .append(
-                                        $('<span>').addClass('font-weight-bold').text(options.data.name || '')
-                                    )
-                                    .append(
-                                        $('<small>').addClass('text-muted').text(options.data.code || '')
-                                    )
+                                $('<small>').addClass('text-muted').text(options.data.code || '')
                             )
-                            .appendTo(container);
+                            .appendTo($container);
+
+                        container.append($container);
                     }
                 },
                 {
@@ -397,22 +447,144 @@ window.ProductPage = class {
                 popup: {
                     title: 'Product Information',
                     showTitle: true,
-                    width: 700,
-                    height: 500
+                    width: '90vw',
+                    height: '90vh',
+                    maxHeight: '90vh',
+                    showCloseButton: true,
+                    toolbarItems: [{
+                        toolbar: 'bottom',
+                        location: 'after',
+                        widget: 'dxButton',
+                        options: {
+                            text: 'Save',
+                            type: 'success',
+                            stylingMode: 'contained',
+                            onClick: function(e) {
+                                const grid = $('#productGrid').dxDataGrid('instance');
+                                const $form = $('.dx-popup-content .dx-form');
+                                const form = $form.length ? $form.dxForm('instance') : null;
+                                
+                                if (form && grid) {
+                                    const validationResult = form.validate();
+                                    if (validationResult.isValid) {
+                                        grid.saveEditData().then(() => {
+                                            grid.option('editing.popup.visible', false);
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }, {
+                        toolbar: 'bottom',
+                        location: 'after',
+                        widget: 'dxButton',
+                        options: {
+                            text: 'Cancel',
+                            stylingMode: 'outlined',
+                            onClick: function(e) {
+                                const popup = e.component._options.owner;
+                                const grid = $('#productGrid').dxDataGrid('instance');
+                                
+                                if (grid) {
+                                    grid.cancelEditData();
+                                }
+                                popup.hide();
+                            }
+                        }
+                    }]
                 },
                 form: {
+                    labelLocation: 'top',
+                    showColonAfterLabel: false,
+                    colCount: 2,
                     items: [
                         {
                             itemType: 'group',
+                            caption: 'Product Images',
+                            colSpan: 2,
+                            cssClass: 'product-images-section',
+                            items: [{
+                                dataField: 'images',
+                                label: { visible: false },
+                                template: (data, itemElement) => {
+                                    const $container = $('<div>').addClass('product-images-container');
+                                    
+                                    // Dropzone area
+                                    const $dropzone = $('<div>')
+                                        .addClass('dropzone-area')
+                                        .append(
+                                            $('<div>').addClass('dropzone-content')
+                                                .append($('<i>').addClass('fas fa-cloud-upload-alt fa-3x mb-3'))
+                                                .append($('<h4>').addClass('mb-2').text('Drag and drop images here'))
+                                                .append($('<p>').addClass('text-muted').text('or click to browse'))
+                                        )
+                                        .on('dragover', (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            $dropzone.addClass('dragover');
+                                        })
+                                        .on('dragleave', (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            $dropzone.removeClass('dragover');
+                                        })
+                                        .on('drop', (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            $dropzone.removeClass('dragover');
+                                            const files = e.originalEvent.dataTransfer.files;
+                                            this.handleImageUpload({ target: { files } }, data, $previewContainer);
+                                        })
+                                        .appendTo($container);
+
+                                    // Hidden file input
+                                    const $fileInput = $('<input>')
+                                        .attr('type', 'file')
+                                        .attr('multiple', true)
+                                        .attr('accept', 'image/*')
+                                        .addClass('d-none')
+                                        .on('change', (e) => this.handleImageUpload(e, data, $previewContainer))
+                                        .appendTo($container);
+
+                                    // Click anywhere in dropzone to trigger file input
+                                    $dropzone.on('click', () => $fileInput.click());
+
+                                    // Image preview container
+                                    const $previewContainer = $('<div>')
+                                        .addClass('image-preview-container')
+                                        .appendTo($container);
+
+                                    // Display existing images if any
+                                    if (data.editorOptions.value) {
+                                        this.displayProductImages(data.editorOptions.value, $previewContainer);
+                                    }
+
+                                    itemElement.append($container);
+                                }
+                            }]
+                        },
+                        {
+                            itemType: 'group',
                             caption: 'Basic Information',
-                            colCount: 2,
+                            colSpan: 1,
+                            cssClass: 'form-section',
                             items: [
                                 {
                                     dataField: 'name',
+                                    label: { text: 'Product Name' },
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        placeholder: 'Enter product name'
+                                    },
                                     validationRules: [{ type: 'required', message: 'Product name is required' }]
                                 },
                                 {
                                     dataField: 'code',
+                                    label: { text: 'Product Code' },
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        placeholder: 'Enter product code'
+                                    },
                                     validationRules: [{ type: 'required', message: 'Product code is required' }]
                                 },
                                 {
@@ -423,52 +595,48 @@ window.ProductPage = class {
                                         dataSource: this.allCategories,
                                         displayExpr: 'name',
                                         valueExpr: 'id',
-                                        placeholder: 'Select a category'
+                                        placeholder: 'Select a category',
+                                        searchEnabled: true,
+                                        showClearButton: true,
+                                        onValueChanged: (e) => {
+                                            console.log('Category selected:', e.value);
+                                            if (e.value) {
+                                                const selectedCategory = this.allCategories.find(c => c.id === e.value);
+                                                if (selectedCategory) {
+                                                    // Get the form instance directly
+                                                    const form = e.component._form;
+                                                    if (form) {
+                                                        // Update the form data
+                                                        const formData = form.option('formData') || {};
+                                                        formData.category_id = selectedCategory.id;
+                                                        formData.category = selectedCategory;
+                                                        
+                                                        // Update the form
+                                                        form.updateData('category_id', selectedCategory.id);
+                                                        form.updateData('category', selectedCategory);
+                                                        
+                                                        // Update the grid's editing data
+                                                        const editRowKey = this.grid.option('editing.editRowKey');
+                                                        if (editRowKey !== undefined) {
+                                                            const editData = this.grid.option('editing.changes')[0]?.data || {};
+                                                            editData.category_id = selectedCategory.id;
+                                                            editData.category = selectedCategory;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     },
                                     validationRules: [{ type: 'required', message: 'Category is required' }]
                                 },
                                 {
                                     dataField: 'description',
+                                    label: { text: 'Description' },
                                     editorType: 'dxTextArea',
                                     editorOptions: {
-                                        height: 90
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            itemType: 'group',
-                            caption: 'Product Details',
-                            colCount: 2,
-                            items: [
-                                {
-                                    dataField: 'material',
-                                    validationRules: [{ type: 'required', message: 'Material is required' }]
-                                },
-                                {
-                                    dataField: 'weight',
-                                    editorType: 'dxNumberBox',
-                                    editorOptions: {
-                                        min: 0,
-                                        step: 0.1,
-                                        suffix: 'g'
-                                    }
-                                },
-                                {
-                                    dataField: 'size_available',
-                                    editorType: 'dxTagBox',
-                                    editorOptions: {
-                                        items: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'],
-                                        showSelectionControls: true,
-                                        applyValueMode: 'useButtons'
-                                    }
-                                },
-                                {
-                                    dataField: 'color_options',
-                                    editorType: 'dxTagBox',
-                                    editorOptions: {
-                                        showSelectionControls: true,
-                                        applyValueMode: 'useButtons'
+                                        stylingMode: 'filled',
+                                        height: 120,
+                                        placeholder: 'Enter product description'
                                     }
                                 }
                             ]
@@ -476,13 +644,17 @@ window.ProductPage = class {
                         {
                             itemType: 'group',
                             caption: 'Pricing & Production',
-                            colCount: 2,
+                            colSpan: 1,
+                            cssClass: 'form-section',
                             items: [
                                 {
                                     dataField: 'base_price',
+                                    label: { text: 'Base Price' },
                                     editorType: 'dxNumberBox',
                                     editorOptions: {
-                                        format: 'currency',
+                                        stylingMode: 'filled',
+                                        format: { type: 'currency', precision: 2 },
+                                        placeholder: 'Enter base price',
                                         min: 0,
                                         step: 0.01
                                     },
@@ -490,59 +662,272 @@ window.ProductPage = class {
                                 },
                                 {
                                     dataField: 'production_time',
+                                    label: { text: 'Production Time (days)' },
                                     editorType: 'dxNumberBox',
                                     editorOptions: {
+                                        stylingMode: 'filled',
                                         min: 1,
                                         step: 1,
-                                        suffix: ' days'
-                                    }
+                                        placeholder: 'Production time'
+                                    },
+                                    validationRules: [{ type: 'required', message: 'Production time is required' }]
                                 },
                                 {
                                     dataField: 'min_order_quantity',
+                                    label: { text: 'Minimum Order Quantity' },
                                     editorType: 'dxNumberBox',
                                     editorOptions: {
+                                        stylingMode: 'filled',
                                         min: 1,
-                                        step: 1
-                                    }
+                                        step: 1,
+                                        placeholder: 'Minimum order quantity'
+                                    },
+                                    validationRules: [{ type: 'required', message: 'Minimum order quantity is required' }]
                                 },
                                 {
                                     dataField: 'stock_status',
+                                    label: { text: 'Stock Status' },
                                     editorType: 'dxSelectBox',
                                     editorOptions: {
-                                        items: ['in_stock', 'out_of_stock', 'pre_order'],
-                                        placeholder: 'Select stock status'
+                                        stylingMode: 'filled',
+                                        items: [
+                                            { id: 'in_stock', text: 'In Stock' },
+                                            { id: 'out_of_stock', text: 'Out of Stock' },
+                                            { id: 'pre_order', text: 'Pre-Order' }
+                                        ],
+                                        displayExpr: 'text',
+                                        valueExpr: 'id',
+                                        placeholder: 'Select status'
+                                    },
+                                    validationRules: [{ type: 'required', message: 'Stock status is required' }]
+                                }
+                            ]
+                        },
+                        {
+                            itemType: 'group',
+                            caption: 'Bulk Discount Rules',
+                            colSpan: 2,
+                            cssClass: 'form-section',
+                            items: [
+                                {
+                                    dataField: 'bulk_discount_rules.10',
+                                    label: { text: 'Discount for ≥10 units (%)' },
+                                    editorType: 'dxNumberBox',
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        min: 0,
+                                        max: 100,
+                                        step: 1,
+                                        suffix: '%',
+                                        placeholder: 'Enter discount percentage'
+                                    }
+                                },
+                                {
+                                    dataField: 'bulk_discount_rules.20',
+                                    label: { text: 'Discount for ≥20 units (%)' },
+                                    editorType: 'dxNumberBox',
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        min: 0,
+                                        max: 100,
+                                        step: 1,
+                                        suffix: '%',
+                                        placeholder: 'Enter discount percentage'
+                                    }
+                                },
+                                {
+                                    dataField: 'bulk_discount_rules.50',
+                                    label: { text: 'Discount for ≥50 units (%)' },
+                                    editorType: 'dxNumberBox',
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        min: 0,
+                                        max: 100,
+                                        step: 1,
+                                        suffix: '%',
+                                        placeholder: 'Enter discount percentage'
                                     }
                                 }
                             ]
                         },
                         {
                             itemType: 'group',
+                            caption: 'Product Details',
+                            colSpan: 2,
+                            cssClass: 'form-section',
+                            items: [
+                                {
+                                    dataField: 'material',
+                                    label: { text: 'Material' },
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        placeholder: 'Enter material type'
+                                    },
+                                    validationRules: [{ type: 'required', message: 'Material is required' }]
+                                },
+                                {
+                                    dataField: 'weight',
+                                    label: { text: 'Weight (g)' },
+                                    editorType: 'dxNumberBox',
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        min: 0,
+                                        step: 1,
+                                        placeholder: 'Enter weight in grams'
+                                    },
+                                    validationRules: [{ type: 'required', message: 'Weight is required' }]
+                                },
+                                {
+                                    dataField: 'size_available',
+                                    label: { text: 'Available Sizes' },
+                                    editorType: 'dxTagBox',
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        items: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'],
+                                        showSelectionControls: true,
+                                        placeholder: 'Select available sizes',
+                                        multiline: false
+                                    },
+                                    validationRules: [{ type: 'required', message: 'At least one size must be selected' }]
+                                },
+                                {
+                                    dataField: 'color_options',
+                                    label: { text: 'Color Options' },
+                                    editorType: 'dxTagBox',
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        items: ['Red/White', 'Blue/White', 'Green/White', 'Black/White', 'Custom'],
+                                        showSelectionControls: true,
+                                        placeholder: 'Select available colors',
+                                        multiline: false
+                                    },
+                                    validationRules: [{ type: 'required', message: 'At least one color must be selected' }]
+                                }
+                            ]
+                        },
+                        {
+                            itemType: 'group',
                             caption: 'Customization Options',
-                            colCount: 2,
+                            colSpan: 2,
+                            cssClass: 'form-section',
                             items: [
                                 {
                                     dataField: 'customization_options.name',
                                     label: { text: 'Name Customization' },
-                                    editorType: 'dxSwitch'
+                                    editorType: 'dxSwitch',
+                                    editorOptions: {
+                                        switchedOnText: 'YES',
+                                        switchedOffText: 'NO'
+                                    }
                                 },
                                 {
                                     dataField: 'customization_options.number',
                                     label: { text: 'Number Customization' },
-                                    editorType: 'dxSwitch'
+                                    editorType: 'dxSwitch',
+                                    editorOptions: {
+                                        switchedOnText: 'YES',
+                                        switchedOffText: 'NO'
+                                    }
                                 },
                                 {
                                     dataField: 'customization_options.patches',
                                     label: { text: 'Patches Available' },
-                                    editorType: 'dxSwitch'
+                                    editorType: 'dxSwitch',
+                                    editorOptions: {
+                                        switchedOnText: 'YES',
+                                        switchedOffText: 'NO'
+                                    }
                                 },
                                 {
                                     dataField: 'customization_options.team_logo',
                                     label: { text: 'Team Logo Available' },
-                                    editorType: 'dxSwitch'
+                                    editorType: 'dxSwitch',
+                                    editorOptions: {
+                                        switchedOnText: 'YES',
+                                        switchedOffText: 'NO'
+                                    }
                                 }
                             ]
                         }
                     ]
+                },
+                onEditingStart: (e) => {
+                    // Wait for the popup to be shown and form to be created
+                    setTimeout(() => {
+                        // Get the existing data
+                        const formData = { ...e.data };  // Create a copy of existing data
+                        console.log('Original data when editing starts:', formData);
+                        
+                        // Initialize arrays with existing values or empty arrays
+                        formData.size_available = Array.isArray(formData.size_available) ? formData.size_available : [];
+                        formData.color_options = Array.isArray(formData.color_options) ? formData.color_options : [];
+                        formData.images = Array.isArray(formData.images) ? formData.images : [];
+                        
+                        // Initialize customization options while preserving existing values
+                        formData.customization_options = {
+                            name: Boolean(formData.customization_options?.name),
+                            number: Boolean(formData.customization_options?.number),
+                            patches: Boolean(formData.customization_options?.patches),
+                            team_logo: Boolean(formData.customization_options?.team_logo),
+                            ...(formData.customization_options || {})
+                        };
+                        
+                        // Initialize bulk discount rules while preserving existing values
+                        formData.bulk_discount_rules = {
+                            10: parseInt(formData.bulk_discount_rules?.['10']) || 0,
+                            20: parseInt(formData.bulk_discount_rules?.['20']) || 0,
+                            50: parseInt(formData.bulk_discount_rules?.['50']) || 0,
+                            ...(formData.bulk_discount_rules || {})
+                        };
+                        
+                        // Preserve existing values or set defaults
+                        formData.code = formData.code || `PROD-${Date.now()}`;
+                        formData.material = formData.material || 'Default Material';
+                        formData.description = formData.description || '';
+                        formData.weight = parseInt(formData.weight) || 100;
+                        formData.min_order_quantity = parseInt(formData.min_order_quantity) || 1;
+                        formData.is_active = formData.is_active !== undefined ? Boolean(formData.is_active) : true;
+                        formData.stock_status = formData.stock_status || 'in_stock';
+                        
+                        // Ensure numeric fields are properly formatted while preserving existing values
+                        formData.base_price = parseFloat(formData.base_price) || 0;
+                        formData.production_time = parseInt(formData.production_time) || 1;
+                        
+                        // Ensure category is properly set
+                        if (formData.category_id) {
+                            formData.category_id = parseInt(formData.category_id);
+                            const category = this.allCategories.find(c => c.id === formData.category_id);
+                            if (category) {
+                                formData.category = category;
+                            }
+                        }
+                        
+                        // Get the form instance
+                        const form = $('.dx-popup-content .dx-form').dxForm('instance');
+                        if (form) {
+                            // First, set the entire form data
+                            form.option('formData', formData);
+                            
+                            // Then update each field individually to ensure proper binding
+                            Object.entries(formData).forEach(([key, value]) => {
+                                if (value !== undefined) {
+                                    form.updateData(key, value);
+                                    
+                                    // Special handling for nested objects
+                                    if (key === 'customization_options' || key === 'bulk_discount_rules') {
+                                        Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+                                            form.updateData(`${key}.${nestedKey}`, nestedValue);
+                                        });
+                                    }
+                                }
+                            });
+                            
+                            // Force a repaint of the form
+                            form.repaint();
+                            
+                            console.log('Final form data after initialization:', form.option('formData'));
+                        }
+                    }, 100); // Small delay to ensure form is created
                 }
             },
             toolbar: {
@@ -565,6 +950,500 @@ window.ProductPage = class {
             onRowRemoving: (e) => this.handleRowRemoving(e),
             onInitialized: () => this.loadData()
         }).dxDataGrid('instance');
+
+        // Add enhanced CSS for professional styling
+        $('<style>')
+            .text(`
+                /* Grid Styling */
+                .dx-datagrid {
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+                }
+
+                .dx-datagrid-headers {
+                    background: #f8f9fa;
+                    border-bottom: 2px solid #e9ecef;
+                }
+
+                .dx-datagrid-headers .dx-datagrid-table .dx-row > td {
+                    padding: 16px;
+                    font-weight: 600;
+                    color: #344767;
+                    background: transparent;
+                }
+
+                .dx-datagrid-rowsview .dx-row {
+                    border-bottom: 1px solid #f0f2f5;
+                }
+
+                .dx-datagrid-rowsview .dx-row:hover {
+                    background-color: #f8f9fa;
+                }
+
+                .dx-datagrid-rowsview .dx-row > td {
+                    padding: 16px;
+                    vertical-align: middle;
+                }
+
+                /* Product Form Styling */
+                .dx-popup-content {
+                    padding: 0 !important;
+                }
+
+                .dx-popup-title {
+                    background: #f8f9fa;
+                    border-bottom: 1px solid #e9ecef;
+                    padding: 20px 24px;
+                }
+
+                .dx-popup-title .dx-toolbar-items-container {
+                    height: auto;
+                }
+
+                .dx-popup-title .dx-toolbar-label {
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #344767;
+                }
+
+                .dx-form {
+                    padding: 24px;
+                }
+
+                .dx-form-group-caption {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #344767;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    padding: 0 0 16px;
+                }
+
+                .dx-form-group {
+                    padding: 24px;
+                    background: #fff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+                    margin-bottom: 24px;
+                }
+
+                .dx-form .dx-texteditor {
+                    border-radius: 6px;
+                }
+
+                .dx-form .dx-texteditor.dx-state-focused {
+                    border-color: #5e72e4;
+                    box-shadow: 0 0 0 3px rgba(94,114,228,0.1);
+                }
+
+                .dx-form .dx-texteditor-input {
+                    padding: 8px 12px;
+                    font-size: 14px;
+                }
+
+                /* Image Upload Section */
+                .product-images-container {
+                    padding: 24px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    border: 2px dashed #e9ecef;
+                    transition: all 0.3s ease;
+                }
+
+                .product-images-container:hover {
+                    border-color: #5e72e4;
+                    background: #f8f9fa;
+                }
+
+                .upload-button-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 24px;
+                    text-align: center;
+                }
+
+                .upload-button-container .btn {
+                    padding: 12px 24px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    transition: all 0.3s ease;
+                }
+
+                .upload-button-container .btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(94,114,228,0.15);
+                }
+
+                .image-preview-container {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                    gap: 16px;
+                    padding: 16px;
+                }
+
+                .image-preview {
+                    position: relative;
+                    padding-top: 100%;
+                    background: white;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                    transition: all 0.3s ease;
+                }
+
+                .image-preview.uploading::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 24px;
+                }
+
+                .image-preview.uploading::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 40px;
+                    height: 40px;
+                    border: 4px solid #fff;
+                    border-top-color: transparent;
+                    border-radius: 50%;
+                    z-index: 1;
+                    animation: spin 1s linear infinite;
+                }
+
+                @keyframes spin {
+                    0% { transform: translate(-50%, -50%) rotate(0deg); }
+                    100% { transform: translate(-50%, -50%) rotate(360deg); }
+                }
+
+                .image-preview img {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .image-preview .delete-button {
+                    position: absolute;
+                    top: 8px;
+                    right: 8px;
+                    background: rgba(255,255,255,0.9);
+                    border-radius: 50%;
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    color: #dc3545;
+                    transition: all 0.2s;
+                    opacity: 0;
+                    transform: translateY(-8px);
+                }
+
+                .image-preview:hover .delete-button {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+
+                .image-preview .delete-button:hover {
+                    background: #dc3545;
+                    color: white;
+                }
+
+                /* Product Grid Thumbnails */
+                .product-thumbnail {
+                    width: 64px;
+                    height: 64px;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+                }
+
+                .product-thumbnail img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                .no-image-placeholder {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #f8f9fa;
+                    color: #adb5bd;
+                    font-size: 24px;
+                }
+
+                /* Status Badges */
+                .badge {
+                    padding: 6px 12px;
+                    font-weight: 600;
+                    font-size: 12px;
+                    border-radius: 6px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                .badge-soft-primary {
+                    background: rgba(94,114,228,0.1);
+                    color: #5e72e4;
+                }
+
+                .badge-soft-success {
+                    background: rgba(45,206,137,0.1);
+                    color: #2dce89;
+                }
+
+                .badge-soft-info {
+                    background: rgba(17,205,239,0.1);
+                    color: #11cdef;
+                }
+
+                /* Form Controls */
+                .dx-switch {
+                    height: 24px;
+                }
+
+                .dx-switch.dx-state-hover {
+                    border-color: #5e72e4;
+                }
+
+                .dx-switch.dx-state-focused {
+                    box-shadow: 0 0 0 3px rgba(94,114,228,0.1);
+                }
+
+                .dx-selectbox {
+                    border-radius: 6px;
+                }
+
+                .dx-selectbox.dx-state-focused {
+                    border-color: #5e72e4;
+                    box-shadow: 0 0 0 3px rgba(94,114,228,0.1);
+                }
+
+                /* Action Buttons */
+                .dx-button {
+                    border-radius: 6px;
+                    min-height: 38px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                .dx-button-has-text .dx-button-content {
+                    padding: 8px 16px;
+                }
+
+                .dx-button-success {
+                    background: #2dce89;
+                    color: white;
+                }
+
+                .dx-button-success:hover {
+                    background: #26af74;
+                }
+
+                /* Popup Footer */
+                .dx-popup-bottom {
+                    background: #f8f9fa;
+                    border-top: 1px solid #e9ecef;
+                    padding: 16px 24px;
+                }
+
+                .dx-popup-bottom .dx-toolbar-items-container {
+                    height: auto;
+                }
+
+                /* Form Popup Styling */
+                .dx-popup-wrapper .dx-popup-content {
+                    padding: 0;
+                    overflow-y: auto;
+                }
+
+                .dx-popup-title {
+                    background: #f8f9fa;
+                    border-bottom: 1px solid #e9ecef;
+                    padding: 28px 40px;
+                    position: sticky;
+                    top: 0;
+                    z-index: 1;
+                }
+
+                .dx-popup-title .dx-toolbar-label {
+                    font-size: 28px;
+                    font-weight: 600;
+                    color: #344767;
+                }
+
+                /* Form Layout */
+                .dx-form {
+                    padding: 40px;
+                    max-width: 100%;
+                    margin: 0 auto;
+                }
+
+                .form-section {
+                    background: white;
+                    border-radius: 16px;
+                    margin-bottom: 40px;
+                    padding: 40px;
+                    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+                    height: 100%;
+                }
+
+                .form-section .dx-form-group-caption {
+                    font-size: 20px;
+                    font-weight: 600;
+                    color: #344767;
+                    margin-bottom: 32px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                /* Form Fields */
+                .dx-field-item {
+                    margin-bottom: 24px;
+                }
+
+                .dx-field-item-label {
+                    font-size: 15px;
+                    font-weight: 500;
+                    color: #344767;
+                    margin-bottom: 10px;
+                }
+
+                .dx-texteditor {
+                    border-radius: 12px;
+                    background: #f8f9fa;
+                    height: 56px;
+                }
+
+                .dx-texteditor.dx-editor-filled {
+                    background: #f8f9fa;
+                }
+
+                .dx-texteditor.dx-state-focused {
+                    border-color: #5e72e4;
+                    box-shadow: 0 0 0 3px rgba(94,114,228,0.1);
+                }
+
+                .dx-texteditor-input {
+                    font-size: 16px;
+                    padding: 16px 20px;
+                    min-height: 56px;
+                }
+
+                .dx-textarea {
+                    height: auto;
+                }
+
+                .dx-textarea .dx-texteditor-input {
+                    min-height: 140px;
+                    padding: 20px;
+                }
+
+                /* Image Upload Area */
+                .dropzone-area {
+                    background: #f8f9fa;
+                    border: 3px dashed #e9ecef;
+                    border-radius: 16px;
+                    padding: 60px;
+                    text-align: center;
+                    transition: all 0.3s ease;
+                    cursor: pointer;
+                    margin-bottom: 32px;
+                }
+
+                .dropzone-area.dragover {
+                    background: #fff;
+                    border-color: #5e72e4;
+                    transform: scale(1.02);
+                }
+
+                .dropzone-content i {
+                    color: #5e72e4;
+                    margin-bottom: 24px;
+                    font-size: 64px;
+                }
+
+                .dropzone-content h4 {
+                    color: #344767;
+                    font-size: 24px;
+                    font-weight: 600;
+                    margin-bottom: 16px;
+                }
+
+                .dropzone-content p {
+                    font-size: 16px;
+                    color: #8898aa;
+                }
+
+                /* Image Preview Grid */
+                .image-preview-container {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                    gap: 32px;
+                    padding: 32px;
+                }
+
+                .image-preview {
+                    position: relative;
+                    padding-top: 100%;
+                    background: white;
+                    border-radius: 16px;
+                    overflow: hidden;
+                    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+                    transition: all 0.3s ease;
+                }
+
+                .image-preview:hover {
+                    transform: translateY(-8px);
+                    box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+                }
+
+                /* Form Buttons */
+                .dx-popup-bottom {
+                    background: #f8f9fa;
+                    border-top: 1px solid #e9ecef;
+                    padding: 28px 40px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    transition: transform 0.2s;
+                }
+                
+                .product-gallery-item:hover {
+                    transform: scale(1.02);
+                }
+                
+                .product-gallery-item img {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+            `)
+            .appendTo('head');
     }
 
     async loadData() {
@@ -574,16 +1453,6 @@ window.ProductPage = class {
         } catch (error) {
             console.error('Error loading products:', error);
             DevExpress.ui.notify('Failed to load products', 'error', 3000);
-        }
-    }
-
-    async loadCategories(productId) {
-        try {
-            this.allCategories = await vomoAPI.getCategories();
-            this.renderCategories();
-        } catch (error) {
-            console.error('Error loading categories:', error);
-            DevExpress.ui.notify('Failed to load categories', 'error', 3000);
         }
     }
 
@@ -655,24 +1524,248 @@ window.ProductPage = class {
 
     async handleRowInserting(e) {
         try {
-            const result = await vomoAPI.createProduct(e.data);
+            // Get the form instance
+            const $form = $('.dx-popup-content .dx-form');
+            const form = $form.length ? $form.dxForm('instance') : null;
+            
+            if (!form) {
+                throw new Error('Form instance not found');
+            }
+
+            // Get all form data
+            const formData = form.option('formData') || {};
+            console.log('Form data before processing:', formData);
+
+            // Get the grid's editing data
+            const gridData = e.data || {};
+            console.log('Grid data:', gridData);
+
+            // Merge form data with grid data, giving priority to form data
+            const cleanData = { ...gridData, ...formData };
+            console.log('Merged data:', cleanData);
+
+            // Remove any temporary fields
+            delete cleanData.__KEY__;
+            delete cleanData.pendingImages;
+
+            // Initialize arrays if they don't exist
+            cleanData.size_available = Array.isArray(cleanData.size_available) ? cleanData.size_available : [];
+            cleanData.color_options = Array.isArray(cleanData.color_options) ? cleanData.color_options : [];
+            cleanData.images = Array.isArray(cleanData.images) ? cleanData.images : [];
+
+            // Initialize customization options
+            cleanData.customization_options = {
+                name: Boolean(cleanData.customization_options?.name),
+                number: Boolean(cleanData.customization_options?.number),
+                patches: Boolean(cleanData.customization_options?.patches),
+                team_logo: Boolean(cleanData.customization_options?.team_logo),
+                ...cleanData.customization_options
+            };
+
+            // Initialize bulk discount rules
+            cleanData.bulk_discount_rules = {
+                10: parseInt(cleanData.bulk_discount_rules?.['10']) || 0,
+                20: parseInt(cleanData.bulk_discount_rules?.['20']) || 0,
+                50: parseInt(cleanData.bulk_discount_rules?.['50']) || 0,
+                ...cleanData.bulk_discount_rules
+            };
+
+            // Set default values for missing fields
+            cleanData.code = cleanData.code || `PROD-${Date.now()}`;
+            cleanData.material = cleanData.material || 'Default Material';
+            cleanData.description = cleanData.description || '';
+            cleanData.weight = parseInt(cleanData.weight) || 100;
+            cleanData.min_order_quantity = parseInt(cleanData.min_order_quantity) || 1;
+            cleanData.is_active = cleanData.is_active !== undefined ? Boolean(cleanData.is_active) : true;
+            cleanData.stock_status = cleanData.stock_status || 'in_stock';
+
+            // Ensure numeric fields are properly formatted
+            cleanData.base_price = parseFloat(cleanData.base_price) || 0;
+            cleanData.production_time = parseInt(cleanData.production_time) || 1;
+            cleanData.min_order_quantity = parseInt(cleanData.min_order_quantity) || 1;
+            cleanData.weight = parseInt(cleanData.weight) || 100;
+
+            // Handle category_id and category object
+            if (cleanData.category_id) {
+                cleanData.category_id = parseInt(cleanData.category_id);
+                const category = this.allCategories.find(c => c.id === cleanData.category_id);
+                if (category) {
+                    cleanData.category = category;
+                } else {
+                    throw new Error('Invalid category selected');
+                }
+            } else {
+                throw new Error('Category is required');
+            }
+
+            // Validate required fields
+            const requiredFields = {
+                name: { value: cleanData.name, message: 'Product name is required' },
+                category_id: { value: cleanData.category_id, message: 'Category is required' },
+                base_price: { value: parseFloat(cleanData.base_price), message: 'Base price is required' },
+                production_time: { value: parseInt(cleanData.production_time), message: 'Production time is required' },
+                size_available: { value: cleanData.size_available?.length > 0, message: 'At least one size must be selected' }
+            };
+
+            // Check each required field
+            for (const [field, { value, message }] of Object.entries(requiredFields)) {
+                if (!value && value !== 0) {
+                    console.error(`Missing required field: ${field}`, cleanData);
+                    throw new Error(message);
+                }
+            }
+
+            console.log('Final data being sent to API:', cleanData);
+
+            // Create the product
+            const result = await vomoAPI.createProduct(cleanData);
             e.data.id = result.id;
+
+            // Handle image uploads if any
+            if (e.data.pendingImages && e.data.pendingImages.length > 0) {
+                for (const file of e.data.pendingImages) {
+                    try {
+                        const uploadedImage = await vomoAPI.uploadProductImage(result.id, file);
+                        if (!e.data.images) {
+                            e.data.images = [];
+                        }
+                        e.data.images.push(uploadedImage);
+                    } catch (error) {
+                        console.error('Error uploading image:', error);
+                        DevExpress.ui.notify(`Failed to upload image: ${file.name}`, 'error', 3000);
+                    }
+                }
+                delete e.data.pendingImages;
+            }
+
             DevExpress.ui.notify('Product created successfully', 'success', 3000);
         } catch (error) {
             console.error('Error creating product:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to create product', 'error', 3000);
+            DevExpress.ui.notify('Error creating product: ' + error.message, 'error', 3000);
         }
     }
 
     async handleRowUpdating(e) {
         try {
-            await vomoAPI.updateProduct(e.key.id, {...e.oldData, ...e.newData});
+            // Get the form instance
+            const $form = $('.dx-popup-content .dx-form');
+            const form = $form.length ? $form.dxForm('instance') : null;
+            
+            if (!form) {
+                throw new Error('Form instance not found');
+            }
+
+            // Get all form data
+            const formData = form.option('formData') || {};
+            console.log('Form data before processing:', formData);
+
+            // Get the grid's editing data
+            const gridData = e.newData || {};
+            console.log('Grid data:', gridData);
+
+            // Merge form data with grid data, giving priority to form data
+            const cleanData = { ...e.oldData, ...gridData, ...formData };
+            console.log('Merged data:', cleanData);
+
+            // Remove any temporary fields
+            delete cleanData.__KEY__;
+            delete cleanData.pendingImages;
+
+            // Initialize arrays if they don't exist
+            cleanData.size_available = Array.isArray(cleanData.size_available) ? cleanData.size_available : [];
+            cleanData.color_options = Array.isArray(cleanData.color_options) ? cleanData.color_options : [];
+            cleanData.images = Array.isArray(cleanData.images) ? cleanData.images : [];
+
+            // Initialize customization options
+            cleanData.customization_options = {
+                name: Boolean(cleanData.customization_options?.name),
+                number: Boolean(cleanData.customization_options?.number),
+                patches: Boolean(cleanData.customization_options?.patches),
+                team_logo: Boolean(cleanData.customization_options?.team_logo),
+                ...cleanData.customization_options
+            };
+
+            // Initialize bulk discount rules
+            cleanData.bulk_discount_rules = {
+                10: parseInt(cleanData.bulk_discount_rules?.['10']) || 0,
+                20: parseInt(cleanData.bulk_discount_rules?.['20']) || 0,
+                50: parseInt(cleanData.bulk_discount_rules?.['50']) || 0,
+                ...cleanData.bulk_discount_rules
+            };
+
+            // Set default values for missing fields
+            cleanData.code = cleanData.code || `PROD-${Date.now()}`;
+            cleanData.material = cleanData.material || 'Default Material';
+            cleanData.description = cleanData.description || '';
+            cleanData.weight = parseInt(cleanData.weight) || 100;
+            cleanData.min_order_quantity = parseInt(cleanData.min_order_quantity) || 1;
+            cleanData.is_active = cleanData.is_active !== undefined ? Boolean(cleanData.is_active) : true;
+            cleanData.stock_status = cleanData.stock_status || 'in_stock';
+
+            // Ensure numeric fields are properly formatted
+            cleanData.base_price = parseFloat(cleanData.base_price) || 0;
+            cleanData.production_time = parseInt(cleanData.production_time) || 1;
+            cleanData.min_order_quantity = parseInt(cleanData.min_order_quantity) || 1;
+            cleanData.weight = parseInt(cleanData.weight) || 100;
+
+            // Handle category_id and category object
+            if (cleanData.category_id) {
+                cleanData.category_id = parseInt(cleanData.category_id);
+                const category = this.allCategories.find(c => c.id === cleanData.category_id);
+                if (category) {
+                    cleanData.category = category;
+                } else {
+                    throw new Error('Invalid category selected');
+                }
+            } else {
+                throw new Error('Category is required');
+            }
+
+            // Validate required fields
+            const requiredFields = {
+                name: { value: cleanData.name, message: 'Product name is required' },
+                category_id: { value: cleanData.category_id, message: 'Category is required' },
+                base_price: { value: parseFloat(cleanData.base_price), message: 'Base price is required' },
+                production_time: { value: parseInt(cleanData.production_time), message: 'Production time is required' },
+                size_available: { value: cleanData.size_available?.length > 0, message: 'At least one size must be selected' }
+            };
+
+            // Check each required field
+            for (const [field, { value, message }] of Object.entries(requiredFields)) {
+                if (!value && value !== 0) {
+                    console.error(`Missing required field: ${field}`, cleanData);
+                    throw new Error(message);
+                }
+            }
+
+            console.log('Final data being sent to API:', cleanData);
+
+            // Update the product
+            await vomoAPI.updateProduct(e.key.id, cleanData);
+
+            // Handle image uploads if any
+            if (e.data.pendingImages && e.data.pendingImages.length > 0) {
+                for (const file of e.data.pendingImages) {
+                    try {
+                        const uploadedImage = await vomoAPI.uploadProductImage(e.key.id, file);
+                        if (!cleanData.images) {
+                            cleanData.images = [];
+                        }
+                        cleanData.images.push(uploadedImage);
+                    } catch (error) {
+                        console.error('Error uploading image:', error);
+                        DevExpress.ui.notify(`Failed to upload image: ${file.name}`, 'error', 3000);
+                    }
+                }
+                delete e.data.pendingImages;
+            }
+
             DevExpress.ui.notify('Product updated successfully', 'success', 3000);
         } catch (error) {
             console.error('Error updating product:', error);
             e.cancel = true;
-            DevExpress.ui.notify('Failed to update product', 'error', 3000);
+            DevExpress.ui.notify('Error updating product: ' + error.message, 'error', 3000);
         }
     }
 
@@ -706,151 +1799,100 @@ window.ProductPage = class {
         }
     }
 
-    showProductDetails(product) {
-        const content = `
-            <div class="p-4">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-body">
-                                <h6 class="card-title text-uppercase text-muted mb-3">
-                                    <i class="fas fa-info-circle mr-2"></i>Basic Information
-                                </h6>
-                                <div class="mb-2">
-                                    <small class="text-muted">Name</small>
-                                    <div class="font-weight-bold">${product.name}</div>
-                                </div>
-                                <div class="mb-2">
-                                    <small class="text-muted">Code</small>
-                                    <div class="font-weight-bold">${product.code}</div>
-                                </div>
-                                <div class="mb-2">
-                                    <small class="text-muted">Category</small>
-                                    <div class="font-weight-bold">${product.category?.name || 'N/A'}</div>
-                                </div>
-                                <div class="mb-2">
-                                    <small class="text-muted">Material</small>
-                                    <div class="font-weight-bold">${product.material}</div>
-                                </div>
-                                <div>
-                                    <small class="text-muted">Weight</small>
-                                    <div class="font-weight-bold">${product.weight}g</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-body">
-                                <h6 class="card-title text-uppercase text-muted mb-3">
-                                    <i class="fas fa-dollar-sign mr-2"></i>Pricing & Production
-                                </h6>
-                                <div class="mb-2">
-                                    <small class="text-muted">Base Price</small>
-                                    <div class="font-weight-bold">$${product.base_price}</div>
-                                </div>
-                                <div class="mb-2">
-                                    <small class="text-muted">Minimum Order</small>
-                                    <div class="font-weight-bold">${product.min_order_quantity} units</div>
-                                </div>
-                                <div>
-                                    <small class="text-muted">Production Time</small>
-                                    <div class="font-weight-bold">${product.production_time} days</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-body">
-                                <h6 class="card-title text-uppercase text-muted mb-3">
-                                    <i class="fas fa-palette mr-2"></i>Available Options
-                                </h6>
-                                <div class="mb-3">
-                                    <small class="text-muted d-block mb-2">Sizes</small>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        ${(product.size_available || []).map(size => 
-                                            `<span class="badge badge-soft-primary">${size}</span>`
-                                        ).join('')}
-                                    </div>
-                                </div>
-                                <div>
-                                    <small class="text-muted d-block mb-2">Colors</small>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        ${(product.color_options || []).map(color => 
-                                            `<span class="badge badge-soft-info">${color}</span>`
-                                        ).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-body">
-                                <h6 class="card-title text-uppercase text-muted mb-3">
-                                    <i class="fas fa-tags mr-2"></i>Bulk Discounts
-                                </h6>
-                                <div class="table-responsive">
-                                    <table class="table table-sm mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th>Quantity</th>
-                                                <th>Discount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            ${Object.entries(product.bulk_discount_rules || {}).map(([qty, discount]) => `
-                                                <tr>
-                                                    <td>≥${qty} units</td>
-                                                    <td><span class="text-success">${discount}% off</span></td>
-                                                </tr>
-                                            `).join('')}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-12">
-                        <div class="card shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-title text-uppercase text-muted mb-3">
-                                    <i class="fas fa-align-left mr-2"></i>Description
-                                </h6>
-                                <p class="mb-0">${product.description}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        const popup = $('<div>').dxPopup({
-            title: `Product Details - ${product.name}`,
-            showTitle: true,
-            width: '90%',
-            maxWidth: '1200px',
-            height: '90%',
-            contentTemplate: () => content,
-            toolbarItems: [{
-                widget: 'dxButton',
-                toolbar: 'bottom',
-                location: 'after',
-                options: {
-                    text: 'Close',
-                    onClick: function(e) {
-                        popup.hide();
-                    }
+    async handleImageUpload(event, data, previewContainer) {
+        const files = Array.from(event.target.files);
+        const maxSize = 5 * 1024 * 1024; // 5MB limit
+        
+        // Get product ID from the form data
+        const formData = data.component.option('formData');
+        const productId = formData && formData.id;
+        
+        // For new products, we'll store the files temporarily
+        if (!productId) {
+            if (!formData.pendingImages) {
+                formData.pendingImages = [];
+            }
+            
+            for (const file of files) {
+                if (file.size > maxSize) {
+                    DevExpress.ui.notify(`File ${file.name} exceeds 5MB limit`, 'error', 3000);
+                    continue;
                 }
-            }]
-        }).dxPopup('instance');
 
-        popup.show();
+                // Store file and show preview
+                const tempPreview = this.createImagePreview(URL.createObjectURL(file));
+                previewContainer.append(tempPreview);
+                formData.pendingImages.push(file);
+            }
+            
+            // Update form data with pending images
+            data.component.option('formData', formData);
+            return;
+        }
+        
+        // For existing products, upload immediately
+        for (const file of files) {
+            if (file.size > maxSize) {
+                DevExpress.ui.notify(`File ${file.name} exceeds 5MB limit`, 'error', 3000);
+                continue;
+            }
+
+            try {
+                // Show loading preview
+                const tempPreview = this.createImagePreview(URL.createObjectURL(file));
+                tempPreview.addClass('uploading');
+                previewContainer.append(tempPreview);
+
+                // Upload the image
+                const uploadedImage = await vomoAPI.uploadProductImage(productId, file);
+
+                // Update preview with actual image URL
+                tempPreview.removeClass('uploading');
+                tempPreview.find('img').attr('src', uploadedImage.image_url);
+
+                // Add to form data
+                if (!formData.images) {
+                    formData.images = [];
+                }
+                formData.images.push(uploadedImage);
+                
+                // Update the form data
+                data.component.option('formData', formData);
+
+                DevExpress.ui.notify('Image uploaded successfully', 'success', 3000);
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                DevExpress.ui.notify('Failed to upload image', 'error', 3000);
+            }
+        }
+    }
+
+    createImagePreview(src) {
+        return $('<div>')
+            .addClass('image-preview')
+            .append(
+                $('<img>').attr('src', src)
+            )
+            .append(
+                $('<div>')
+                    .addClass('delete-button')
+                    .append($('<i>').addClass('fas fa-times'))
+                    .on('click', function() {
+                        $(this).closest('.image-preview').remove();
+                    })
+            );
+    }
+
+    displayProductImages(images, container) {
+        container.empty();
+        images.forEach(image => {
+            const $preview = this.createImagePreview(image.url);
+            container.append($preview);
+        });
+    }
+
+    showProductDetails(product) {
+        // ... existing showProductDetails code ...
     }
 };
 
