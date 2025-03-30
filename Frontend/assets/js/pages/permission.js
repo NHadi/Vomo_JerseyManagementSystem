@@ -45,7 +45,24 @@ window.PermissionPage = class {
                 {
                     dataField: 'name',
                     caption: 'Permission Name',
-                    validationRules: [{ type: 'required' }]
+                    validationRules: [{ type: 'required' }],
+                    cellTemplate: (container, options) => {
+                        $('<div>')
+                            .addClass('d-flex align-items-center')
+                            .append(
+                                $('<i>').addClass('ni ni-key mr-2 text-primary')
+                            )
+                            .append(
+                                $('<div>').addClass('d-flex flex-column')
+                                    .append(
+                                        $('<span>').addClass('font-weight-bold').text(options.data.name || '')
+                                    )
+                                    .append(
+                                        $('<small>').addClass('text-muted').text(options.data.description || '')
+                                    )
+                            )
+                            .appendTo(container);
+                    }
                 },
                 {
                     dataField: 'description',
@@ -53,7 +70,8 @@ window.PermissionPage = class {
                     editorType: 'dxTextArea',
                     editorOptions: {
                         height: 100
-                    }
+                    },
+                    visible: false
                 },
                 {
                     type: 'buttons',
@@ -79,7 +97,12 @@ window.PermissionPage = class {
                             .attr('title', 'Delete Permission')
                             .append($('<i>').addClass('fas fa-trash'))
                             .on('click', () => {
-                                this.grid.deleteRow(options.rowIndex);
+                                DevExpress.ui.dialog.confirm("Are you sure you want to delete this permission?", "Confirm deletion")
+                                    .then((result) => {
+                                        if (result) {
+                                            this.grid.deleteRow(options.rowIndex);
+                                        }
+                                    });
                             })
                             .appendTo($buttonContainer);
 
@@ -93,6 +116,73 @@ window.PermissionPage = class {
             headerFilter: { visible: true },
             groupPanel: { visible: true },
             columnChooser: { enabled: false },
+            paging: {
+                pageSize: 10
+            },
+            pager: {
+                showPageSizeSelector: true,
+                allowedPageSizes: [5, 10, 20],
+                showInfo: true
+            },
+            editing: {
+                mode: 'popup',
+                allowUpdating: true,
+                allowDeleting: true,
+                allowAdding: true,
+                popup: {
+                    title: 'Permission Information',
+                    showTitle: true,
+                    width: 700,
+                    height: 325,
+                    position: { my: 'center', at: 'center', of: window },
+                    showCloseButton: true
+                },
+                form: {
+                    items: [
+                        {
+                            itemType: 'group',
+                            colCount: 1,
+                            items: [
+                                {
+                                    dataField: 'name',
+                                    label: { text: 'Permission Name', showColon: true },
+                                    isRequired: true,
+                                    editorOptions: {
+                                        placeholder: 'Enter permission name',
+                                        stylingMode: 'filled',
+                                        showClearButton: true,
+                                        mode: 'text',
+                                        inputAttr: {
+                                            'aria-label': 'Permission Name'
+                                        }
+                                    },
+                                    validationRules: [{ type: 'required', message: 'Permission name is required' }]
+                                },
+                                {
+                                    dataField: 'description',
+                                    label: { text: 'Description', showColon: true },
+                                    editorType: 'dxTextArea',
+                                    editorOptions: {
+                                        placeholder: 'Enter permission description',
+                                        stylingMode: 'filled',
+                                        height: 100,
+                                        maxLength: 500,
+                                        showClearButton: true,
+                                        inputAttr: {
+                                            'aria-label': 'Permission Description'
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                useIcons: true,
+                texts: {
+                    saveRowChanges: 'Save',
+                    cancelRowChanges: 'Cancel'
+                }
+            },
             toolbar: {
                 items: [
                     {
@@ -107,39 +197,6 @@ window.PermissionPage = class {
                     'searchPanel',
                     'columnChooserButton'
                 ]
-            },
-            editing: {
-                mode: 'popup',
-                allowUpdating: true,
-                allowDeleting: true,
-                allowAdding: true,
-                popup: {
-                    title: 'Permission Information',
-                    showTitle: true,
-                    width: 700,
-                    height: 325
-                },
-                form: {
-                    items: [
-                        {
-                            itemType: 'group',
-                            colCount: 1,
-                            items: [
-                                {
-                                    dataField: 'name',
-                                    isRequired: true
-                                },
-                                {
-                                    dataField: 'description',
-                                    editorType: 'dxTextArea',
-                                    editorOptions: {
-                                        height: 100
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                }
             },
             onContentReady: (e) => {
                 // Add export buttons after grid is fully loaded
@@ -157,6 +214,9 @@ window.PermissionPage = class {
             onRowUpdating: (e) => this.handleRowUpdating(e),
             onRowRemoving: (e) => this.handleRowRemoving(e)
         }).dxDataGrid('instance');
+
+        // Initial data load
+        this.loadData();
     }
 
     async loadData() {
@@ -170,18 +230,37 @@ window.PermissionPage = class {
             this.grid.beginCustomLoading('Loading permissions...');
             
             const data = await vomoAPI.getPermissions();
-            this.grid.option('dataSource', data);
-            
-            // Hide loading panel
-            this.grid.endCustomLoading();
+            if (Array.isArray(data)) {
+                this.grid.option('dataSource', data);
+            } else {
+                console.warn('Invalid data format received:', data);
+                this.grid.option('dataSource', []);
+            }
         } catch (error) {
+            console.error('Error loading permissions:', error);
             gridUtils.handleGridError(error, 'loading permissions');
+        } finally {
+            // Always hide loading panel
+            this.grid.endCustomLoading();
         }
     }
 
     async handleRowInserting(e) {
         try {
-            const result = await vomoAPI.createPermission(e.data);
+            // Validate required fields
+            if (!e.data.name) {
+                e.cancel = true;
+                DevExpress.ui.notify('Permission name is required', 'error', 3000);
+                return;
+            }
+
+            // Create permission data
+            const permissionData = {
+                name: e.data.name.trim(),
+                description: e.data.description || null
+            };
+
+            const result = await vomoAPI.createPermission(permissionData);
             e.data.id = result.id;
             gridUtils.showSuccess('Permission created successfully');
         } catch (error) {
@@ -192,7 +271,14 @@ window.PermissionPage = class {
 
     async handleRowUpdating(e) {
         try {
-            await vomoAPI.updatePermission(e.key.id, {...e.oldData, ...e.newData});
+            const updatedData = {
+                ...e.oldData,
+                ...e.newData,
+                name: e.newData.name || e.oldData.name,
+                description: e.newData.description || e.oldData.description || null
+            };
+
+            await vomoAPI.updatePermission(e.key.id, updatedData);
             gridUtils.showSuccess('Permission updated successfully');
         } catch (error) {
             e.cancel = true;

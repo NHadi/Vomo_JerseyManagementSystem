@@ -527,7 +527,115 @@ window.ProductPage = class {
                         hint: 'View Details',
                         icon: 'fas fa-eye',
                         onClick: (e) => {
-                            this.showProductDetails(e.row.data);
+                            // Create modal if it doesn't exist
+                            if (!$('#productViewModal').length) {
+                                $('body').append(`
+                                    <div class="modal fade" id="productViewModal" tabindex="-1" role="dialog">
+                                        <div class="modal-dialog modal-xl modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-primary py-2">
+                                                    <h5 class="modal-title text-white">
+                                                        <i class="fas fa-box-open mr-2"></i>
+                                                        <span class="product-title"></span>
+                                                    </h5>
+                                                    <button type="button" class="close text-white" data-dismiss="modal">
+                                                        <span>&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body p-0">
+                                                    <div class="product-view-container"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `);
+
+                                // Add modal-specific styles
+                                $('<style>')
+                                    .text(`
+                                        #productViewModal .modal-content {
+                                            border: none;
+                                            border-radius: 8px;
+                                            overflow: hidden;
+                                        }
+                                        #productViewModal .modal-header {
+                                            border-bottom: none;
+                                        }
+                                        #productViewModal .modal-body {
+                                            max-height: calc(90vh - 60px);
+                                            overflow-y: auto;
+                                        }
+                                        #productViewModal .close {
+                                            opacity: 0.8;
+                                            text-shadow: none;
+                                            transition: opacity 0.2s;
+                                        }
+                                        #productViewModal .close:hover {
+                                            opacity: 1;
+                                        }
+                                        .product-view-container {
+                                            padding: 1.5rem;
+                                        }
+                                        .product-view-container .card {
+                                            border: none;
+                                            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+                                            transition: transform 0.2s;
+                                        }
+                                        .product-view-container .card:hover {
+                                            transform: translateY(-2px);
+                                        }
+                                        .gallery-section {
+                                            background: transparent !important;
+                                            padding: 0 !important;
+                                        }
+                                        .main-image-container {
+                                            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                                        }
+                                        .nav-btn {
+                                            opacity: 0.7;
+                                            transform: scale(0.9);
+                                            transition: all 0.2s;
+                                        }
+                                        .nav-btn:hover {
+                                            opacity: 1;
+                                            transform: scale(1);
+                                        }
+                                        .thumbnail-wrapper {
+                                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                                        }
+                                        .thumbnail-wrapper.active {
+                                            transform: scale(1.05);
+                                        }
+                                        .badge {
+                                            font-size: 0.8rem;
+                                            padding: 0.4rem 0.8rem;
+                                            border-radius: 20px;
+                                        }
+                                        .badge-soft-primary {
+                                            background-color: rgba(94,114,228,0.1);
+                                            color: #5e72e4;
+                                        }
+                                        .badge-soft-info {
+                                            background-color: rgba(23,162,184,0.1);
+                                            color: #17a2b8;
+                                        }
+                                        .badge-soft-success {
+                                            background-color: rgba(40,167,69,0.1);
+                                            color: #28a745;
+                                        }
+                                    `)
+                                    .appendTo('head');
+                            }
+
+                            // Update modal content
+                            const modal = $('#productViewModal');
+                            modal.find('.product-title').text(e.row.data.name);
+                            modal.find('.product-view-container').empty().append(
+                                this.showProductDetails(e.row.data)
+                            );
+
+                            // Show modal
+                            modal.modal('show');
                         }
                     }, {
                         name: 'edit',
@@ -549,88 +657,9 @@ window.ProductPage = class {
             masterDetail: {
                 enabled: true,
                 template: (container, options) => {
-                    const product = options.data;
-                    
-                    $('<div>')
-                        .addClass('p-4 bg-light rounded')
-                        .append(`
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="card shadow-sm">
-                                        <div class="card-body">
-                                            <h6 class="card-title text-uppercase text-muted mb-3">
-                                                <i class="fas fa-box-open mr-2"></i>Product Details
-                                            </h6>
-                                            <div class="mb-2">
-                                                <small class="text-muted">Material</small>
-                                                <div class="font-weight-bold">${product.material}</div>
-                                            </div>
-                                            <div class="mb-2">
-                                                <small class="text-muted">Weight</small>
-                                                <div class="font-weight-bold">${product.weight}g</div>
-                                            </div>
-                                            <div>
-                                                <small class="text-muted">Description</small>
-                                                <div class="text-muted">${product.description}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card shadow-sm">
-                                        <div class="card-body">
-                                            <h6 class="card-title text-uppercase text-muted mb-3">
-                                                <i class="fas fa-palette mr-2"></i>Available Options
-                                            </h6>
-                                            <div class="mb-3">
-                                                <small class="text-muted d-block mb-2">Sizes</small>
-                                                <div class="d-flex flex-wrap gap-2">
-                                                    ${(product.size_available || []).map(size => 
-                                                        `<span class="badge badge-soft-primary">${size}</span>`
-                                                    ).join('')}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <small class="text-muted d-block mb-2">Colors</small>
-                                                <div class="d-flex flex-wrap gap-2">
-                                                    ${(product.color_options || []).map(color => 
-                                                        `<span class="badge badge-soft-info">${color}</span>`
-                                                    ).join('')}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card shadow-sm">
-                                        <div class="card-body">
-                                            <h6 class="card-title text-uppercase text-muted mb-3">
-                                                <i class="fas fa-tags mr-2"></i>Bulk Discounts
-                                            </h6>
-                                            <div class="table-responsive">
-                                                <table class="table table-sm mb-0">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Quantity</th>
-                                                            <th>Discount</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        ${Object.entries(product.bulk_discount_rules || {}).map(([qty, discount]) => `
-                                                            <tr>
-                                                                <td>≥${qty} units</td>
-                                                                <td><span class="text-success">${discount}% off</span></td>
-                                                            </tr>
-                                                        `).join('')}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `)
-                        .appendTo(container);
+                    // Create and append the product details
+                    const $details = this.showProductDetails(options.data);
+                    container.append($details);
                 }
             },
             paging: {
@@ -1687,7 +1716,263 @@ window.ProductPage = class {
     }
 
     showProductDetails(product) {
-        // ... existing showProductDetails code ...
+        const $container = $('<div>')
+            .addClass('product-details-container');
+
+        // Image Gallery Section
+        if (product.images && product.images.length > 0) {
+            const $gallerySection = $('<div>')
+                .addClass('gallery-section mb-4')
+                .append(`
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="main-image-container position-relative">
+                                <img src="${this.getFullImageUrl(product.images[0].url || product.images[0].image_url)}" 
+                                    class="main-image img-fluid rounded shadow-sm" 
+                                    alt="${product.name}">
+                                <div class="image-navigation">
+                                    <button class="nav-btn prev-btn"><i class="fas fa-chevron-left"></i></button>
+                                    <button class="nav-btn next-btn"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                                <div class="image-counter">1/${product.images.length}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="thumbnails-container">
+                                ${product.images.map((image, index) => `
+                                    <div class="thumbnail-wrapper ${index === 0 ? 'active' : ''}" data-index="${index}">
+                                        <img src="${this.getFullImageUrl(image.url || image.image_url)}" 
+                                            class="thumbnail-image" 
+                                            alt="Thumbnail ${index + 1}">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+            // Add gallery interaction
+            let currentImageIndex = 0;
+            const updateMainImage = (index) => {
+                const images = product.images;
+                currentImageIndex = (index + images.length) % images.length;
+                const newImage = images[currentImageIndex];
+                
+                $gallerySection.find('.main-image')
+                    .attr('src', this.getFullImageUrl(newImage.url || newImage.image_url));
+                $gallerySection.find('.image-counter')
+                    .text(`${currentImageIndex + 1}/${images.length}`);
+                $gallerySection.find('.thumbnail-wrapper')
+                    .removeClass('active')
+                    .eq(currentImageIndex)
+                    .addClass('active');
+            };
+
+            // Bind navigation events
+            $gallerySection.find('.prev-btn').on('click', () => updateMainImage(currentImageIndex - 1));
+            $gallerySection.find('.next-btn').on('click', () => updateMainImage(currentImageIndex + 1));
+            $gallerySection.find('.thumbnail-wrapper').on('click', function() {
+                updateMainImage($(this).data('index'));
+            });
+
+            $container.append($gallerySection);
+        }
+
+        // Add styles for the gallery
+        $('<style>')
+            .text(`
+                .gallery-section {
+                    background: #fff;
+                    border-radius: 8px;
+                    padding: 1.5rem;
+                }
+                .main-image-container {
+                    position: relative;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    background: #f8f9fa;
+                }
+                .main-image {
+                    width: 100%;
+                    height: 400px;
+                    object-fit: contain;
+                    background: #fff;
+                }
+                .image-navigation {
+                    position: absolute;
+                    top: 50%;
+                    left: 0;
+                    right: 0;
+                    transform: translateY(-50%);
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 0 1rem;
+                    pointer-events: none;
+                }
+                .nav-btn {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: rgba(255,255,255,0.9);
+                    border: none;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    pointer-events: auto;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                }
+                .nav-btn:hover {
+                    background: #fff;
+                    transform: scale(1.1);
+                }
+                .image-counter {
+                    position: absolute;
+                    bottom: 1rem;
+                    right: 1rem;
+                    background: rgba(0,0,0,0.6);
+                    color: white;
+                    padding: 0.25rem 0.75rem;
+                    border-radius: 20px;
+                    font-size: 0.875rem;
+                }
+                .thumbnails-container {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 0.5rem;
+                    max-height: 400px;
+                    overflow-y: auto;
+                    padding-right: 0.5rem;
+                }
+                .thumbnail-wrapper {
+                    position: relative;
+                    padding-bottom: 100%;
+                    border-radius: 4px;
+                    overflow: hidden;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+                .thumbnail-wrapper:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+                }
+                .thumbnail-wrapper.active {
+                    border: 2px solid #5e72e4;
+                }
+                .thumbnail-image {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+                /* Scrollbar styling for thumbnails */
+                .thumbnails-container::-webkit-scrollbar {
+                    width: 4px;
+                }
+                .thumbnails-container::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                    border-radius: 2px;
+                }
+                .thumbnails-container::-webkit-scrollbar-thumb {
+                    background: #888;
+                    border-radius: 2px;
+                }
+                .thumbnails-container::-webkit-scrollbar-thumb:hover {
+                    background: #555;
+                }
+            `)
+            .appendTo('head');
+
+        // Rest of the product details (existing code)
+        const detailsContent = `
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-uppercase text-muted mb-3">
+                                <i class="fas fa-box-open mr-2"></i>Product Details
+                            </h6>
+                            <div class="mb-2">
+                                <small class="text-muted">Material</small>
+                                <div class="font-weight-bold">${product.material}</div>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted">Weight</small>
+                                <div class="font-weight-bold">${product.weight}g</div>
+                            </div>
+                            <div>
+                                <small class="text-muted">Description</small>
+                                <div class="text-muted">${product.description}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-uppercase text-muted mb-3">
+                                <i class="fas fa-palette mr-2"></i>Available Options
+                            </h6>
+                            <div class="mb-3">
+                                <small class="text-muted d-block mb-2">Sizes</small>
+                                <div class="d-flex flex-wrap gap-2">
+                                    ${(product.size_available || []).map(size => 
+                                        `<span class="badge badge-soft-primary">${size}</span>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block mb-2">Colors</small>
+                                <div class="d-flex flex-wrap gap-2">
+                                    ${(product.color_options || []).map(color => 
+                                        `<span class="badge badge-soft-info">${color}</span>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-uppercase text-muted mb-3">
+                                <i class="fas fa-tags mr-2"></i>Bulk Discounts
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Quantity</th>
+                                            <th>Discount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${Object.entries(product.bulk_discount_rules || {}).map(([qty, discount]) => `
+                                            <tr>
+                                                <td>≥${qty} units</td>
+                                                <td><span class="text-success">${discount}% off</span></td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $container.append(detailsContent);
+        return $container;
+    }
+
+    // Helper function to get full image URL
+    getFullImageUrl(url) {
+        if (!url) return '';
+        return url.startsWith('http') ? url : `${getBaseUrl()}${url}`;
     }
 };
 
