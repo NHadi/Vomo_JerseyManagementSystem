@@ -90,6 +90,7 @@ func main() {
 	officeRepo := postgres.NewOfficeRepository(db)
 	productRepo := postgres.NewProductRepository(db)
 	productCategoryRepo := postgres.NewProductCategoryRepository(db)
+	productImageRepo := postgres.NewProductImageRepository(db)
 	employeeRepo := postgres.NewEmployeeRepository(db)
 	divisionRepo := postgres.NewDivisionRepository(db)
 
@@ -107,6 +108,13 @@ func main() {
 	employeeService := application.NewEmployeeService(employeeRepo, auditService)
 	productService := application.NewProductService(productRepo, auditService)
 	productCategoryService := application.NewProductCategoryService(productCategoryRepo, auditService)
+	productImageService := application.NewProductImageService(productImageRepo, productRepo)
+
+	// Ensure upload directory exists
+	if err := os.MkdirAll("uploads/products", 0755); err != nil {
+		logger.Error("Failed to create upload directory", nil, err)
+		os.Exit(1)
+	}
 
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -130,6 +138,9 @@ func main() {
 		}
 		c.Next()
 	})
+
+	// Serve static files from uploads directory
+	r.Static("/uploads", "./uploads")
 
 	// Add services to Gin context
 	r.Use(func(c *gin.Context) {
@@ -167,6 +178,7 @@ func main() {
 		EmployeeService:        employeeService,
 		ProductService:         productService,
 		ProductCategoryService: productCategoryService,
+		ProductImageService:    productImageService,
 	})
 
 	// Start Server

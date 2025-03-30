@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 	"vomo/internal/domain/product"
 )
@@ -44,14 +46,20 @@ func (s *ProductImageService) CreateProductImage(ctx context.Context, image *pro
 		return fmt.Errorf("failed to create upload directory: %v", err)
 	}
 
-	// Generate unique filename
-	filename := fmt.Sprintf("%d_%s%s",
+	// Generate unique filename using proper string formatting
+	filename := fmt.Sprintf("%d_%d%s",
 		time.Now().UnixNano(),
 		image.ProductID,
 		filepath.Ext(file.Filename))
 
-	// Create the file path
+	// Create the file path using proper path handling
 	filePath := filepath.Join(s.uploadDir, filename)
+
+	log.Printf("Creating product image - product_id: %d, filename: %s, filepath: %s",
+		image.ProductID,
+		filename,
+		filePath,
+	)
 
 	// Open the uploaded file
 	src, err := file.Open()
@@ -72,8 +80,14 @@ func (s *ProductImageService) CreateProductImage(ctx context.Context, image *pro
 		return fmt.Errorf("failed to save file: %v", err)
 	}
 
-	// Set the image URL
-	image.ImageURL = "/" + filePath // Store the relative path
+	// Set the image URL with forward slashes for web URLs
+	imageURL := "/" + strings.ReplaceAll(filePath, "\\", "/")
+	image.ImageURL = imageURL
+
+	log.Printf("Successfully saved product image - product_id: %d, image_url: %s",
+		image.ProductID,
+		image.ImageURL,
+	)
 
 	// Save to database
 	return s.productImageRepo.Create(image, ctx)

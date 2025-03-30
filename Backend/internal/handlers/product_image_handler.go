@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"vomo/internal/domain/product"
@@ -36,6 +37,13 @@ func (h *ProductImageHandler) CreateProductImage(c *gin.Context) {
 		return
 	}
 
+	// Log file details
+	log.Printf("Received file upload - filename: %s, size: %d, content_type: %s",
+		file.Filename,
+		file.Size,
+		file.Header.Get("Content-Type"),
+	)
+
 	// Validate file type
 	if !isValidImageType(file.Header.Get("Content-Type")) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image type. Supported types: image/jpeg, image/png, image/gif"})
@@ -52,6 +60,7 @@ func (h *ProductImageHandler) CreateProductImage(c *gin.Context) {
 
 	// Pass both the image object and file to the service
 	if err := h.productImageService.CreateProductImage(c.Request.Context(), image, file); err != nil {
+		log.Printf("Failed to create product image: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

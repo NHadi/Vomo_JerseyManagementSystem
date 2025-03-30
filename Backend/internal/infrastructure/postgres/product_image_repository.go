@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"log"
 	"vomo/internal/domain/appcontext"
 	"vomo/internal/domain/product"
 
@@ -27,7 +28,21 @@ func (r *ProductImageRepository) Create(image *product.ProductImage, ctx context
 	image.TenantID = userCtx.TenantID
 	image.CreatedBy = userCtx.Username
 	image.UpdatedBy = userCtx.Username
-	return r.db.WithContext(ctx).Create(image).Error
+
+	log.Printf("Creating product image in database - id: %d, product_id: %d, tenant_id: %d",
+		image.ID,
+		image.ProductID,
+		image.TenantID,
+	)
+
+	err := r.db.WithContext(ctx).Create(image).Error
+	if err != nil {
+		log.Printf("Failed to create product image in database: %v", err)
+		return err
+	}
+
+	log.Printf("Successfully created product image in database - id: %d", image.ID)
+	return nil
 }
 
 // FindByID finds a product image by ID

@@ -194,16 +194,27 @@ export const productAPI = {
         }
     },
 
-    async uploadProductImage(productId, imageFile) {
+    async uploadProductImage(productId, file) {
         try {
+            console.log('Uploading file to product:', productId, file);
+            
+            // Create new FormData and append the file
             const formData = new FormData();
-            formData.append('image', imageFile);
+            formData.append('image', file, file.name); // Add filename as third parameter
+            
+            console.log('FormData created:', formData);
+            console.log('File in FormData:', formData.get('image'));
+
+            // Get token and tenant ID directly
+            const token = localStorage.getItem('token');
+            const tenantId = localStorage.getItem('tenant_id');
 
             const response = await fetch(`${config.baseUrl}/products/${productId}/images`, {
                 method: 'POST',
                 headers: {
-                    ...getAuthHeaders(),
-                    // Let the browser set the Content-Type with boundary
+                    'Authorization': `Bearer ${token}`,
+                    'X-Tenant-ID': tenantId
+                    // Let the browser set the Content-Type header with boundary
                 },
                 body: formData
             });

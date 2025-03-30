@@ -1,4 +1,5 @@
 import { vomoAPI } from '../api/index.js';
+import { getBaseUrl } from '../api/config.js';
 
 // Define ProductPage
 window.ProductPage = class {
@@ -65,6 +66,8 @@ window.ProductPage = class {
         this.loadCategories().then(() => {
             // Initialize grid after categories are loaded
             this.initializeGrid();
+            // Load data after grid is initialized
+            this.loadData();
         }).catch(error => {
             console.error('Failed to initialize categories:', error);
             DevExpress.ui.notify('Failed to load categories. Please refresh the page.', 'error', 5000);
@@ -121,11 +124,17 @@ window.ProductPage = class {
 
                         // Add product image thumbnail if available
                         if (options.data.images && options.data.images.length > 0) {
+                            const image = options.data.images[0];
+                            const imageUrl = image.url || image.image_url;
+                            const fullImageUrl = imageUrl.startsWith('http') || imageUrl.startsWith(getBaseUrl())
+                                ? imageUrl
+                                : `${getBaseUrl()}${imageUrl}`;
+
                             $('<div>')
                                 .addClass('product-thumbnail mr-3')
                                 .append(
                                     $('<img>')
-                                        .attr('src', options.data.images[0].url)
+                                        .attr('src', fullImageUrl)
                                         .attr('alt', options.data.name)
                                         .addClass('img-fluid rounded')
                                 )
@@ -289,48 +298,22 @@ window.ProductPage = class {
                 {
                     type: 'buttons',
                     width: 140,
-                    alignment: 'center',
-                    cellTemplate: (container, options) => {
-                        const $buttonContainer = $('<div>')
-                            .addClass('d-flex justify-content-end align-items-center');
-
-                        // View Details Button
-                        $('<button>')
-                            .addClass('btn btn-icon-only btn-sm btn-secondary mr-2')
-                            .attr('title', 'View Details')
-                            .append($('<i>').addClass('fas fa-eye'))
-                            .on('click', () => {
-                                this.showProductDetails(options.data);
-                            })
-                            .appendTo($buttonContainer);
-
-                        // Edit Button
-                        $('<button>')
-                            .addClass('btn btn-icon-only btn-sm btn-info mr-2')
-                            .attr('title', 'Edit Product')
-                            .append($('<i>').addClass('fas fa-edit'))
-                            .on('click', () => {
-                                this.grid.editRow(options.rowIndex);
-                            })
-                            .appendTo($buttonContainer);
-
-                        // Delete Button
-                        $('<button>')
-                            .addClass('btn btn-icon-only btn-sm btn-danger')
-                            .attr('title', 'Delete Product')
-                            .append($('<i>').addClass('fas fa-trash'))
-                            .on('click', () => {
-                                DevExpress.ui.dialog.confirm("Are you sure you want to delete this product?", "Confirm deletion")
-                                    .then((result) => {
-                                        if (result) {
-                                            this.grid.deleteRow(options.rowIndex);
-                                        }
-                                    });
-                            })
-                            .appendTo($buttonContainer);
-
-                        container.append($buttonContainer);
-                    }
+                    buttons: [{
+                        name: 'view',
+                        hint: 'View Details',
+                        icon: 'fas fa-eye',
+                        onClick: (e) => {
+                            this.showProductDetails(e.row.data);
+                        }
+                    }, {
+                        name: 'edit',
+                        hint: 'Edit Product',
+                        icon: 'fas fa-edit'
+                    }, {
+                        name: 'delete',
+                        hint: 'Delete Product',
+                        icon: 'fas fa-trash'
+                    }]
                 }
             ],
             showBorders: true,
@@ -451,47 +434,7 @@ window.ProductPage = class {
                     height: '90vh',
                     maxHeight: '90vh',
                     showCloseButton: true,
-                    toolbarItems: [{
-                        toolbar: 'bottom',
-                        location: 'after',
-                        widget: 'dxButton',
-                        options: {
-                            text: 'Save',
-                            type: 'success',
-                            stylingMode: 'contained',
-                            onClick: function(e) {
-                                const grid = $('#productGrid').dxDataGrid('instance');
-                                const $form = $('.dx-popup-content .dx-form');
-                                const form = $form.length ? $form.dxForm('instance') : null;
-                                
-                                if (form && grid) {
-                                    const validationResult = form.validate();
-                                    if (validationResult.isValid) {
-                                        grid.saveEditData().then(() => {
-                                            grid.option('editing.popup.visible', false);
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }, {
-                        toolbar: 'bottom',
-                        location: 'after',
-                        widget: 'dxButton',
-                        options: {
-                            text: 'Cancel',
-                            stylingMode: 'outlined',
-                            onClick: function(e) {
-                                const popup = e.component._options.owner;
-                                const grid = $('#productGrid').dxDataGrid('instance');
-                                
-                                if (grid) {
-                                    grid.cancelEditData();
-                                }
-                                popup.hide();
-                            }
-                        }
-                    }]
+                    position: { my: 'center', at: 'center', of: window }
                 },
                 form: {
                     labelLocation: 'top',
@@ -851,84 +794,8 @@ window.ProductPage = class {
                         }
                     ]
                 },
-                onEditingStart: (e) => {
-                    // Wait for the popup to be shown and form to be created
-                    setTimeout(() => {
-                        // Get the existing data
-                        const formData = { ...e.data };  // Create a copy of existing data
-                        console.log('Original data when editing starts:', formData);
-                        
-                        // Initialize arrays with existing values or empty arrays
-                        formData.size_available = Array.isArray(formData.size_available) ? formData.size_available : [];
-                        formData.color_options = Array.isArray(formData.color_options) ? formData.color_options : [];
-                        formData.images = Array.isArray(formData.images) ? formData.images : [];
-                        
-                        // Initialize customization options while preserving existing values
-                        formData.customization_options = {
-                            name: Boolean(formData.customization_options?.name),
-                            number: Boolean(formData.customization_options?.number),
-                            patches: Boolean(formData.customization_options?.patches),
-                            team_logo: Boolean(formData.customization_options?.team_logo),
-                            ...(formData.customization_options || {})
-                        };
-                        
-                        // Initialize bulk discount rules while preserving existing values
-                        formData.bulk_discount_rules = {
-                            10: parseInt(formData.bulk_discount_rules?.['10']) || 0,
-                            20: parseInt(formData.bulk_discount_rules?.['20']) || 0,
-                            50: parseInt(formData.bulk_discount_rules?.['50']) || 0,
-                            ...(formData.bulk_discount_rules || {})
-                        };
-                        
-                        // Preserve existing values or set defaults
-                        formData.code = formData.code || `PROD-${Date.now()}`;
-                        formData.material = formData.material || 'Default Material';
-                        formData.description = formData.description || '';
-                        formData.weight = parseInt(formData.weight) || 100;
-                        formData.min_order_quantity = parseInt(formData.min_order_quantity) || 1;
-                        formData.is_active = formData.is_active !== undefined ? Boolean(formData.is_active) : true;
-                        formData.stock_status = formData.stock_status || 'in_stock';
-                        
-                        // Ensure numeric fields are properly formatted while preserving existing values
-                        formData.base_price = parseFloat(formData.base_price) || 0;
-                        formData.production_time = parseInt(formData.production_time) || 1;
-                        
-                        // Ensure category is properly set
-                        if (formData.category_id) {
-                            formData.category_id = parseInt(formData.category_id);
-                            const category = this.allCategories.find(c => c.id === formData.category_id);
-                            if (category) {
-                                formData.category = category;
-                            }
-                        }
-                        
-                        // Get the form instance
-                        const form = $('.dx-popup-content .dx-form').dxForm('instance');
-                        if (form) {
-                            // First, set the entire form data
-                            form.option('formData', formData);
-                            
-                            // Then update each field individually to ensure proper binding
-                            Object.entries(formData).forEach(([key, value]) => {
-                                if (value !== undefined) {
-                                    form.updateData(key, value);
-                                    
-                                    // Special handling for nested objects
-                                    if (key === 'customization_options' || key === 'bulk_discount_rules') {
-                                        Object.entries(value).forEach(([nestedKey, nestedValue]) => {
-                                            form.updateData(`${key}.${nestedKey}`, nestedValue);
-                                        });
-                                    }
-                                }
-                            });
-                            
-                            // Force a repaint of the form
-                            form.repaint();
-                            
-                            console.log('Final form data after initialization:', form.option('formData'));
-                        }
-                    }, 100); // Small delay to ensure form is created
-                }
+                startEditAction: 'click',
+                refreshMode: 'reshape'
             },
             toolbar: {
                 items: [
@@ -948,7 +815,100 @@ window.ProductPage = class {
             onRowInserting: (e) => this.handleRowInserting(e),
             onRowUpdating: (e) => this.handleRowUpdating(e),
             onRowRemoving: (e) => this.handleRowRemoving(e),
-            onInitialized: () => this.loadData()
+            onInitialized: (e) => {
+                this.grid = e.component;
+                console.log('Grid initialized');
+            },
+            onEditingStart: (e) => {
+                console.log('Edit starting for row:', e.key);
+                console.log('Row data:', e.data);
+                
+                // Wait for the popup to be shown and form to be created
+                setTimeout(() => {
+                    // Get the existing data
+                    const formData = { ...e.data };  // Create a copy of existing data
+                    console.log('Original data when editing starts:', formData);
+
+                    // Get the form instance
+                    const form = $('.dx-popup-content .dx-form').dxForm('instance');
+                    if (!form) {
+                        console.error('Form instance not found');
+                        return;
+                    }
+
+                    // Initialize arrays with existing values or empty arrays
+                    formData.size_available = Array.isArray(formData.size_available) ? formData.size_available : [];
+                    formData.color_options = Array.isArray(formData.color_options) ? formData.color_options : [];
+                    formData.images = Array.isArray(formData.images) ? formData.images : [];
+                    
+                    // Initialize customization options while preserving existing values
+                    formData.customization_options = {
+                        name: Boolean(formData.customization_options?.name),
+                        number: Boolean(formData.customization_options?.number),
+                        patches: Boolean(formData.customization_options?.patches),
+                        team_logo: Boolean(formData.customization_options?.team_logo)
+                    };
+                    
+                    // Initialize bulk discount rules while preserving existing values
+                    formData.bulk_discount_rules = {
+                        10: parseInt(formData.bulk_discount_rules?.['10']) || 0,
+                        20: parseInt(formData.bulk_discount_rules?.['20']) || 0,
+                        50: parseInt(formData.bulk_discount_rules?.['50']) || 0
+                    };
+                    
+                    // Ensure category is properly set
+                    if (formData.category_id) {
+                        formData.category_id = parseInt(formData.category_id);
+                        const category = this.allCategories.find(c => c.id === formData.category_id);
+                        if (category) {
+                            formData.category = category;
+                        }
+                    }
+
+                    // Set the entire form data first
+                    form.option('formData', formData);
+
+                    // Then update each field individually to ensure proper binding
+                    Object.entries(formData).forEach(([key, value]) => {
+                        if (value !== undefined) {
+                            form.updateData(key, value);
+                        }
+                    });
+
+                    // Update nested fields
+                    if (formData.customization_options) {
+                        Object.entries(formData.customization_options).forEach(([key, value]) => {
+                            form.updateData(`customization_options.${key}`, value);
+                        });
+                    }
+
+                    if (formData.bulk_discount_rules) {
+                        Object.entries(formData.bulk_discount_rules).forEach(([key, value]) => {
+                            form.updateData(`bulk_discount_rules.${key}`, value);
+                        });
+                    }
+
+                    // Update specific fields that might need type conversion
+                    form.updateData('base_price', parseFloat(formData.base_price) || 0);
+                    form.updateData('production_time', parseInt(formData.production_time) || 1);
+                    form.updateData('min_order_quantity', parseInt(formData.min_order_quantity) || 1);
+                    form.updateData('weight', parseInt(formData.weight) || 100);
+                    form.updateData('is_active', Boolean(formData.is_active));
+                    form.updateData('stock_status', formData.stock_status || 'in_stock');
+                    form.updateData('material', formData.material || 'Default Material');
+                    form.updateData('description', formData.description || '');
+                    form.updateData('code', formData.code || `PROD-${Date.now()}`);
+
+                    // Force form to update UI
+                    form.repaint();
+
+                    // Log the final state
+                    console.log('Final form data after initialization:', form.option('formData'));
+                }, 100);
+            },
+            onRowUpdating: (e) => {
+                console.log('Row updating:', e);
+            }
         }).dxDataGrid('instance');
 
         // Add enhanced CSS for professional styling
@@ -1800,12 +1760,16 @@ window.ProductPage = class {
     }
 
     async handleImageUpload(event, data, previewContainer) {
-        const files = Array.from(event.target.files);
+        const files = Array.from(event.target.files || event.originalEvent?.dataTransfer?.files || []);
+        console.log('Files to upload:', files);
+        
         const maxSize = 5 * 1024 * 1024; // 5MB limit
         
         // Get product ID from the form data
         const formData = data.component.option('formData');
         const productId = formData && formData.id;
+        
+        console.log('Product ID:', productId);
         
         // For new products, we'll store the files temporarily
         if (!productId) {
@@ -1819,6 +1783,7 @@ window.ProductPage = class {
                     continue;
                 }
 
+                console.log('Adding pending file:', file);
                 // Store file and show preview
                 const tempPreview = this.createImagePreview(URL.createObjectURL(file));
                 previewContainer.append(tempPreview);
@@ -1838,23 +1803,30 @@ window.ProductPage = class {
             }
 
             try {
+                console.log('Uploading file:', file);
+                
                 // Show loading preview
                 const tempPreview = this.createImagePreview(URL.createObjectURL(file));
                 tempPreview.addClass('uploading');
                 previewContainer.append(tempPreview);
 
-                // Upload the image
+                // Upload the image directly
                 const uploadedImage = await vomoAPI.uploadProductImage(productId, file);
+                console.log('Uploaded image response:', uploadedImage);
 
-                // Update preview with actual image URL
+                // Update preview with actual image URL including base URL
                 tempPreview.removeClass('uploading');
-                tempPreview.find('img').attr('src', uploadedImage.image_url);
+                const fullImageUrl = `${getBaseUrl()}${uploadedImage.image_url}`;
+                tempPreview.find('img').attr('src', fullImageUrl);
 
-                // Add to form data
+                // Add to form data with the full URL
                 if (!formData.images) {
                     formData.images = [];
                 }
-                formData.images.push(uploadedImage);
+                formData.images.push({
+                    ...uploadedImage,
+                    url: fullImageUrl // Store the full URL in the form data
+                });
                 
                 // Update the form data
                 data.component.option('formData', formData);
@@ -1862,16 +1834,20 @@ window.ProductPage = class {
                 DevExpress.ui.notify('Image uploaded successfully', 'success', 3000);
             } catch (error) {
                 console.error('Error uploading image:', error);
-                DevExpress.ui.notify('Failed to upload image', 'error', 3000);
+                DevExpress.ui.notify(`Failed to upload image: ${error.message}`, 'error', 3000);
             }
         }
     }
 
     createImagePreview(src) {
+        // If it's a blob URL (for temporary preview), use it as is
+        // Otherwise, prepend the backend base URL
+        const imageUrl = src.startsWith('blob:') ? src : `${getBaseUrl()}${src}`;
+        
         return $('<div>')
             .addClass('image-preview')
             .append(
-                $('<img>').attr('src', src)
+                $('<img>').attr('src', imageUrl)
             )
             .append(
                 $('<div>')
@@ -1886,7 +1862,14 @@ window.ProductPage = class {
     displayProductImages(images, container) {
         container.empty();
         images.forEach(image => {
-            const $preview = this.createImagePreview(image.url);
+            // Handle both cases where the URL might be stored as image.url or image.image_url
+            const imageUrl = image.url || image.image_url;
+            // If the URL already starts with http or the base URL, use it as is
+            const fullImageUrl = imageUrl.startsWith('http') || imageUrl.startsWith(getBaseUrl())
+                ? imageUrl
+                : `${getBaseUrl()}${imageUrl}`;
+            
+            const $preview = this.createImagePreview(fullImageUrl);
             container.append($preview);
         });
     }

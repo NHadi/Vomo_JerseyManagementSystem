@@ -27,9 +27,15 @@ func AuditContext() gin.HandlerFunc {
 
 		claims, err := jwt.ValidateToken(tokenString)
 		if err == nil {
+			// Get tenant ID from Gin context
+			tenantID, exists := c.Get("tenant_id")
+			if !exists {
+				tenantID = claims.TenantID
+			}
+
 			userContext := &appcontext.UserContext{
 				Username: claims.Username,
-				TenantID: claims.TenantID,
+				TenantID: tenantID.(int),
 			}
 			c.Set(appcontext.UserContextKey, userContext)
 		}
