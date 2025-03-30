@@ -24,30 +24,35 @@ window.ProductPage = class {
                 /* Image Preview Grid */
                 .image-preview-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                    gap: 1.5rem;
-                    padding: 1.5rem;
+                    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                    gap: 0.75rem;
+                    padding: 0.75rem;
                 }
 
                 /* Image Preview Container */
                 .image-preview {
                     position: relative;
-                    border-radius: 12px;
+                    border-radius: 6px;
                     overflow: hidden;
                     background: #f8f9fa;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    aspect-ratio: 1;
+                    width: 100%;
+                    max-width: 100px;
+                    margin: 0 auto;
                 }
 
                 .image-preview:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+                    transform: translateY(-2px);
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
                 }
 
                 /* Image Wrapper */
                 .image-wrapper {
                     position: relative;
-                    padding-bottom: 100%;
+                    width: 100%;
+                    height: 100%;
                     background: #f8f9fa;
                 }
 
@@ -59,41 +64,40 @@ window.ProductPage = class {
                     height: 100%;
                     object-fit: cover;
                     opacity: 0;
-                    transition: opacity 0.3s ease;
+                    transition: opacity 0.2s ease;
                 }
 
                 .image-wrapper img.loaded {
                     opacity: 1;
                 }
 
-                /* Image Overlay */
+                /* Overlay Buttons */
                 .image-overlay {
                     position: absolute;
                     top: 0;
                     left: 0;
                     right: 0;
                     bottom: 0;
-                    background: rgba(0,0,0,0.4);
+                    background: rgba(0,0,0,0.3);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     opacity: 0;
-                    transition: opacity 0.3s ease;
+                    transition: opacity 0.2s ease;
                 }
 
                 .image-preview:hover .image-overlay {
                     opacity: 1;
                 }
 
-                /* Overlay Buttons */
                 .overlay-buttons {
                     display: flex;
-                    gap: 1rem;
+                    gap: 0.25rem;
                 }
 
                 .btn-action {
-                    width: 40px;
-                    height: 40px;
+                    width: 24px;
+                    height: 24px;
                     border-radius: 50%;
                     border: none;
                     background: white;
@@ -102,9 +106,10 @@ window.ProductPage = class {
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
-                    transition: all 0.3s ease;
-                    transform: translateY(20px);
+                    transition: all 0.2s ease;
+                    transform: translateY(5px);
                     opacity: 0;
+                    font-size: 12px;
                 }
 
                 .image-preview:hover .btn-action {
@@ -115,7 +120,7 @@ window.ProductPage = class {
                 .btn-action:hover {
                     background: #5e72e4;
                     color: white;
-                    transform: translateY(-2px) !important;
+                    transform: translateY(-1px) !important;
                 }
 
                 .btn-action.delete-btn:hover {
@@ -134,7 +139,13 @@ window.ProductPage = class {
                     align-items: center;
                     justify-content: center;
                     opacity: 1;
-                    transition: opacity 0.3s ease;
+                    transition: opacity 0.2s ease;
+                }
+
+                .loading-spinner .spinner-border {
+                    width: 1.5rem;
+                    height: 1.5rem;
+                    border-width: 0.15em;
                 }
 
                 .image-preview.uploading .loading-spinner {
@@ -148,84 +159,85 @@ window.ProductPage = class {
                 /* No Images Placeholder */
                 .no-images-placeholder {
                     text-align: center;
-                    padding: 3rem;
+                    padding: 1.5rem;
                     background: #f8f9fa;
-                    border-radius: 12px;
+                    border-radius: 6px;
                     border: 2px dashed #dee2e6;
                     color: #6c757d;
+                    margin: 0.75rem;
                 }
 
                 .no-images-placeholder i {
+                    font-size: 1.5rem;
                     color: #adb5bd;
-                }
-
-                /* Image Preview Modal */
-                #imagePreviewModal .modal-content {
-                    background: transparent;
-                    border: none;
-                }
-
-                #imagePreviewModal .modal-header {
-                    position: absolute;
-                    right: 0;
-                    z-index: 1;
-                }
-
-                #imagePreviewModal .close {
-                    color: white;
-                    text-shadow: 0 0 3px rgba(0,0,0,0.5);
-                    opacity: 0.8;
-                }
-
-                #imagePreviewModal .close:hover {
-                    opacity: 1;
-                }
-
-                #imagePreviewModal .modal-body {
-                    background: transparent;
-                }
-
-                #imagePreviewModal .modal-body img {
-                    max-height: 80vh;
-                    object-fit: contain;
-                    border-radius: 8px;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    margin-bottom: 0.75rem;
                 }
 
                 /* Product Grid Thumbnail */
                 .product-thumbnail {
-                    width: 64px;
-                    height: 64px;
-                    border-radius: 8px;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 4px;
                     overflow: hidden;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    transition: transform 0.3s ease;
-                }
-
-                .product-thumbnail:hover {
-                    transform: scale(1.05);
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                    transition: transform 0.2s ease;
                 }
 
                 .product-thumbnail img {
                     width: 100%;
                     height: 100%;
                     object-fit: cover;
-                    transition: transform 0.3s ease;
                 }
 
-                .product-thumbnail:hover img {
-                    transform: scale(1.1);
+                /* Image Preview Modal */
+                #imagePreviewModal {
+                    z-index: 2000; /* Higher than DevExpress popup z-index */
                 }
 
-                .no-image-placeholder {
-                    width: 100%;
-                    height: 100%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
+                #imagePreviewModal .modal-dialog {
+                    max-width: 600px;
+                }
+
+                #imagePreviewModal .modal-content {
+                    background: transparent;
+                    border: none;
+                    box-shadow: none;
+                }
+
+                #imagePreviewModal .modal-body {
+                    padding: 0;
                     background: #f8f9fa;
-                    color: #adb5bd;
-                    font-size: 24px;
+                    border-radius: 6px;
+                    overflow: hidden;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+                }
+
+                #imagePreviewModal .modal-body img {
+                    max-width: 100%;
+                    height: auto;
+                    display: block;
+                    margin: 0 auto;
+                }
+
+                #imagePreviewModal .modal-header {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    z-index: 2001;
+                    border: none;
+                    background: transparent;
+                }
+
+                #imagePreviewModal .close {
+                    color: white;
+                    text-shadow: 0 0 3px rgba(0,0,0,0.5);
+                    opacity: 0.8;
+                    font-size: 28px;
+                    padding: 0.5rem;
+                }
+
+                #imagePreviewModal .close:hover {
+                    opacity: 1;
                 }
             `)
             .appendTo('head');
@@ -1532,18 +1544,19 @@ window.ProductPage = class {
                 const uploadedImage = await vomoAPI.uploadProductImage(productId, file);
                 console.log('Uploaded image response:', uploadedImage);
 
-                // Update preview with actual image URL including base URL
+                // Update preview with actual image URL
                 tempPreview.removeClass('uploading');
-                const fullImageUrl = `${getBaseUrl()}${uploadedImage.image_url}`;
+                const imageUrl = uploadedImage.image_url;
+                const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `${getBaseUrl()}${imageUrl}`;
                 tempPreview.find('img').attr('src', fullImageUrl);
 
-                // Add to form data with the full URL
+                // Add to form data
                 if (!formData.images) {
                     formData.images = [];
                 }
                 formData.images.push({
                     ...uploadedImage,
-                    url: fullImageUrl // Store the full URL in the form data
+                    url: uploadedImage.image_url // Store the relative URL
                 });
                 
                 // Update the form data
@@ -1559,8 +1572,9 @@ window.ProductPage = class {
 
     createImagePreview(src) {
         // If it's a blob URL (for temporary preview), use it as is
-        // Otherwise, prepend the backend base URL
-        const imageUrl = src.startsWith('blob:') ? src : `${getBaseUrl()}${src}`;
+        // Otherwise, check if it's already a full URL
+        const imageUrl = src.startsWith('blob:') ? src :
+            src.startsWith('http') ? src : `${getBaseUrl()}${src}`;
         
         return $('<div>')
             .addClass('image-preview')
@@ -1618,7 +1632,7 @@ window.ProductPage = class {
                 <div class="modal fade" id="imagePreviewModal" tabindex="-1" role="dialog">
                     <div class="modal-dialog modal-lg modal-dialog-centered">
                         <div class="modal-content">
-                            <div class="modal-header border-0">
+                            <div class="modal-header">
                                 <button type="button" class="close" data-dismiss="modal">
                                     <span>&times;</span>
                                 </button>
@@ -1635,7 +1649,11 @@ window.ProductPage = class {
         // Update image source and show modal
         const modal = $('#imagePreviewModal');
         modal.find('.modal-body img').attr('src', imageUrl);
-        modal.modal('show');
+        modal.modal({
+            show: true,
+            backdrop: 'static',
+            keyboard: true
+        });
     }
 
     displayProductImages(images, container) {
@@ -1649,11 +1667,10 @@ window.ProductPage = class {
         // Add images
         images.forEach(image => {
             const imageUrl = image.url || image.image_url;
-            const fullImageUrl = imageUrl.startsWith('http') || imageUrl.startsWith(getBaseUrl())
-                ? imageUrl
-                : `${getBaseUrl()}${imageUrl}`;
+            // Check if the URL is already absolute
+            const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `${getBaseUrl()}${imageUrl}`;
             
-            const $preview = this.createImagePreview(fullImageUrl);
+            const $preview = this.createImagePreview(imageUrl); // Pass relative URL, createImagePreview will handle the base URL
             $previewContainer.append($preview);
         });
 
