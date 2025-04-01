@@ -20,6 +20,7 @@
             const href = $(this).attr('href');
             // Skip if link has data-no-route attribute
             if ($(this).attr('data-no-route')) {
+                console.log('Skipping route change due to data-no-route');
                 return;
             }
             if (href && href !== '#' && !href.startsWith('http') && !href.startsWith('mailto:')) {

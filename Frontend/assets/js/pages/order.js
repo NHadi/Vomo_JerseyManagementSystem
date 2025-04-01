@@ -48,6 +48,26 @@ window.OrderPage = class {
             this.clearOrderDetails();
         });
 
+        // Tab change events
+        $('.nav-tabs a').on('click', (event) => {
+            event.preventDefault();
+            const $this = $(event.currentTarget);
+            const tabId = $this.data('tab');
+            
+            // Update active states
+            $('.nav-tabs a').removeClass('active');
+            $this.addClass('active');
+            
+            // Show corresponding tab content
+            $('.tab-pane').removeClass('show active');
+            $(`#${tabId}`).addClass('show active');
+            
+            // Update content if needed
+            if (this.currentOrder) {
+                this.updateTabContent(`#${tabId}`, this.currentOrder);
+            }
+        });
+
         // Action buttons
         $('#editOrder').on('click', () => this.editOrder());
         $('#updateStatus').on('click', () => this.updateOrderStatus());
@@ -477,35 +497,150 @@ window.OrderPage = class {
         $('#totalRevenue').text(`$${totalRevenue.toFixed(2)}`);
     }
 
+    updateTabContent(tabId, order) {
+        switch (tabId) {
+            case '#orderInfo':
+                this.updateOrderInfoTab(order);
+                break;
+            case '#itemsInfo':
+                this.updateItemsTab(order);
+                break;
+            case '#productionStatus':
+                this.updateProductionTab(order);
+                break;
+            case '#paymentInfo':
+                this.updatePaymentTab(order);
+                break;
+        }
+    }
+
+    updateOrderInfoTab(order) {
+        if (!order) return;
+        // Update customer information
+        $('#customerName').text(order.customer_name || 'N/A');
+        $('#customerEmail').text(order.customer_email || 'N/A');
+        $('#customerPhone').text(order.customer_phone || 'N/A');
+        $('#officeId').text(order.office_id || 'N/A');
+        $('#deliveryAddress').text(order.delivery_address || 'N/A');
+        $('#expectedDelivery').text(order.expected_delivery_date ? new Date(order.expected_delivery_date).toLocaleDateString() : 'N/A');
+
+        // Update order information
+        $('#orderNumber').text(order.order_number || 'N/A');
+        $('#createdDate').text(order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A');
+        $('#updatedDate').text(order.updated_at ? new Date(order.updated_at).toLocaleDateString() : 'N/A');
+
+        // Update payment information
+        $('#subtotal').text(`$${(order.subtotal || 0).toFixed(2)}`);
+        $('#discount').text(`-$${(order.discount_amount || 0).toFixed(2)}`);
+        $('#totalAmount').text(`$${(order.total_amount || 0).toFixed(2)}`);
+
+        // Update status badges
+        this.updateStatusBadge('orderStatus', order.status || 'N/A');
+        this.updateStatusBadge('paymentStatus', order.payment_status || 'N/A');
+    }
+
+    updateItemsTab(order) {
+        if (!order || !order.order_items) return;
+        if (!this.orderItemsGrid) {
+            this.initializeOrderItemsGrid(order.order_items);
+        } else {
+            this.orderItemsGrid.option('dataSource', order.order_items);
+        }
+    }
+
+    updateProductionTab(order) {
+        if (!order) return;
+        const $timeline = $('.production-timeline');
+        $timeline.empty();
+        this.renderProductionTimeline($timeline, order);
+    }
+
+    updatePaymentTab(order) {
+        if (!order) return;
+        const $paymentHistory = $('.payment-history');
+        $paymentHistory.empty();
+
+        // Create payment history container
+        const $container = $('<div>').addClass('payment-history-container');
+
+        // Add payment summary
+        const $summary = $('<div>').addClass('payment-summary card mb-4');
+        $summary.append(
+            $('<div>').addClass('card-body')
+                .append($('<h5>').addClass('card-title').text('Payment Summary'))
+                .append(
+                    $('<div>').addClass('row')
+                        .append(
+                            $('<div>').addClass('col-md-4')
+                                .append($('<p>').addClass('mb-1 text-muted').text('Total Amount'))
+                                .append($('<h3>').addClass('text-primary').text(`$${(order.total_amount || 0).toFixed(2)}`))
+                        )
+                        .append(
+                            $('<div>').addClass('col-md-4')
+                                .append($('<p>').addClass('mb-1 text-muted').text('Amount Paid'))
+                                .append($('<h3>').addClass('text-success').text(`$${((order.total_amount || 0) - (order.balance || 0)).toFixed(2)}`))
+                        )
+                        .append(
+                            $('<div>').addClass('col-md-4')
+                                .append($('<p>').addClass('mb-1 text-muted').text('Balance'))
+                                .append($('<h3>').addClass('text-danger').text(`$${(order.balance || 0).toFixed(2)}`))
+                        )
+                )
+        );
+
+        // Add payment transactions
+        const $transactions = $('<div>').addClass('payment-transactions card');
+        const $transactionsBody = $('<div>').addClass('card-body')
+            .append($('<h5>').addClass('card-title').text('Payment Transactions'));
+        
+        // Add transaction list
+        if (order.payments && order.payments.length > 0) {
+            const $list = $('<div>').addClass('transaction-list');
+            order.payments.forEach(payment => {
+                const $paymentItem = $('<div>').addClass('payment-item');
+                $paymentItem
+                    .append(
+                        $('<div>').addClass('payment-icon')
+                            .append($('<i>').addClass('fas fa-credit-card'))
+                    )
+                    .append(
+                        $('<div>').addClass('payment-details')
+                            .append($('<div>').addClass('font-weight-bold').text(payment.payment_method || 'N/A'))
+                            .append($('<small>').addClass('text-muted').text(payment.payment_date ? new Date(payment.payment_date).toLocaleString() : 'N/A'))
+                    )
+                    .append(
+                        $('<div>').addClass('payment-amount')
+                            .text(`$${(payment.amount || 0).toFixed(2)}`)
+                    );
+                $list.append($paymentItem);
+            });
+            $transactionsBody.append($list);
+        } else {
+            $transactionsBody.append(
+                $('<div>').addClass('text-center text-muted py-4')
+                    .append($('<i>').addClass('fas fa-receipt fa-3x mb-3'))
+                    .append($('<p>').text('No payment transactions found'))
+            );
+        }
+
+        $transactions.append($transactionsBody);
+
+        // Append all elements to the payment history container
+        $container.append($summary).append($transactions);
+        $paymentHistory.append($container);
+    }
+
     showOrderDetails(order) {
         this.currentOrder = order;
         
         // Update modal title
         $('#orderTitle').text(`Order ${order.order_number}`);
         
-        // Update order info
-        $('#customerName').text(order.customer_name);
-        $('#customerEmail').text(order.customer_email);
-        $('#customerPhone').text(order.customer_phone);
-        $('#officeId').text(order.office_id);
-        $('#deliveryAddress').text(order.delivery_address);
-        $('#expectedDelivery').text(new Date(order.expected_delivery_date).toLocaleDateString());
-        $('#orderNumber').text(order.order_number);
-        $('#createdDate').text(new Date(order.created_at).toLocaleDateString());
-        $('#updatedDate').text(new Date(order.updated_at).toLocaleDateString());
-        $('#subtotal').text(`$${order.subtotal.toFixed(2)}`);
-        $('#discount').text(`-$${order.discount_amount.toFixed(2)}`);
-        $('#totalAmount').text(`$${order.total_amount.toFixed(2)}`);
-        
-        // Update status badges
-        this.updateStatusBadge('orderStatus', order.status);
-        this.updateStatusBadge('paymentStatus', order.payment_status);
-        
-        // Initialize order items grid
-        this.initializeOrderItemsGrid(order.order_items);
-        
-        // Show production timeline
-        this.showProductionTimeline(order);
+        // Initialize all tabs
+        this.updateOrderInfoTab(order);
+        this.updateItemsTab(order);
+        this.updateProductionTab(order);
+        this.updatePaymentTab(order);
         
         // Show modal
         $('#orderDetailsModal').modal('show');
@@ -1197,7 +1332,8 @@ window.OrderPage = class {
                 $taskInfo.append(
                     $('<div>').addClass('task-progress')
                         .append(
-                            $('<div>').addClass('progress')
+                            $('<div>')
+                                .addClass('progress')
                                 .append(
                                     $('<div>')
                                         .addClass('progress-bar')
@@ -1325,6 +1461,12 @@ window.OrderPage = class {
         $('#orderItemsGrid').empty();
         $('.production-timeline').empty();
         $('.payment-history').empty();
+        
+        // Reset grids
+        if (this.orderItemsGrid) {
+            this.orderItemsGrid.dispose();
+            this.orderItemsGrid = null;
+        }
     }
 
     editOrder() {
