@@ -139,6 +139,9 @@
                         case 'product-category':
                             await this.loadProductCategoryGrid();
                             break;
+                        case 'user':
+                            await this.loadUserGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -836,6 +839,63 @@
                     } catch (error) {
                         console.error('Failed to load product category component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load product category component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadUserGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.userPageInstance) {
+                window.userPageInstance.dispose();
+                window.userPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/user.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="user"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the user.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/user.js';
+                        script.setAttribute('data-page', 'user');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the user page instance
+                            if (!window.userPageInstance) {
+                                window.userPageInstance = new window.UserPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load user module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load user component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load user component</div>');
                         reject(error);
                     }
                 });
