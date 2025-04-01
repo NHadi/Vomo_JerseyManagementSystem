@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"vomo/internal/application"
@@ -9,28 +10,53 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// OrderItemResponse represents the order item response structure
+// @Description Order item response model
+type OrderItemResponse struct {
+	ID                  int             `json:"id" example:"1"`
+	OrderID             int             `json:"order_id" example:"1"`
+	ProductID           int             `json:"product_id" example:"1"`
+	Quantity            int             `json:"quantity" example:"2"`
+	Size                string          `json:"size" example:"M"`
+	Color               string          `json:"color" example:"Red/White"`
+	UnitPrice           float64         `json:"unit_price" example:"49.99"`
+	OriginalSubtotal    float64         `json:"original_subtotal" example:"99.98"`
+	AppliedDiscountRule json.RawMessage `json:"applied_discount_rule"`
+	DiscountAmount      float64         `json:"discount_amount" example:"10.00"`
+	FinalSubtotal       float64         `json:"final_subtotal" example:"89.98"`
+	Customization       json.RawMessage `json:"customization"`
+	CurrentTask         string          `json:"current_task" example:"layout"`
+	ProductionStatus    string          `json:"production_status" example:"pending"`
+	CreatedAt           string          `json:"created_at" example:"2024-03-24T21:41:49Z"`
+	CreatedBy           string          `json:"created_by" example:"admin"`
+	UpdatedAt           string          `json:"updated_at" example:"2024-03-24T21:41:49Z"`
+	UpdatedBy           string          `json:"updated_by" example:"admin"`
+	TenantID            int             `json:"tenant_id" example:"1"`
+}
+
 // OrderResponse represents the order response structure
 // @Description Order response model
 type OrderResponse struct {
-	ID                   int     `json:"id" example:"1"`
-	OrderNumber          string  `json:"order_number" example:"ORD-001"`
-	CustomerName         string  `json:"customer_name" example:"John Doe"`
-	CustomerEmail        string  `json:"customer_email" example:"john.doe@example.com"`
-	CustomerPhone        string  `json:"customer_phone" example:"123-456-7890"`
-	DeliveryAddress      string  `json:"delivery_address" example:"123 Main St"`
-	OfficeID             int     `json:"office_id" example:"1"`
-	Subtotal             float64 `json:"subtotal" example:"100.00"`
-	DiscountAmount       float64 `json:"discount_amount" example:"10.00"`
-	TotalAmount          float64 `json:"total_amount" example:"90.00"`
-	Status               string  `json:"status" example:"pending"`
-	PaymentStatus        string  `json:"payment_status" example:"unpaid"`
-	ExpectedDeliveryDate string  `json:"expected_delivery_date" example:"2024-03-25"`
-	Notes                string  `json:"notes" example:"Please deliver in the morning"`
-	CreatedAt            string  `json:"created_at" example:"2024-03-24T21:41:49Z"`
-	CreatedBy            string  `json:"created_by" example:"admin"`
-	UpdatedAt            string  `json:"updated_at" example:"2024-03-24T21:41:49Z"`
-	UpdatedBy            string  `json:"updated_by" example:"admin"`
-	TenantID             int     `json:"tenant_id" example:"1"`
+	ID                   int                 `json:"id" example:"1"`
+	OrderNumber          string              `json:"order_number" example:"ORD-001"`
+	CustomerName         string              `json:"customer_name" example:"John Doe"`
+	CustomerEmail        string              `json:"customer_email" example:"john.doe@example.com"`
+	CustomerPhone        string              `json:"customer_phone" example:"123-456-7890"`
+	DeliveryAddress      string              `json:"delivery_address" example:"123 Main St"`
+	OfficeID             int                 `json:"office_id" example:"1"`
+	Subtotal             float64             `json:"subtotal" example:"100.00"`
+	DiscountAmount       float64             `json:"discount_amount" example:"10.00"`
+	TotalAmount          float64             `json:"total_amount" example:"90.00"`
+	Status               string              `json:"status" example:"pending"`
+	PaymentStatus        string              `json:"payment_status" example:"unpaid"`
+	ExpectedDeliveryDate string              `json:"expected_delivery_date" example:"2024-03-25"`
+	Notes                string              `json:"notes" example:"Please deliver in the morning"`
+	OrderItems           []OrderItemResponse `json:"order_items,omitempty"`
+	CreatedAt            string              `json:"created_at" example:"2024-03-24T21:41:49Z"`
+	CreatedBy            string              `json:"created_by" example:"admin"`
+	UpdatedAt            string              `json:"updated_at" example:"2024-03-24T21:41:49Z"`
+	UpdatedBy            string              `json:"updated_by" example:"admin"`
+	TenantID             int                 `json:"tenant_id" example:"1"`
 }
 
 // CreateOrderRequest represents the request structure for creating an order
@@ -68,8 +94,32 @@ type UpdateOrderRequest struct {
 	Notes                string  `json:"notes" example:"Please deliver in the morning"`
 }
 
+func toOrderItemResponse(item *order.OrderItem) OrderItemResponse {
+	return OrderItemResponse{
+		ID:                  item.ID,
+		OrderID:             item.OrderID,
+		ProductID:           item.ProductID,
+		Quantity:            item.Quantity,
+		Size:                item.Size,
+		Color:               item.Color,
+		UnitPrice:           item.UnitPrice,
+		OriginalSubtotal:    item.OriginalSubtotal,
+		AppliedDiscountRule: item.AppliedDiscountRule,
+		DiscountAmount:      item.DiscountAmount,
+		FinalSubtotal:       item.FinalSubtotal,
+		Customization:       item.Customization,
+		CurrentTask:         item.CurrentTask,
+		ProductionStatus:    item.ProductionStatus,
+		CreatedAt:           item.CreatedAt.String(),
+		CreatedBy:           item.CreatedBy,
+		UpdatedAt:           item.UpdatedAt.String(),
+		UpdatedBy:           item.UpdatedBy,
+		TenantID:            item.TenantID,
+	}
+}
+
 func toOrderResponse(o *order.Order) OrderResponse {
-	return OrderResponse{
+	response := OrderResponse{
 		ID:                   o.ID,
 		OrderNumber:          o.OrderNumber,
 		CustomerName:         o.CustomerName,
@@ -90,6 +140,16 @@ func toOrderResponse(o *order.Order) OrderResponse {
 		UpdatedBy:            o.UpdatedBy,
 		TenantID:             o.TenantID,
 	}
+
+	// Add order items if they exist
+	if len(o.OrderItems) > 0 {
+		response.OrderItems = make([]OrderItemResponse, len(o.OrderItems))
+		for i, item := range o.OrderItems {
+			response.OrderItems[i] = toOrderItemResponse(&item)
+		}
+	}
+
+	return response
 }
 
 // @Summary Create a new order

@@ -142,6 +142,9 @@
                         case 'user':
                             await this.loadUserGrid();
                             break;
+                        case 'order':
+                            await this.loadOrderGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -896,6 +899,63 @@
                     } catch (error) {
                         console.error('Failed to load user component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load user component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadOrderGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.orderPageInstance) {
+                window.orderPageInstance.dispose();
+                window.orderPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/order.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="order"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the order.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/order.js';
+                        script.setAttribute('data-page', 'order');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the order page instance
+                            if (!window.orderPageInstance) {
+                                window.orderPageInstance = new window.OrderPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load order module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load order component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load order component</div>');
                         reject(error);
                     }
                 });

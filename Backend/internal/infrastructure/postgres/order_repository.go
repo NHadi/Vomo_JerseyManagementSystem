@@ -30,9 +30,9 @@ func (r *orderRepository) Create(order *order.Order, ctx context.Context) error 
 
 // FindByID retrieves an order by its ID
 func (r *orderRepository) FindByID(id int, ctx context.Context) (*order.Order, error) {
-	var order order.Order
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).First(&order).Error
+	var order order.Order
+	err := r.db.Preload("OrderItems").Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).First(&order).Error
 	if err != nil {
 		return nil, err
 	}
@@ -41,9 +41,9 @@ func (r *orderRepository) FindByID(id int, ctx context.Context) (*order.Order, e
 
 // FindAll retrieves all orders
 func (r *orderRepository) FindAll(ctx context.Context) ([]order.Order, error) {
-	var orders []order.Order
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("tenant_id = ?", userCtx.TenantID).Find(&orders).Error
+	var orders []order.Order
+	err := r.db.Preload("OrderItems").Where("tenant_id = ?", userCtx.TenantID).Find(&orders).Error
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,6 @@ func (r *orderRepository) FindAll(ctx context.Context) ([]order.Order, error) {
 // Update updates an existing order
 func (r *orderRepository) Update(order *order.Order, ctx context.Context) error {
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	order.TenantID = userCtx.TenantID
 	order.UpdatedBy = userCtx.Username
 	return r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", order.ID, userCtx.TenantID).Updates(order).Error
 }
@@ -66,9 +65,9 @@ func (r *orderRepository) Delete(id int, ctx context.Context) error {
 
 // FindByCustomerEmail retrieves all orders for a given customer email
 func (r *orderRepository) FindByCustomerEmail(email string, ctx context.Context) ([]order.Order, error) {
-	var orders []order.Order
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("customer_email = ? AND tenant_id = ?", email, userCtx.TenantID).Find(&orders).Error
+	var orders []order.Order
+	err := r.db.Preload("OrderItems").Where("customer_email = ? AND tenant_id = ?", email, userCtx.TenantID).Find(&orders).Error
 	if err != nil {
 		return nil, err
 	}
@@ -77,9 +76,9 @@ func (r *orderRepository) FindByCustomerEmail(email string, ctx context.Context)
 
 // FindByOrderNumber retrieves an order by order number
 func (r *orderRepository) FindByOrderNumber(orderNumber string, ctx context.Context) (*order.Order, error) {
-	var order order.Order
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("order_number = ? AND tenant_id = ?", orderNumber, userCtx.TenantID).First(&order).Error
+	var order order.Order
+	err := r.db.Preload("OrderItems").Where("order_number = ? AND tenant_id = ?", orderNumber, userCtx.TenantID).First(&order).Error
 	if err != nil {
 		return nil, err
 	}
@@ -88,9 +87,9 @@ func (r *orderRepository) FindByOrderNumber(orderNumber string, ctx context.Cont
 
 // FindByStatus retrieves all orders with a specific status
 func (r *orderRepository) FindByStatus(status string, ctx context.Context) ([]order.Order, error) {
-	var orders []order.Order
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("status = ? AND tenant_id = ?", status, userCtx.TenantID).Find(&orders).Error
+	var orders []order.Order
+	err := r.db.Preload("OrderItems").Where("status = ? AND tenant_id = ?", status, userCtx.TenantID).Find(&orders).Error
 	if err != nil {
 		return nil, err
 	}
@@ -99,9 +98,9 @@ func (r *orderRepository) FindByStatus(status string, ctx context.Context) ([]or
 
 // FindByPaymentStatus retrieves all orders with a specific payment status
 func (r *orderRepository) FindByPaymentStatus(status string, ctx context.Context) ([]order.Order, error) {
-	var orders []order.Order
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("payment_status = ? AND tenant_id = ?", status, userCtx.TenantID).Find(&orders).Error
+	var orders []order.Order
+	err := r.db.Preload("OrderItems").Where("payment_status = ? AND tenant_id = ?", status, userCtx.TenantID).Find(&orders).Error
 	if err != nil {
 		return nil, err
 	}
