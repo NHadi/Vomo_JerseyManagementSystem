@@ -145,6 +145,9 @@
                         case 'order':
                             await this.loadOrderGrid();
                             break;
+                        case 'task':
+                            await this.loadTaskGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -956,6 +959,63 @@
                     } catch (error) {
                         console.error('Failed to load order component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load order component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadTaskGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.taskPageInstance) {
+                window.taskPageInstance.dispose();
+                window.taskPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/task.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="task"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the task.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/task.js';
+                        script.setAttribute('data-page', 'task');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the task page instance
+                            if (!window.taskPageInstance) {
+                                window.taskPageInstance = new window.TaskPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load task module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load task component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load task component</div>');
                         reject(error);
                     }
                 });

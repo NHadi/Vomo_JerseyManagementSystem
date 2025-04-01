@@ -35,28 +35,46 @@ window.TaskPage = class {
     }
 
     bindEvents() {
-        // Modal events
-        $('#taskDetailsModal').on('show.bs.modal', (event) => {
-            const button = $(event.relatedTarget);
-            const taskId = button.data('task-id');
-            if (taskId) {
-                this.loadTaskDetails(taskId);
+        // Filter button click handler
+        $(document).on('click', '#filterTasks', () => {
+            this.showFilterModal();
+        });
+
+        // Task card click handler
+        $(document).on('click', '.task-card', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const taskId = $(e.currentTarget).data('task-id');
+            const task = this.tasks.find(t => t.id === taskId);
+            if (task) {
+                this.showTaskDetails(task);
             }
         });
 
-        $('#taskDetailsModal').on('hide.bs.modal', () => {
-            this.currentTask = null;
+        // Task action buttons
+        $(document).on('click', '#startTask', () => {
+            if (this.currentTask) {
+                this.startTask(this.currentTask.id);
+            }
         });
 
-        // Task action buttons
-        $('#startTask').on('click', () => this.startTask());
-        $('#completeTask').on('click', () => this.completeTask());
-        $('#addNote').on('click', () => this.addNote());
-        $('#reassignTask').on('click', () => this.reassignTask());
-        
-        // Filter and view options
-        $('#filterTasks').on('click', () => this.showFilterModal());
-        $('#viewOptions').on('click', () => this.showViewOptions());
+        $(document).on('click', '#completeTask', () => {
+            if (this.currentTask) {
+                this.completeTask(this.currentTask.id);
+            }
+        });
+
+        $(document).on('click', '#addNote', () => {
+            if (this.currentTask) {
+                this.addNoteToTask(this.currentTask.id);
+            }
+        });
+
+        $(document).on('click', '#reassignTask', () => {
+            if (this.currentTask) {
+                this.showReassignModal(this.currentTask.id);
+            }
+        });
     }
 
     initialize() {
@@ -163,95 +181,53 @@ window.TaskPage = class {
         const container = $('<div>').addClass('division-container').html(`
             <div class="board-header">
                 <div class="dashboard-summary">
-                    <div class="summary-grid">
-                        <div class="summary-card total-tasks">
-                            <div class="card-content">
-                                <div class="card-header">
-                                    <div class="card-title">Total Tasks</div>
-                                    <div class="card-icon">
-                                        <i class="fas fa-tasks"></i>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="card-value">${tasks.length}</div>
-                                    <div class="card-trend positive">
-                                        <i class="fas fa-arrow-up"></i>
-                                        <span>12% from last week</span>
-                                    </div>
-                                </div>
-                                <div class="card-footer">
-                                    <div class="progress-mini">
-                                        <div class="progress-bar" style="width: ${(tasks.filter(t => t.status === 'completed').length / tasks.length * 100)}%"></div>
-                                    </div>
-                                </div>
+                    <div class="summary-stats">
+                        <div class="stat-item total">
+                            <div class="stat-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value">${tasks.length}</div>
+                                <div class="stat-label">Total Tasks</div>
                             </div>
                         </div>
-                        <div class="summary-card pending-tasks">
-                            <div class="card-content">
-                                <div class="card-header">
-                                    <div class="card-title">To Do</div>
-                                    <div class="card-icon">
-                                        <i class="fas fa-clock"></i>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="card-value">${tasks.filter(t => t.status === 'pending').length}</div>
-                                    <div class="card-trend">
-                                        <div class="task-distribution">
-                                            ${this.taskTypes.map(type => {
-                                                const count = tasks.filter(t => t.status === 'pending' && t.task_type === type).length;
-                                                return count ? `<span class="distribution-item" title="${type}">${count}</span>` : '';
-                                            }).join('')}
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item pending">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value">${tasks.filter(t => t.status === 'pending').length}</div>
+                                <div class="stat-label">To Do</div>
                             </div>
                         </div>
-                        <div class="summary-card in-progress-tasks">
-                            <div class="card-content">
-                                <div class="card-header">
-                                    <div class="card-title">In Progress</div>
-                                    <div class="card-icon">
-                                        <i class="fas fa-spinner fa-spin"></i>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="card-value">${tasks.filter(t => t.status === 'in_progress').length}</div>
-                                    <div class="card-trend">
-                                        <div class="task-distribution">
-                                            ${this.taskTypes.map(type => {
-                                                const count = tasks.filter(t => t.status === 'in_progress' && t.task_type === type).length;
-                                                return count ? `<span class="distribution-item" title="${type}">${count}</span>` : '';
-                                            }).join('')}
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item in-progress">
+                            <div class="stat-icon">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value">${tasks.filter(t => t.status === 'in_progress').length}</div>
+                                <div class="stat-label">In Progress</div>
                             </div>
                         </div>
-                        <div class="summary-card completed-tasks">
-                            <div class="card-content">
-                                <div class="card-header">
-                                    <div class="card-title">Completed</div>
-                                    <div class="card-icon">
-                                        <i class="fas fa-check"></i>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="card-value">${tasks.filter(t => t.status === 'completed').length}</div>
-                                    <div class="card-trend positive">
-                                        <i class="fas fa-arrow-up"></i>
-                                        <span>8% from last week</span>
-                                    </div>
-                                </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-item completed">
+                            <div class="stat-icon">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-value">${tasks.filter(t => t.status === 'completed').length}</div>
+                                <div class="stat-label">Completed</div>
                             </div>
                         </div>
                     </div>
                     <div class="dashboard-actions">
                         <button class="btn btn-light btn-sm" id="viewFilters">
-                            <i class="fas fa-filter"></i> Filters
+                            <i class="fas fa-filter"></i>
                         </button>
                         <button class="btn btn-light btn-sm" id="viewSettings">
-                            <i class="fas fa-cog"></i> Settings
+                            <i class="fas fa-cog"></i>
                         </button>
                     </div>
                 </div>
@@ -280,152 +256,142 @@ window.TaskPage = class {
     addDashboardStyles() {
         const styles = `
             .dashboard-summary {
-                padding: 1rem;
-                background: #fff;
-            }
-
-            .summary-grid {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 1rem;
-                margin-bottom: 1rem;
-            }
-
-            .summary-card {
-                background: #fff;
-                border-radius: 12px;
-                box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
-                overflow: hidden;
-                border: 1px solid rgba(0,0,0,0.05);
-            }
-
-            .summary-card:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-            }
-
-            .card-content {
-                padding: 1.25rem;
-            }
-
-            .card-header {
                 display: flex;
-                justify-content: space-between;
                 align-items: center;
-                margin-bottom: 1rem;
+                justify-content: space-between;
+                padding: 0.75rem 1rem;
+                background: #fff;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.04);
             }
 
-            .card-title {
-                font-size: 0.875rem;
+            .summary-stats {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .stat-item {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0.5rem 0.75rem;
+                border-radius: 6px;
+                transition: transform 0.2s ease;
+            }
+
+            .stat-item:hover {
+                transform: translateY(-1px);
+            }
+
+            .stat-divider {
+                width: 1px;
+                height: 2rem;
+                background: #e9ecef;
+                margin: 0 0.5rem;
+            }
+
+            .stat-icon {
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1rem;
+            }
+
+            .stat-info {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
                 font-weight: 600;
+                line-height: 1;
+                margin-bottom: 0.25rem;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
                 color: #8898aa;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
             }
 
-            .card-icon {
-                width: 40px;
-                height: 40px;
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.25rem;
-            }
-
-            .total-tasks .card-icon {
-                background: rgba(94, 114, 228, 0.1);
+            .stat-item.total {
                 color: #5e72e4;
             }
-
-            .pending-tasks .card-icon {
-                background: rgba(251, 99, 64, 0.1);
-                color: #fb6340;
-            }
-
-            .in-progress-tasks .card-icon {
-                background: rgba(45, 206, 137, 0.1);
-                color: #2dce89;
-            }
-
-            .completed-tasks .card-icon {
-                background: rgba(45, 206, 137, 0.1);
-                color: #2dce89;
-            }
-
-            .card-body {
-                margin-bottom: 1rem;
-            }
-
-            .card-value {
-                font-size: 2rem;
-                font-weight: 600;
-                color: #32325d;
-                line-height: 1.2;
-                margin-bottom: 0.5rem;
-            }
-
-            .card-trend {
-                font-size: 0.875rem;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                color: #8898aa;
-            }
-
-            .card-trend.positive {
-                color: #2dce89;
-            }
-
-            .card-trend.negative {
-                color: #fb6340;
-            }
-
-            .progress-mini {
-                height: 4px;
+            .stat-item.total .stat-icon {
                 background: rgba(94, 114, 228, 0.1);
-                border-radius: 2px;
-                overflow: hidden;
             }
 
-            .progress-bar {
-                height: 100%;
-                background: #5e72e4;
-                border-radius: 2px;
-                transition: width 0.3s ease;
+            .stat-item.pending {
+                color: #fb6340;
+            }
+            .stat-item.pending .stat-icon {
+                background: rgba(251, 99, 64, 0.1);
             }
 
-            .task-distribution {
-                display: flex;
-                gap: 0.5rem;
-                flex-wrap: wrap;
+            .stat-item.in-progress {
+                color: #2dce89;
+            }
+            .stat-item.in-progress .stat-icon {
+                background: rgba(45, 206, 137, 0.1);
             }
 
-            .distribution-item {
-                padding: 0.25rem 0.5rem;
-                background: #f6f9fc;
-                border-radius: 4px;
-                font-size: 0.75rem;
-                font-weight: 600;
-                color: #8898aa;
+            .stat-item.completed {
+                color: #11cdef;
+            }
+            .stat-item.completed .stat-icon {
+                background: rgba(17, 205, 239, 0.1);
             }
 
             .dashboard-actions {
                 display: flex;
-                justify-content: flex-end;
                 gap: 0.5rem;
             }
 
-            @media (max-width: 1200px) {
-                .summary-grid {
-                    grid-template-columns: repeat(2, 1fr);
-                }
+            .dashboard-actions .btn {
+                width: 32px;
+                height: 32px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 6px;
+                background: #f6f9fc;
+                border: none;
+                color: #8898aa;
+                transition: all 0.2s ease;
+            }
+
+            .dashboard-actions .btn:hover {
+                background: #e9ecef;
+                color: #5e72e4;
             }
 
             @media (max-width: 768px) {
-                .summary-grid {
-                    grid-template-columns: 1fr;
+                .dashboard-summary {
+                    flex-direction: column;
+                    gap: 1rem;
+                    padding: 1rem;
+                }
+
+                .summary-stats {
+                    flex-wrap: wrap;
+                    justify-content: center;
+                }
+
+                .stat-divider {
+                    display: none;
+                }
+
+                .stat-item {
+                    flex: 1;
+                    min-width: 140px;
+                    justify-content: center;
                 }
             }
         `;
@@ -615,6 +581,7 @@ window.TaskPage = class {
     }
 
     createTaskCard(task) {
+        // Create the card element
         const card = $('<div>')
             .addClass('task-card')
             .attr({
@@ -625,6 +592,7 @@ window.TaskPage = class {
         const statusClass = this.getStatusClass(task.status);
         const timeInfo = this.formatTaskTime(task);
         
+        // Add card content
         card.html(`
             <div class="task-card-content">
                 <div class="task-header">
@@ -639,11 +607,6 @@ window.TaskPage = class {
                             <i class="fas fa-user"></i>
                             E${task.employee_id}
                         </span>
-                    </div>
-                    <div class="task-actions">
-                        <button class="btn btn-icon" title="More Actions">
-                            <i class="fas fa-ellipsis-h"></i>
-                        </button>
                     </div>
                 </div>
                 
@@ -667,6 +630,9 @@ window.TaskPage = class {
                 </div>
             </div>
         `);
+
+        // Add styles for clickable card
+        card.css('cursor', 'pointer');
         
         return card;
     }
@@ -876,7 +842,7 @@ window.TaskPage = class {
             .task-count i {
                 font-size: 0.875rem;
             }
-            
+
             .task-count.total {
                 background: rgba(94, 114, 228, 0.1);
                 color: #5e72e4;
@@ -1091,12 +1057,613 @@ window.TaskPage = class {
                     justify-content: space-between;
                 }
             }
+
+            /* Filter Modal Styles */
+            .filter-form {
+                padding: 1rem;
+            }
+
+            .filter-form .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .filter-form label {
+                display: block;
+                margin-bottom: 0.5rem;
+                color: #8898aa;
+                font-size: 0.875rem;
+                font-weight: 600;
+            }
+
+            .filter-form .form-control {
+                border: 1px solid #e9ecef;
+                border-radius: 6px;
+                padding: 0.75rem;
+                font-size: 0.875rem;
+                transition: all 0.2s ease;
+            }
+
+            .filter-form .form-control:focus {
+                border-color: #5e72e4;
+                box-shadow: 0 0 0 0.2rem rgba(94, 114, 228, 0.25);
+            }
+
+            .filter-form .input-group {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .filter-form .input-group-text {
+                background: #f6f9fc;
+                border: 1px solid #e9ecef;
+                color: #8898aa;
+                padding: 0.75rem;
+                border-radius: 6px;
+            }
+
+            /* Task Card Hover Effect */
+            .task-card {
+                transition: all 0.2s ease;
+            }
+
+            .task-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(50, 50, 93, 0.1);
+            }
+
+            .task-card:active {
+                transform: translateY(0);
+            }
+
+            /* Task Detail Modal Improvements */
+            .task-detail-modal {
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+
+            .task-detail-modal::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .task-detail-modal::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 3px;
+            }
+
+            .task-detail-modal::-webkit-scrollbar-thumb {
+                background: #c1c1c1;
+                border-radius: 3px;
+            }
+
+            .task-detail-modal::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+
+            /* Responsive Improvements */
+            @media (max-width: 768px) {
+                .task-detail-modal {
+                    padding: 0.5rem;
+                }
+
+                .task-detail-actions {
+                    flex-wrap: wrap;
+                    gap: 0.5rem;
+                }
+
+                .task-detail-actions .btn {
+                    flex: 1;
+                    min-width: 120px;
+                }
+            }
         `;
         
         // Add styles to head
         const styleElement = document.createElement('style');
         styleElement.textContent = styles;
         document.head.appendChild(styleElement);
+    }
+
+    showFilterModal() {
+        const content = `
+            <div class="filter-form">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select class="form-control" id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Task Type</label>
+                    <select class="form-control" id="typeFilter">
+                        <option value="">All Types</option>
+                        ${this.taskTypes.map(type => `
+                            <option value="${type}">${type}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Assigned To</label>
+                    <input type="text" class="form-control" id="employeeFilter" placeholder="Employee ID">
+                </div>
+                <div class="form-group">
+                    <label>Date Range</label>
+                    <div class="input-group">
+                        <input type="date" class="form-control" id="dateFrom">
+                        <div class="input-group-append">
+                            <span class="input-group-text">to</span>
+                        </div>
+                        <input type="date" class="form-control" id="dateTo">
+                    </div>
+                </div>
+            </div>
+        `;
+
+        DevExpress.ui.dialog.custom({
+            title: 'Filter Tasks',
+            content: content,
+            buttons: [{
+                text: 'Cancel',
+                onClick: () => true
+            }, {
+                text: 'Apply Filters',
+                onClick: () => {
+                    const filters = {
+                        status: $('#statusFilter').val(),
+                        type: $('#typeFilter').val(),
+                        employeeId: $('#employeeFilter').val(),
+                        dateFrom: $('#dateFrom').val(),
+                        dateTo: $('#dateTo').val()
+                    };
+                    this.applyFilters(filters);
+                    return true;
+                }
+            }],
+            width: '500px'
+        });
+    }
+
+    applyFilters(filters) {
+        let filteredTasks = [...this.tasks];
+
+        if (filters.status) {
+            filteredTasks = filteredTasks.filter(task => task.status === filters.status);
+        }
+
+        if (filters.type) {
+            filteredTasks = filteredTasks.filter(task => task.task_type === filters.type);
+        }
+
+        if (filters.employeeId) {
+            filteredTasks = filteredTasks.filter(task => task.employee_id === parseInt(filters.employeeId));
+        }
+
+        if (filters.dateFrom) {
+            const fromDate = new Date(filters.dateFrom);
+            filteredTasks = filteredTasks.filter(task => new Date(task.created_at) >= fromDate);
+        }
+
+        if (filters.dateTo) {
+            const toDate = new Date(filters.dateTo);
+            filteredTasks = filteredTasks.filter(task => new Date(task.created_at) <= toDate);
+        }
+
+        this.renderTasksByDivision(filteredTasks);
+        this.updateTaskStatistics(filteredTasks);
+    }
+
+    showTaskDetails(task) {
+        if (!task) return;
+        
+        this.currentTask = task; // Store the current task
+        
+        // Create modal content
+        const timeInfo = this.formatTaskTime(task);
+        const statusClass = this.getStatusClass(task.status);
+        
+        const modalContent = `
+            <div class="task-detail-modal">
+                <div class="task-detail-header">
+                    <div class="status-section">
+                        <span class="badge badge-${statusClass} badge-lg">
+                            ${task.status === 'in_progress' ? 
+                                '<i class="fas fa-spinner fa-spin"></i>' : 
+                                '<i class="fas fa-circle"></i>'}
+                            ${task.status.replace('_', ' ').toUpperCase()}
+                        </span>
+                    </div>
+                    <div class="task-type-section">
+                        <span class="task-type-badge">
+                            <i class="fas fa-layer-group"></i>
+                            ${task.task_type}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="task-detail-body">
+                    <div class="detail-section">
+                        <h6 class="section-title">Order Information</h6>
+                        <div class="order-info">
+                            <div class="info-item">
+                                <span class="label">Order ID:</span>
+                                <span class="value">#${task.order_item_id}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Assigned To:</span>
+                                <span class="value">Employee ${task.employee_id}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h6 class="section-title">Timeline</h6>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <i class="fas fa-clock"></i>
+                                <div class="timeline-content">
+                                    <div class="event">Created</div>
+                                    <div class="time">${new Date(task.created_at).toLocaleString()}</div>
+                                </div>
+                            </div>
+                            ${task.started_at ? `
+                                <div class="timeline-item">
+                                    <i class="fas fa-play"></i>
+                                    <div class="timeline-content">
+                                        <div class="event">Started</div>
+                                        <div class="time">${new Date(task.started_at).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${task.completed_at ? `
+                                <div class="timeline-item">
+                                    <i class="fas fa-check"></i>
+                                    <div class="timeline-content">
+                                        <div class="event">Completed</div>
+                                        <div class="time">${new Date(task.completed_at).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h6 class="section-title">Notes</h6>
+                        <div class="notes-section">
+                            <div class="note-content">
+                                ${task.notes || 'No notes available'}
+                            </div>
+                            <div class="add-note-form">
+                                <textarea id="newNote" class="form-control" placeholder="Add a note..."></textarea>
+                                <button class="btn btn-sm btn-primary mt-2" id="addNote">
+                                    Add Note
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="task-detail-actions">
+                    ${task.status === 'pending' ? `
+                        <button class="btn btn-primary" id="startTask">
+                            <i class="fas fa-play"></i> Start Task
+                        </button>
+                    ` : ''}
+                    ${task.status === 'in_progress' ? `
+                        <button class="btn btn-success" id="completeTask">
+                            <i class="fas fa-check"></i> Complete Task
+                        </button>
+                    ` : ''}
+                    <button class="btn btn-info" id="reassignTask">
+                        <i class="fas fa-user-edit"></i> Reassign
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Show modal using DevExpress dialog
+        try {
+            DevExpress.ui.dialog.custom({
+                title: `Task Details - ${task.task_type}`,
+                content: modalContent,
+                buttons: [{
+                    text: 'Close',
+                    onClick: () => {
+                        this.currentTask = null;
+                        return true;
+                    }
+                }],
+                width: '600px',
+                height: 'auto',
+                dragEnabled: true,
+                showCloseButton: true,
+                onShown: () => {
+                    console.log('Modal shown successfully');
+                    // Add styles if not already added
+                    this.addTaskDetailStyles();
+                }
+            });
+        } catch (error) {
+            console.error('Error showing task details:', error);
+            // Fallback to bootstrap modal if DevExpress dialog fails
+            const bootstrapModal = `
+                <div class="modal fade" id="taskDetailModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Task Details - ${task.task_type}</h5>
+                                <button type="button" class="close" data-dismiss="modal">
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                ${modalContent}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            $('#taskDetailModal').remove();
+            
+            // Add new modal to body
+            $('body').append(bootstrapModal);
+            
+            // Show the modal
+            $('#taskDetailModal').modal('show');
+            
+            // Handle modal hidden event
+            $('#taskDetailModal').on('hidden.bs.modal', () => {
+                this.currentTask = null;
+            });
+        }
+    }
+
+    addTaskDetailStyles() {
+        const styles = `
+            .task-detail-modal {
+                padding: 1rem;
+            }
+
+            .task-detail-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1.5rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid #e9ecef;
+            }
+
+            .badge-lg {
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+
+            .task-type-badge {
+                padding: 0.5rem 1rem;
+                background: #f6f9fc;
+                border-radius: 6px;
+                color: #5e72e4;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .task-detail-body {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .detail-section {
+                background: #fff;
+                border-radius: 8px;
+                padding: 1rem;
+                border: 1px solid #e9ecef;
+            }
+
+            .section-title {
+                color: #8898aa;
+                font-size: 0.875rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 1rem;
+            }
+
+            .order-info {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 1rem;
+            }
+
+            .info-item {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .info-item .label {
+                color: #8898aa;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .info-item .value {
+                color: #32325d;
+                font-weight: 600;
+            }
+
+            .timeline {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .timeline-item {
+                display: flex;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .timeline-item i {
+                width: 24px;
+                height: 24px;
+                background: #f6f9fc;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #5e72e4;
+            }
+
+            .timeline-content {
+                flex: 1;
+            }
+
+            .timeline-content .event {
+                font-weight: 600;
+                color: #32325d;
+                margin-bottom: 0.25rem;
+            }
+
+            .timeline-content .time {
+                font-size: 0.875rem;
+                color: #8898aa;
+            }
+
+            .notes-section {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .note-content {
+                color: #525f7f;
+                line-height: 1.5;
+                margin-bottom: 1rem;
+            }
+
+            .add-note-form textarea {
+                border: 1px solid #e9ecef;
+                border-radius: 6px;
+                padding: 0.75rem;
+                resize: vertical;
+                min-height: 80px;
+            }
+
+            .task-detail-actions {
+                display: flex;
+                gap: 1rem;
+                margin-top: 1.5rem;
+                padding-top: 1.5rem;
+                border-top: 1px solid #e9ecef;
+            }
+
+            .task-detail-actions .btn {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.75rem 1.25rem;
+                font-weight: 600;
+            }
+        `;
+
+        // Add styles to head if not already added
+        if (!document.querySelector('style[data-task-detail-styles]')) {
+            const styleElement = document.createElement('style');
+            styleElement.setAttribute('data-task-detail-styles', '');
+            styleElement.textContent = styles;
+            document.head.appendChild(styleElement);
+        }
+    }
+
+    async startTask(taskId) {
+        try {
+            await vomoAPI.updateTaskStatus(taskId, 'in_progress');
+            await this.loadData();
+            DevExpress.ui.notify('Task started successfully', 'success', 3000);
+        } catch (error) {
+            console.error('Error starting task:', error);
+            DevExpress.ui.notify('Failed to start task', 'error', 3000);
+        }
+    }
+
+    async completeTask(taskId) {
+        try {
+            await vomoAPI.updateTaskStatus(taskId, 'completed');
+            await this.loadData();
+            DevExpress.ui.notify('Task completed successfully', 'success', 3000);
+        } catch (error) {
+            console.error('Error completing task:', error);
+            DevExpress.ui.notify('Failed to complete task', 'error', 3000);
+        }
+    }
+
+    async addNoteToTask(taskId) {
+        const noteText = $('#newNote').val().trim();
+        if (!noteText) {
+            DevExpress.ui.notify('Please enter a note', 'warning', 3000);
+            return;
+        }
+
+        try {
+            await vomoAPI.addTaskNote(taskId, noteText);
+            await this.loadData();
+            DevExpress.ui.notify('Note added successfully', 'success', 3000);
+            $('#newNote').val('');
+        } catch (error) {
+            console.error('Error adding note:', error);
+            DevExpress.ui.notify('Failed to add note', 'error', 3000);
+        }
+    }
+
+    showReassignModal(taskId) {
+        const content = `
+            <div class="reassign-form">
+                <div class="form-group">
+                    <label for="employeeId">Employee ID</label>
+                    <input type="text" class="form-control" id="employeeId" placeholder="Enter employee ID">
+                </div>
+            </div>
+        `;
+
+        DevExpress.ui.dialog.custom({
+            title: 'Reassign Task',
+            content: content,
+            buttons: [{
+                text: 'Cancel',
+                onClick: () => true
+            }, {
+                text: 'Reassign',
+                onClick: () => {
+                    const employeeId = $('#employeeId').val();
+                    if (employeeId) {
+                        this.reassignTask(taskId, employeeId);
+                        return true;
+                    }
+                    DevExpress.ui.notify('Please enter an employee ID', 'warning', 3000);
+                    return false;
+                }
+            }],
+            width: '400px'
+        });
+    }
+
+    async reassignTask(taskId, employeeId) {
+        try {
+            await vomoAPI.reassignTask(taskId, employeeId);
+            await this.loadData();
+            DevExpress.ui.notify('Task reassigned successfully', 'success', 3000);
+        } catch (error) {
+            console.error('Error reassigning task:', error);
+            DevExpress.ui.notify('Failed to reassign task', 'error', 3000);
+        }
     }
 };
 
