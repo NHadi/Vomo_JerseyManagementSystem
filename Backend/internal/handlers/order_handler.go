@@ -1,0 +1,419 @@
+package handlers
+
+import (
+	"net/http"
+	"strconv"
+	"vomo/internal/application"
+	"vomo/internal/domain/order"
+
+	"github.com/gin-gonic/gin"
+)
+
+// OrderResponse represents the order response structure
+// @Description Order response model
+type OrderResponse struct {
+	ID                   int     `json:"id" example:"1"`
+	OrderNumber          string  `json:"order_number" example:"ORD-001"`
+	CustomerName         string  `json:"customer_name" example:"John Doe"`
+	CustomerEmail        string  `json:"customer_email" example:"john.doe@example.com"`
+	CustomerPhone        string  `json:"customer_phone" example:"123-456-7890"`
+	DeliveryAddress      string  `json:"delivery_address" example:"123 Main St"`
+	OfficeID             int     `json:"office_id" example:"1"`
+	Subtotal             float64 `json:"subtotal" example:"100.00"`
+	DiscountAmount       float64 `json:"discount_amount" example:"10.00"`
+	TotalAmount          float64 `json:"total_amount" example:"90.00"`
+	Status               string  `json:"status" example:"pending"`
+	PaymentStatus        string  `json:"payment_status" example:"unpaid"`
+	ExpectedDeliveryDate string  `json:"expected_delivery_date" example:"2024-03-25"`
+	Notes                string  `json:"notes" example:"Please deliver in the morning"`
+	CreatedAt            string  `json:"created_at" example:"2024-03-24T21:41:49Z"`
+	CreatedBy            string  `json:"created_by" example:"admin"`
+	UpdatedAt            string  `json:"updated_at" example:"2024-03-24T21:41:49Z"`
+	UpdatedBy            string  `json:"updated_by" example:"admin"`
+	TenantID             int     `json:"tenant_id" example:"1"`
+}
+
+// CreateOrderRequest represents the request structure for creating an order
+// @Description Create order request model
+type CreateOrderRequest struct {
+	OrderNumber          string  `json:"order_number" binding:"required" example:"ORD-001"`
+	CustomerName         string  `json:"customer_name" binding:"required" example:"John Doe"`
+	CustomerEmail        string  `json:"customer_email" binding:"required,email" example:"john.doe@example.com"`
+	CustomerPhone        string  `json:"customer_phone" example:"123-456-7890"`
+	DeliveryAddress      string  `json:"delivery_address" example:"123 Main St"`
+	OfficeID             int     `json:"office_id" binding:"required" example:"1"`
+	Subtotal             float64 `json:"subtotal" binding:"required" example:"100.00"`
+	DiscountAmount       float64 `json:"discount_amount" example:"10.00"`
+	TotalAmount          float64 `json:"total_amount" binding:"required" example:"90.00"`
+	Status               string  `json:"status" binding:"required" example:"pending"`
+	PaymentStatus        string  `json:"payment_status" binding:"required" example:"unpaid"`
+	ExpectedDeliveryDate string  `json:"expected_delivery_date" example:"2024-03-25"`
+	Notes                string  `json:"notes" example:"Please deliver in the morning"`
+}
+
+// UpdateOrderRequest represents the request structure for updating an order
+// @Description Update order request model
+type UpdateOrderRequest struct {
+	CustomerName         string  `json:"customer_name" binding:"required" example:"John Doe"`
+	CustomerEmail        string  `json:"customer_email" binding:"required,email" example:"john.doe@example.com"`
+	CustomerPhone        string  `json:"customer_phone" example:"123-456-7890"`
+	DeliveryAddress      string  `json:"delivery_address" example:"123 Main St"`
+	OfficeID             int     `json:"office_id" binding:"required" example:"1"`
+	Subtotal             float64 `json:"subtotal" binding:"required" example:"100.00"`
+	DiscountAmount       float64 `json:"discount_amount" example:"10.00"`
+	TotalAmount          float64 `json:"total_amount" binding:"required" example:"90.00"`
+	Status               string  `json:"status" binding:"required" example:"pending"`
+	PaymentStatus        string  `json:"payment_status" binding:"required" example:"unpaid"`
+	ExpectedDeliveryDate string  `json:"expected_delivery_date" example:"2024-03-25"`
+	Notes                string  `json:"notes" example:"Please deliver in the morning"`
+}
+
+func toOrderResponse(o *order.Order) OrderResponse {
+	return OrderResponse{
+		ID:                   o.ID,
+		OrderNumber:          o.OrderNumber,
+		CustomerName:         o.CustomerName,
+		CustomerEmail:        o.CustomerEmail,
+		CustomerPhone:        o.CustomerPhone,
+		DeliveryAddress:      o.DeliveryAddress,
+		OfficeID:             o.OfficeID,
+		Subtotal:             o.Subtotal,
+		DiscountAmount:       o.DiscountAmount,
+		TotalAmount:          o.TotalAmount,
+		Status:               o.Status,
+		PaymentStatus:        o.PaymentStatus,
+		ExpectedDeliveryDate: o.ExpectedDeliveryDate,
+		Notes:                o.Notes,
+		CreatedAt:            o.CreatedAt.String(),
+		CreatedBy:            o.CreatedBy,
+		UpdatedAt:            o.UpdatedAt.String(),
+		UpdatedBy:            o.UpdatedBy,
+		TenantID:             o.TenantID,
+	}
+}
+
+// @Summary Create a new order
+// @Description Create a new order with the provided details
+// @Tags Order
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param order body CreateOrderRequest true "Order Data"
+// @Success 201 {object} OrderResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /orders [post]
+func CreateOrder(service *application.OrderService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req CreateOrderRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		// Check if order number already exists
+		existing, err := service.FindByOrderNumber(req.OrderNumber, c)
+		if err == nil && existing != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Order number already exists"})
+			return
+		}
+
+		order := &order.Order{
+			OrderNumber:          req.OrderNumber,
+			CustomerName:         req.CustomerName,
+			CustomerEmail:        req.CustomerEmail,
+			CustomerPhone:        req.CustomerPhone,
+			DeliveryAddress:      req.DeliveryAddress,
+			OfficeID:             req.OfficeID,
+			Subtotal:             req.Subtotal,
+			DiscountAmount:       req.DiscountAmount,
+			TotalAmount:          req.TotalAmount,
+			Status:               req.Status,
+			PaymentStatus:        req.PaymentStatus,
+			ExpectedDeliveryDate: req.ExpectedDeliveryDate,
+			Notes:                req.Notes,
+		}
+
+		if err := service.Create(order, c); err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		// Fetch the created order
+		createdOrder, err := service.FindByID(order.ID, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch created order"})
+			return
+		}
+
+		c.JSON(http.StatusCreated, toOrderResponse(createdOrder))
+	}
+}
+
+// @Summary Get an order by ID
+// @Description Get order details by ID
+// @Tags Order
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param id path int true "Order ID"
+// @Success 200 {object} OrderResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "Order not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /orders/{id} [get]
+func GetOrder(service *application.OrderService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid order ID"})
+			return
+		}
+
+		order, err := service.FindByID(id, c)
+		if err != nil {
+			c.JSON(http.StatusNotFound, ErrorResponse{Error: "Order not found"})
+			return
+		}
+
+		c.JSON(http.StatusOK, toOrderResponse(order))
+	}
+}
+
+// @Summary Get all orders
+// @Description Get all orders
+// @Tags Order
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Success 200 {array} OrderResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /orders [get]
+func GetAllOrders(service *application.OrderService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		orders, err := service.FindAll(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		response := make([]OrderResponse, len(orders))
+		for i, o := range orders {
+			response[i] = toOrderResponse(&o)
+		}
+
+		c.JSON(http.StatusOK, response)
+	}
+}
+
+// @Summary Update an order
+// @Description Update an existing order with new details
+// @Tags Order
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param id path int true "Order ID"
+// @Param order body UpdateOrderRequest true "Order Data"
+// @Success 200 {object} OrderResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "Order not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /orders/{id} [put]
+func UpdateOrder(service *application.OrderService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid order ID"})
+			return
+		}
+
+		var req UpdateOrderRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		order, err := service.FindByID(id, c)
+		if err != nil {
+			c.JSON(http.StatusNotFound, ErrorResponse{Error: "Order not found"})
+			return
+		}
+
+		order.CustomerName = req.CustomerName
+		order.CustomerEmail = req.CustomerEmail
+		order.CustomerPhone = req.CustomerPhone
+		order.DeliveryAddress = req.DeliveryAddress
+		order.OfficeID = req.OfficeID
+		order.Subtotal = req.Subtotal
+		order.DiscountAmount = req.DiscountAmount
+		order.TotalAmount = req.TotalAmount
+		order.Status = req.Status
+		order.PaymentStatus = req.PaymentStatus
+		order.ExpectedDeliveryDate = req.ExpectedDeliveryDate
+		order.Notes = req.Notes
+
+		if err := service.Update(order, c); err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		// Fetch the updated order
+		updatedOrder, err := service.FindByID(id, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch updated order"})
+			return
+		}
+
+		c.JSON(http.StatusOK, toOrderResponse(updatedOrder))
+	}
+}
+
+// @Summary Delete an order
+// @Description Delete an existing order
+// @Tags Order
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param id path int true "Order ID"
+// @Success 200 {object} SuccessResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "Order not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /orders/{id} [delete]
+func DeleteOrder(service *application.OrderService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid order ID"})
+			return
+		}
+
+		if err := service.Delete(id, c); err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, SuccessResponse{Message: "Order deleted successfully"})
+	}
+}
+
+// @Summary Get orders by customer email
+// @Description Get all orders for a specific customer email
+// @Tags Order
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param email query string true "Customer Email" example:"john.doe@example.com"
+// @Success 200 {array} OrderResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /orders/by-customer [get]
+func GetOrdersByCustomerEmail(service *application.OrderService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		email := c.Query("email")
+		if email == "" {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Email is required"})
+			return
+		}
+
+		orders, err := service.FindByCustomerEmail(email, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		response := make([]OrderResponse, len(orders))
+		for i, o := range orders {
+			response[i] = toOrderResponse(&o)
+		}
+
+		c.JSON(http.StatusOK, response)
+	}
+}
+
+// @Summary Get orders by status
+// @Description Get all orders with a specific status
+// @Tags Order
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param status query string true "Order Status" example:"pending"
+// @Success 200 {array} OrderResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /orders/by-status [get]
+func GetOrdersByStatus(service *application.OrderService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		status := c.Query("status")
+		if status == "" {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Status is required"})
+			return
+		}
+
+		orders, err := service.FindByStatus(status, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		response := make([]OrderResponse, len(orders))
+		for i, o := range orders {
+			response[i] = toOrderResponse(&o)
+		}
+
+		c.JSON(http.StatusOK, response)
+	}
+}
+
+// @Summary Get orders by payment status
+// @Description Get all orders with a specific payment status
+// @Tags Order
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param status query string true "Payment Status" example:"unpaid"
+// @Success 200 {array} OrderResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /orders/by-payment-status [get]
+func GetOrdersByPaymentStatus(service *application.OrderService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		status := c.Query("status")
+		if status == "" {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Status is required"})
+			return
+		}
+
+		orders, err := service.FindByPaymentStatus(status, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		response := make([]OrderResponse, len(orders))
+		for i, o := range orders {
+			response[i] = toOrderResponse(&o)
+		}
+
+		c.JSON(http.StatusOK, response)
+	}
+}

@@ -28,5 +28,8 @@ func SetupRoutes(router *gin.RouterGroup, services *services.Services) {
 		SetupEmployeeRoutes(protected, services.EmployeeService, services.DivisionService)
 		SetupProductRoutes(protected, services.ProductService, services.ProductCategoryService, services.ProductImageService)
 		SetupProductCategoryRoutes(protected, services.ProductCategoryService)
+		SetupOrderRoutes(protected, services.OrderService)
+		SetupPaymentRoutes(protected, services.PaymentService)
+		SetupTaskRoutes(protected, services.TaskService)
 	}
 }

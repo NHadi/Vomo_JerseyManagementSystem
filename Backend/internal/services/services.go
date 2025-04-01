@@ -2,6 +2,7 @@ package services
 
 import (
 	"vomo/internal/application"
+	"vomo/internal/config"
 	"vomo/internal/domain/audit"
 	"vomo/internal/domain/product"
 	"vomo/internal/infrastructure/postgres"
@@ -18,6 +19,9 @@ type AuditService = *audit.Service
 type BackupService = *application.BackupService
 type ProductService = *application.ProductService
 type ProductCategoryService = *application.ProductCategoryService
+type OrderService = *application.OrderService
+type PaymentService = *application.PaymentService
+type TaskService = *application.TaskService
 
 // Services holds all the application services
 type Services struct {
@@ -35,33 +39,69 @@ type Services struct {
 	ProductService         *application.ProductService
 	ProductCategoryService *application.ProductCategoryService
 	ProductImageService    product.ProductImageService
+	OrderService           *application.OrderService
+	PaymentService         *application.PaymentService
+	TaskService            *application.TaskService
 }
 
-func NewServices(db *gorm.DB) *Services {
+func NewServices(db *gorm.DB, cfg *config.Config) *Services {
+	// Initialize repositories
+	menuRepo := postgres.NewMenuRepository(db)
+	userRepo := postgres.NewUserRepository(db)
+	roleRepo := postgres.NewRoleRepository(db)
+	permissionRepo := postgres.NewPermissionRepository(db)
+	auditRepo := postgres.NewAuditRepository(db)
+	backupRepo := postgres.NewBackupRepository(db)
+	zoneRepo := postgres.NewZoneRepository(db)
+	regionRepo := postgres.NewRegionRepository(db)
+	officeRepo := postgres.NewOfficeRepository(db)
+	divisionRepo := postgres.NewDivisionRepository(db)
+	employeeRepo := postgres.NewEmployeeRepository(db)
 	productRepo := postgres.NewProductRepository(db)
 	productCategoryRepo := postgres.NewProductCategoryRepository(db)
 	productImageRepo := postgres.NewProductImageRepository(db)
-	auditRepo := postgres.NewAuditRepository(db)
+	orderRepo := postgres.NewOrderRepository(db)
+	paymentRepo := postgres.NewPaymentRepository(db)
+	taskRepo := postgres.NewTaskRepository(db)
+
+	// Initialize audit service first as it's needed by other services
 	auditService := audit.NewService(auditRepo)
 
+	// Initialize all other services
+	menuService := application.NewMenuService(menuRepo, auditService)
+	userService := application.NewUserService(userRepo, auditService)
+	roleService := application.NewRoleService(roleRepo, permissionRepo, auditService)
+	permissionService := application.NewPermissionService(permissionRepo, auditService)
+	backupService := application.NewBackupService(backupRepo, cfg)
+	zoneService := application.NewZoneService(zoneRepo, regionRepo, officeRepo, auditService)
+	regionService := application.NewRegionService(regionRepo, zoneRepo, auditService)
+	officeService := application.NewOfficeService(officeRepo, auditService, zoneRepo)
+	divisionService := application.NewDivisionService(divisionRepo, auditService)
+	employeeService := application.NewEmployeeService(employeeRepo, auditService)
 	productService := application.NewProductService(productRepo, auditService)
 	productCategoryService := application.NewProductCategoryService(productCategoryRepo, auditService)
 	productImageService := application.NewProductImageService(productImageRepo, productRepo)
+	orderService := application.NewOrderService(orderRepo, auditService)
+	paymentService := application.NewPaymentService(paymentRepo, auditService)
+	taskService := application.NewTaskService(taskRepo, auditService)
 
 	return &Services{
-		MenuService:            nil,
-		UserService:            nil,
-		RoleService:            nil,
-		PermissionService:      nil,
+		MenuService:            menuService,
+		UserService:            userService,
+		RoleService:            roleService,
+		PermissionService:      permissionService,
 		AuditService:           auditService,
-		BackupService:          nil,
-		ZoneService:            nil,
-		RegionService:          nil,
-		OfficeService:          nil,
-		DivisionService:        nil,
-		EmployeeService:        nil,
+		BackupService:          backupService,
+		ZoneService:            zoneService,
+		RegionService:          regionService,
+		OfficeService:          officeService,
+		DivisionService:        divisionService,
+		EmployeeService:        employeeService,
 		ProductService:         productService,
 		ProductCategoryService: productCategoryService,
 		ProductImageService:    productImageService,
+		OrderService:           orderService,
+		PaymentService:         paymentService,
+		TaskService:            taskService,
 	}
 }

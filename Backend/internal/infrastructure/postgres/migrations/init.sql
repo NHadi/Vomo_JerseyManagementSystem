@@ -1894,3 +1894,148 @@ ALTER TABLE ONLY public.users
 -- PostgreSQL database dump complete
 --
 
+-- Create sequences for IDs
+CREATE SEQUENCE orders_id_seq;
+CREATE SEQUENCE order_items_id_seq;
+CREATE SEQUENCE production_tasks_id_seq;
+CREATE SEQUENCE task_history_id_seq;
+CREATE SEQUENCE payments_id_seq;
+
+-- Orders table
+CREATE TABLE orders (
+    id BIGINT DEFAULT nextval('orders_id_seq'::regclass) NOT NULL,
+    order_number VARCHAR(50) NOT NULL UNIQUE,
+    customer_name VARCHAR(100) NOT NULL,
+    customer_email VARCHAR(255),
+    customer_phone VARCHAR(20),
+    delivery_address TEXT,
+    office_id INTEGER REFERENCES master_office(id),
+    subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,
+    discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    total_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    payment_status VARCHAR(20) NOT NULL DEFAULT 'unpaid',
+    expected_delivery_date DATE,
+    notes TEXT,
+    tenant_id INTEGER NOT NULL REFERENCES master_tenant(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(255) NOT NULL,
+    CONSTRAINT orders_pkey PRIMARY KEY (id),
+    CONSTRAINT valid_order_status CHECK (status IN ('pending', 'confirmed', 'in_production', 'completed', 'cancelled')),
+    CONSTRAINT valid_payment_status CHECK (payment_status IN ('unpaid', 'partial', 'paid', 'refunded'))
+);
+
+-- Order items with jersey customization
+CREATE TABLE order_items (
+    id BIGINT DEFAULT nextval('order_items_id_seq'::regclass) NOT NULL,
+    order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES master_product(id),
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    size VARCHAR(10) NOT NULL,
+    color VARCHAR(50) NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    original_subtotal DECIMAL(10,2) NOT NULL,
+    applied_discount_rule JSONB,
+    discount_amount DECIMAL(10,2) DEFAULT 0,
+    final_subtotal DECIMAL(10,2) NOT NULL,
+    customization JSONB NOT NULL DEFAULT '{}'::jsonb,
+    current_task VARCHAR(20) NOT NULL DEFAULT 'layout',
+    production_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    tenant_id INTEGER NOT NULL REFERENCES master_tenant(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(255) NOT NULL,
+    CONSTRAINT order_items_pkey PRIMARY KEY (id),
+    CONSTRAINT valid_production_status CHECK (production_status IN ('pending', 'in_progress', 'completed', 'rejected'))
+);
+
+-- Production tasks tracking
+CREATE TABLE production_tasks (
+    id BIGINT DEFAULT nextval('production_tasks_id_seq'::regclass) NOT NULL,
+    order_item_id BIGINT NOT NULL REFERENCES order_items(id) ON DELETE CASCADE,
+    task_type VARCHAR(20) NOT NULL,
+    sequence_number INTEGER NOT NULL,
+    employee_id INTEGER REFERENCES master_employee(id),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    started_at TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    notes TEXT,
+    tenant_id INTEGER NOT NULL REFERENCES master_tenant(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(255) NOT NULL,
+    CONSTRAINT production_tasks_pkey PRIMARY KEY (id),
+    CONSTRAINT valid_task_status CHECK (status IN ('pending', 'in_progress', 'completed', 'rejected'))
+);
+
+-- Task comments and updates
+CREATE TABLE task_history (
+    id BIGINT DEFAULT nextval('task_history_id_seq'::regclass) NOT NULL,
+    task_id BIGINT NOT NULL REFERENCES production_tasks(id) ON DELETE CASCADE,
+    employee_id INTEGER NOT NULL REFERENCES master_employee(id),
+    status_change VARCHAR(50),
+    comment TEXT,
+    tenant_id INTEGER NOT NULL REFERENCES master_tenant(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(255) NOT NULL,
+    CONSTRAINT task_history_pkey PRIMARY KEY (id)
+);
+
+-- Payments
+CREATE TABLE payments (
+    id BIGINT DEFAULT nextval('payments_id_seq'::regclass) NOT NULL,
+    order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_method VARCHAR(50) NOT NULL,
+    payment_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    reference_number VARCHAR(100),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    notes TEXT,
+    tenant_id INTEGER NOT NULL REFERENCES master_tenant(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(255) NOT NULL,
+    CONSTRAINT payments_pkey PRIMARY KEY (id),
+    CONSTRAINT valid_payment_status CHECK (status IN ('pending', 'completed', 'failed', 'refunded'))
+);
+
+-- Set sequence ownership
+ALTER SEQUENCE orders_id_seq OWNED BY orders.id;
+ALTER SEQUENCE order_items_id_seq OWNED BY order_items.id;
+ALTER SEQUENCE production_tasks_id_seq OWNED BY production_tasks.id;
+ALTER SEQUENCE task_history_id_seq OWNED BY task_history.id;
+ALTER SEQUENCE payments_id_seq OWNED BY payments.id;
+
+-- Indexes (same as before)
+CREATE INDEX idx_orders_number ON orders(order_number);
+CREATE INDEX idx_orders_customer ON orders(customer_name, customer_email);
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_payment_status ON orders(payment_status);
+CREATE INDEX idx_orders_tenant ON orders(tenant_id);
+
+CREATE INDEX idx_order_items_order ON order_items(order_id);
+CREATE INDEX idx_order_items_product ON order_items(product_id);
+CREATE INDEX idx_order_items_current_task ON order_items(current_task);
+CREATE INDEX idx_order_items_status ON order_items(production_status);
+CREATE INDEX idx_order_items_tenant ON order_items(tenant_id);
+
+CREATE INDEX idx_production_tasks_order_item ON production_tasks(order_item_id);
+CREATE INDEX idx_production_tasks_type ON production_tasks(task_type);
+CREATE INDEX idx_production_tasks_employee ON production_tasks(employee_id);
+CREATE INDEX idx_production_tasks_status ON production_tasks(status);
+CREATE INDEX idx_production_tasks_tenant ON production_tasks(tenant_id);
+
+CREATE INDEX idx_task_history_task ON task_history(task_id);
+CREATE INDEX idx_task_history_employee ON task_history(employee_id);
+CREATE INDEX idx_task_history_tenant ON task_history(tenant_id);
+
+CREATE INDEX idx_payments_order ON payments(order_id);
+CREATE INDEX idx_payments_status ON payments(status);
+CREATE INDEX idx_payments_tenant ON payments(tenant_id);

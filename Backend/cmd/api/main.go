@@ -29,9 +29,7 @@ import (
 	"log"
 	"os"
 	_ "vomo/docs"
-	"vomo/internal/application"
 	"vomo/internal/config"
-	"vomo/internal/domain/audit"
 	"vomo/internal/handlers"
 	"vomo/internal/infrastructure/jwt"
 	"vomo/internal/infrastructure/logging"
@@ -78,37 +76,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Initialize repositories
-	menuRepo := postgres.NewMenuRepository(db)
-	userRepo := postgres.NewUserRepository(db)
-	auditRepo := postgres.NewAuditRepository(db)
-	roleRepo := postgres.NewRoleRepository(db)
-	permissionRepo := postgres.NewPermissionRepository(db)
-	backupRepo := postgres.NewBackupRepository(db)
-	zoneRepo := postgres.NewZoneRepository(db)
-	regionRepo := postgres.NewRegionRepository(db)
-	officeRepo := postgres.NewOfficeRepository(db)
-	productRepo := postgres.NewProductRepository(db)
-	productCategoryRepo := postgres.NewProductCategoryRepository(db)
-	productImageRepo := postgres.NewProductImageRepository(db)
-	employeeRepo := postgres.NewEmployeeRepository(db)
-	divisionRepo := postgres.NewDivisionRepository(db)
-
 	// Initialize services
-	auditService := audit.NewService(auditRepo)
-	menuService := application.NewMenuService(menuRepo, auditService)
-	userService := application.NewUserService(userRepo, auditService)
-	roleService := application.NewRoleService(roleRepo, permissionRepo, auditService)
-	permissionService := application.NewPermissionService(permissionRepo, auditService)
-	backupService := application.NewBackupService(backupRepo, cfg)
-	zoneService := application.NewZoneService(zoneRepo, regionRepo, officeRepo, auditService)
-	regionService := application.NewRegionService(regionRepo, zoneRepo, auditService)
-	officeService := application.NewOfficeService(officeRepo, auditService, zoneRepo)
-	divisionService := application.NewDivisionService(divisionRepo, auditService)
-	employeeService := application.NewEmployeeService(employeeRepo, auditService)
-	productService := application.NewProductService(productRepo, auditService)
-	productCategoryService := application.NewProductCategoryService(productCategoryRepo, auditService)
-	productImageService := application.NewProductImageService(productImageRepo, productRepo)
+	appServices := services.NewServices(db, cfg)
 
 	// Ensure upload directory exists
 	if err := os.MkdirAll("uploads/products", 0755); err != nil {
@@ -144,7 +113,7 @@ func main() {
 
 	// Add services to Gin context
 	r.Use(func(c *gin.Context) {
-		c.Set("userService", userService)
+		c.Set("userService", appServices.UserService)
 		c.Next()
 	})
 
@@ -157,29 +126,14 @@ func main() {
 
 	// Protected routes
 	protected := r.Group("/api")
-	protected.Use(middleware.AuthMiddleware(userService))
+	protected.Use(middleware.AuthMiddleware(appServices.UserService))
 
 	// Public routes
-	r.POST("/api/auth/login", handlers.Login(userService, menuService))
-	r.POST("/api/auth/refresh", handlers.RefreshToken(userService))
+	r.POST("/api/auth/login", handlers.Login(appServices.UserService, appServices.MenuService))
+	r.POST("/api/auth/refresh", handlers.RefreshToken(appServices.UserService))
 
 	// API routes group
-	routes.SetupRoutes(protected, &services.Services{
-		MenuService:            menuService,
-		UserService:            userService,
-		RoleService:            roleService,
-		PermissionService:      permissionService,
-		AuditService:           auditService,
-		BackupService:          backupService,
-		ZoneService:            zoneService,
-		RegionService:          regionService,
-		OfficeService:          officeService,
-		DivisionService:        divisionService,
-		EmployeeService:        employeeService,
-		ProductService:         productService,
-		ProductCategoryService: productCategoryService,
-		ProductImageService:    productImageService,
-	})
+	routes.SetupRoutes(protected, appServices)
 
 	// Start Server
 	port := cfg.GetServerPort()

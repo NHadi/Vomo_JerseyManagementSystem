@@ -14,8 +14,21 @@ definitions:
         type: integer
       tenant_id:
         type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: string
     type: object
   handlers.AssignMenusRequest:
+    type: object
+  handlers.AssignOfficesRequest:
+    properties:
+      office_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - office_ids
     type: object
   handlers.AssignPermissionsRequest:
     description: Assign permissions request model
@@ -30,6 +43,16 @@ definitions:
         type: array
     required:
     - permission_ids
+    type: object
+  handlers.AssignZoneRequest:
+    properties:
+      zone_id:
+        example: 1
+        type: integer
+    required:
+    - zone_id
+    type: object
+  handlers.AssignZonesRequest:
     type: object
   handlers.AuditResponse:
     description: Audit trail entry response model
@@ -88,7 +111,7 @@ definitions:
   handlers.CreateEmployeeRequest:
     description: Create employee request model
     properties:
-      division_id:
+      DivisionID:
         example: 1
         type: integer
       email:
@@ -101,7 +124,7 @@ definitions:
         example: 123-456-7890
         type: string
     required:
-    - division_id
+    - DivisionID
     - email
     - name
     type: object
@@ -151,6 +174,89 @@ definitions:
     - code
     - email
     - name
+    type: object
+  handlers.CreateOrderRequest:
+    description: Create order request model
+    properties:
+      customer_email:
+        example: john.doe@example.com
+        type: string
+      customer_name:
+        example: John Doe
+        type: string
+      customer_phone:
+        example: 123-456-7890
+        type: string
+      delivery_address:
+        example: 123 Main St
+        type: string
+      discount_amount:
+        example: 10
+        type: number
+      expected_delivery_date:
+        example: "2024-03-25"
+        type: string
+      notes:
+        example: Please deliver in the morning
+        type: string
+      office_id:
+        example: 1
+        type: integer
+      order_number:
+        example: ORD-001
+        type: string
+      payment_status:
+        example: unpaid
+        type: string
+      status:
+        example: pending
+        type: string
+      subtotal:
+        example: 100
+        type: number
+      total_amount:
+        example: 90
+        type: number
+    required:
+    - customer_email
+    - customer_name
+    - office_id
+    - order_number
+    - payment_status
+    - status
+    - subtotal
+    - total_amount
+    type: object
+  handlers.CreatePaymentRequest:
+    description: Create payment request model
+    properties:
+      amount:
+        example: 100
+        type: number
+      notes:
+        example: Payment received
+        type: string
+      order_id:
+        example: 1
+        type: integer
+      payment_date:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      payment_method:
+        example: credit_card
+        type: string
+      reference_number:
+        example: PAY-001
+        type: string
+      status:
+        example: completed
+        type: string
+    required:
+    - amount
+    - order_id
+    - payment_method
+    - reference_number
+    - status
     type: object
   handlers.CreatePermissionRequest:
     description: Create permission request model
@@ -287,6 +393,39 @@ definitions:
     required:
     - name
     type: object
+  handlers.CreateTaskRequest:
+    description: Create task request model
+    properties:
+      completed_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      employee_id:
+        example: 1
+        type: integer
+      notes:
+        example: Handle with care
+        type: string
+      order_item_id:
+        example: 1
+        type: integer
+      sequence_number:
+        example: 1
+        type: integer
+      started_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      status:
+        example: pending
+        type: string
+      task_type:
+        example: washing
+        type: string
+    required:
+    - order_item_id
+    - sequence_number
+    - status
+    - task_type
+    type: object
   handlers.CreateUserRequest:
     description: Create user request model
     properties:
@@ -347,6 +486,10 @@ definitions:
       description:
         example: Administration department
         type: string
+      employees:
+        items:
+          $ref: '#/definitions/handlers.EmployeeInfo'
+        type: array
       id:
         example: 1
         type: integer
@@ -361,6 +504,21 @@ definitions:
         type: string
       updated_by:
         example: admin
+        type: string
+    type: object
+  handlers.EmployeeInfo:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: John Doe
+        type: string
+      phone:
+        example: "+1234567890"
         type: string
     type: object
   handlers.EmployeeResponse:
@@ -405,6 +563,24 @@ definitions:
       error:
         example: Invalid request parameters
         type: string
+    type: object
+  handlers.ImageInfo:
+    properties:
+      id:
+        example: 1
+        type: integer
+      image_url:
+        example: /uploads/products/image.jpg
+        type: string
+      is_primary:
+        example: true
+        type: boolean
+      product_id:
+        example: 1
+        type: integer
+      sort_order:
+        example: 1
+        type: integer
     type: object
   handlers.LoginRequest:
     properties:
@@ -462,6 +638,24 @@ definitions:
         example: /dashboard
         type: string
     type: object
+  handlers.OfficeInfo:
+    properties:
+      address:
+        example: 123 Main St
+        type: string
+      code:
+        example: OFF-001
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Main Office
+        type: string
+      phone:
+        example: "+1234567890"
+        type: string
+    type: object
   handlers.OfficeResponse:
     description: Office response model
     properties:
@@ -498,9 +692,115 @@ definitions:
       updated_by:
         example: admin
         type: string
+      zone:
+        $ref: '#/definitions/handlers.ZoneInfo'
       zone_id:
         example: 1
         type: integer
+    type: object
+  handlers.OrderResponse:
+    description: Order response model
+    properties:
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      customer_email:
+        example: john.doe@example.com
+        type: string
+      customer_name:
+        example: John Doe
+        type: string
+      customer_phone:
+        example: 123-456-7890
+        type: string
+      delivery_address:
+        example: 123 Main St
+        type: string
+      discount_amount:
+        example: 10
+        type: number
+      expected_delivery_date:
+        example: "2024-03-25"
+        type: string
+      id:
+        example: 1
+        type: integer
+      notes:
+        example: Please deliver in the morning
+        type: string
+      office_id:
+        example: 1
+        type: integer
+      order_number:
+        example: ORD-001
+        type: string
+      payment_status:
+        example: unpaid
+        type: string
+      status:
+        example: pending
+        type: string
+      subtotal:
+        example: 100
+        type: number
+      tenant_id:
+        example: 1
+        type: integer
+      total_amount:
+        example: 90
+        type: number
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
+    type: object
+  handlers.PaymentResponse:
+    description: Payment response model
+    properties:
+      amount:
+        example: 100
+        type: number
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      id:
+        example: 1
+        type: integer
+      notes:
+        example: Payment received
+        type: string
+      order_id:
+        example: 1
+        type: integer
+      payment_date:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      payment_method:
+        example: credit_card
+        type: string
+      reference_number:
+        example: PAY-001
+        type: string
+      status:
+        example: completed
+        type: string
+      tenant_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
     type: object
   handlers.PermissionResponse:
     description: Permission response model
@@ -616,6 +916,10 @@ definitions:
       id:
         example: 1
         type: integer
+      images:
+        items:
+          $ref: '#/definitions/handlers.ImageInfo'
+        type: array
       is_active:
         example: true
         type: boolean
@@ -696,6 +1000,10 @@ definitions:
       updated_by:
         example: admin
         type: string
+      zones:
+        items:
+          $ref: '#/definitions/zone.Zone'
+        type: array
     type: object
   handlers.RoleResponse:
     description: Role response model
@@ -740,6 +1048,54 @@ definitions:
         example: Operation completed successfully
         type: string
     type: object
+  handlers.TaskResponse:
+    description: Task response model
+    properties:
+      completed_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      employee_id:
+        example: 1
+        type: integer
+      id:
+        example: 1
+        type: integer
+      notes:
+        example: Handle with care
+        type: string
+      order_item_id:
+        example: 1
+        type: integer
+      sequence_number:
+        example: 1
+        type: integer
+      started_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      status:
+        example: pending
+        type: string
+      task_type:
+        example: washing
+        type: string
+      tenant_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
+    type: object
+  handlers.UpdateDivisionEmployeesRequest:
+    type: object
   handlers.UpdateDivisionRequest:
     description: Update division request model
     properties:
@@ -755,7 +1111,7 @@ definitions:
   handlers.UpdateEmployeeRequest:
     description: Update employee request model
     properties:
-      division_id:
+      DivisionID:
         example: 1
         type: integer
       email:
@@ -768,7 +1124,7 @@ definitions:
         example: 123-456-7890
         type: string
     required:
-    - division_id
+    - DivisionID
     - email
     - name
     type: object
@@ -818,6 +1174,81 @@ definitions:
     - code
     - email
     - name
+    type: object
+  handlers.UpdateOrderRequest:
+    description: Update order request model
+    properties:
+      customer_email:
+        example: john.doe@example.com
+        type: string
+      customer_name:
+        example: John Doe
+        type: string
+      customer_phone:
+        example: 123-456-7890
+        type: string
+      delivery_address:
+        example: 123 Main St
+        type: string
+      discount_amount:
+        example: 10
+        type: number
+      expected_delivery_date:
+        example: "2024-03-25"
+        type: string
+      notes:
+        example: Please deliver in the morning
+        type: string
+      office_id:
+        example: 1
+        type: integer
+      payment_status:
+        example: unpaid
+        type: string
+      status:
+        example: pending
+        type: string
+      subtotal:
+        example: 100
+        type: number
+      total_amount:
+        example: 90
+        type: number
+    required:
+    - customer_email
+    - customer_name
+    - office_id
+    - payment_status
+    - status
+    - subtotal
+    - total_amount
+    type: object
+  handlers.UpdatePaymentRequest:
+    description: Update payment request model
+    properties:
+      amount:
+        example: 100
+        type: number
+      notes:
+        example: Payment received
+        type: string
+      payment_date:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      payment_method:
+        example: credit_card
+        type: string
+      reference_number:
+        example: PAY-001
+        type: string
+      status:
+        example: completed
+        type: string
+    required:
+    - amount
+    - payment_method
+    - reference_number
+    - status
     type: object
   handlers.UpdatePermissionRequest:
     description: Update permission request model
@@ -963,6 +1394,39 @@ definitions:
     required:
     - name
     type: object
+  handlers.UpdateTaskRequest:
+    description: Update task request model
+    properties:
+      completed_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      employee_id:
+        example: 1
+        type: integer
+      notes:
+        example: Handle with care
+        type: string
+      order_item_id:
+        example: 1
+        type: integer
+      sequence_number:
+        example: 1
+        type: integer
+      started_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      status:
+        example: pending
+        type: string
+      task_type:
+        example: washing
+        type: string
+    required:
+    - order_item_id
+    - sequence_number
+    - status
+    - task_type
+    type: object
   handlers.UpdateUserRequest:
     description: Update user request model
     properties:
@@ -1022,6 +1486,18 @@ definitions:
         example: john.doe
         type: string
     type: object
+  handlers.ZoneInfo:
+    properties:
+      description:
+        example: Northern zone
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: North Zone
+        type: string
+    type: object
   handlers.ZoneResponse:
     description: Zone response model
     properties:
@@ -1040,6 +1516,10 @@ definitions:
       name:
         example: North Zone
         type: string
+      offices:
+        items:
+          $ref: '#/definitions/handlers.OfficeInfo'
+        type: array
       region:
         $ref: '#/definitions/handlers.RegionInfo'
       region_id:
@@ -1053,6 +1533,71 @@ definitions:
         type: string
       updated_by:
         example: admin
+        type: string
+    type: object
+  models.Zone:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      region_id:
+        type: integer
+    type: object
+  office.Office:
+    properties:
+      address:
+        type: string
+      code:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        type: string
+      tenant_id:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+      zone:
+        $ref: '#/definitions/models.Zone'
+      zone_id:
+        type: integer
+    type: object
+  zone.Zone:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      offices:
+        items:
+          $ref: '#/definitions/office.Office'
+        type: array
+      region_id:
+        type: integer
+      tenant_id:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
         type: string
     type: object
 host: localhost:8080
@@ -1619,6 +2164,60 @@ paths:
       security:
       - BearerAuth: []
       summary: Update a division
+      tags:
+      - Division
+  /divisions/{id}/employees:
+    post:
+      consumes:
+      - application/json
+      description: Update the list of employees assigned to a division
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Division ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Employee IDs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateDivisionEmployeesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.DivisionResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Division not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update division employees
       tags:
       - Division
   /employees:
@@ -2434,6 +3033,60 @@ paths:
       summary: Update an office
       tags:
       - Office
+  /offices/{id}/zone:
+    post:
+      consumes:
+      - application/json
+      description: Assign a zone to an existing office
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Office ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Zone ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AssignZoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.OfficeResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Office not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Assign zone to an office
+      tags:
+      - Office
   /offices/by-zone:
     get:
       description: Get all offices for a specific zone
@@ -2478,6 +3131,680 @@ paths:
       summary: Get offices by zone
       tags:
       - Office
+  /orders:
+    get:
+      description: Get all orders
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.OrderResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all orders
+      tags:
+      - Order
+    post:
+      consumes:
+      - application/json
+      description: Create a new order with the provided details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Order Data
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.OrderResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new order
+      tags:
+      - Order
+  /orders/{id}:
+    delete:
+      description: Delete an existing order
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Order not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete an order
+      tags:
+      - Order
+    get:
+      description: Get order details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.OrderResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Order not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get an order by ID
+      tags:
+      - Order
+    put:
+      consumes:
+      - application/json
+      description: Update an existing order with new details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Order Data
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.OrderResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Order not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an order
+      tags:
+      - Order
+  /orders/by-customer:
+    get:
+      description: Get all orders for a specific customer email
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Customer Email
+        in: query
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.OrderResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get orders by customer email
+      tags:
+      - Order
+  /orders/by-payment-status:
+    get:
+      description: Get all orders with a specific payment status
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Payment Status
+        in: query
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.OrderResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get orders by payment status
+      tags:
+      - Order
+  /orders/by-status:
+    get:
+      description: Get all orders with a specific status
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Order Status
+        in: query
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.OrderResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get orders by status
+      tags:
+      - Order
+  /payments:
+    get:
+      description: Get all payments
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.PaymentResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all payments
+      tags:
+      - Payment
+    post:
+      consumes:
+      - application/json
+      description: Create a new payment with the provided details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Payment Data
+        in: body
+        name: payment
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreatePaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.PaymentResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new payment
+      tags:
+      - Payment
+  /payments/{id}:
+    delete:
+      description: Delete an existing payment
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Payment not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a payment
+      tags:
+      - Payment
+    get:
+      description: Get payment details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PaymentResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Payment not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a payment by ID
+      tags:
+      - Payment
+    put:
+      consumes:
+      - application/json
+      description: Update an existing payment with new details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Payment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Payment Data
+        in: body
+        name: payment
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdatePaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PaymentResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Payment not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a payment
+      tags:
+      - Payment
+  /payments/by-order:
+    get:
+      description: Get all payments for a specific order
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Order ID
+        in: query
+        name: order_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.PaymentResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get payments by order ID
+      tags:
+      - Payment
+  /payments/by-status:
+    get:
+      description: Get all payments with a specific status
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Payment Status
+        in: query
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.PaymentResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get payments by status
+      tags:
+      - Payment
   /permissions:
     get:
       description: Get all permissions
@@ -3430,6 +4757,60 @@ paths:
       summary: Update a region
       tags:
       - Region
+  /regions/{id}/zones:
+    post:
+      consumes:
+      - application/json
+      description: Assign zones to a specific region
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Region ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Zone IDs to assign
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AssignZonesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.RegionResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Region not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Assign zones to a region
+      tags:
+      - Region
   /roles:
     get:
       description: Get a list of all roles with their permissions and menus
@@ -3818,6 +5199,409 @@ paths:
       summary: Assign permissions to a role
       tags:
       - Permission
+  /tasks:
+    get:
+      description: Get all tasks
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.TaskResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all tasks
+      tags:
+      - Task
+    post:
+      consumes:
+      - application/json
+      description: Create a new task with the provided details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Task Data
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.TaskResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new task
+      tags:
+      - Task
+  /tasks/{id}:
+    delete:
+      description: Delete an existing task
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a task
+      tags:
+      - Task
+    get:
+      description: Get task details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.TaskResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a task by ID
+      tags:
+      - Task
+    put:
+      consumes:
+      - application/json
+      description: Update an existing task with new details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Task Data
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.TaskResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a task
+      tags:
+      - Task
+  /tasks/by-employee:
+    get:
+      description: Get all tasks assigned to an employee
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Employee ID
+        in: query
+        name: employee_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.TaskResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get tasks by employee ID
+      tags:
+      - Task
+  /tasks/by-order-item:
+    get:
+      description: Get all tasks for a specific order item
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Order Item ID
+        in: query
+        name: order_item_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.TaskResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get tasks by order item ID
+      tags:
+      - Task
+  /tasks/by-status:
+    get:
+      description: Get all tasks with a specific status
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Task Status
+        in: query
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.TaskResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get tasks by status
+      tags:
+      - Task
+  /tasks/by-type:
+    get:
+      description: Get all tasks of a specific type
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Task Type
+        in: query
+        name: task_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.TaskResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get tasks by task type
+      tags:
+      - Task
   /users:
     get:
       description: Get a list of all users
@@ -4270,6 +6054,113 @@ paths:
       security:
       - BearerAuth: []
       summary: Update a zone
+      tags:
+      - Zone
+  /zones/{id}/offices:
+    delete:
+      consumes:
+      - application/json
+      description: Remove offices from an existing zone
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Zone ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Office IDs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AssignOfficesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Zone not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove offices from a zone
+      tags:
+      - Zone
+    post:
+      consumes:
+      - application/json
+      description: Assign offices to an existing zone
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Zone ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Office IDs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AssignOfficesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ZoneResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Zone not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Assign offices to a zone
       tags:
       - Zone
   /zones/by-region:
