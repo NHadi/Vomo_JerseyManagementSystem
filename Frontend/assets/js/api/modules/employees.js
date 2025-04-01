@@ -22,6 +22,7 @@ export const employeeAPI = {
 
     async createEmployee(employeeData) {
         try {
+            console.log(employeeData, "teasd");
             const response = await fetch(`${config.baseUrl}/employees`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
@@ -29,8 +30,7 @@ export const employeeAPI = {
                     name: employeeData.name,
                     email: employeeData.email,
                     phone: employeeData.phone,
-                    division_id: employeeData.division_id,
-                    tenant_id: employeeData.tenant_id
+                    DivisionID: employeeData.DivisionID
                 })
             });
 
@@ -55,8 +55,7 @@ export const employeeAPI = {
                     name: employeeData.name,
                     email: employeeData.email,
                     phone: employeeData.phone,
-                    division_id: employeeData.division_id,
-                    tenant_id: employeeData.tenant_id
+                    DivisionID: employeeData.DivisionID
                 })
             });
 

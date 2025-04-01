@@ -13,11 +13,23 @@ window.EmployeePage = class {
         
         // Initialize components
         if (typeof DevExpress !== 'undefined') {
-            this.initialize();
+            this.initializeAsync();
         }
         
         // Bind event handlers
         this.bindEvents();
+    }
+
+    async initializeAsync() {
+        try {
+            // Load divisions first
+            await this.loadDivisionsData();
+            // Then initialize the grid
+            this.initialize();
+        } catch (error) {
+            console.error('Error during initialization:', error);
+            DevExpress.ui.notify('Failed to initialize application', 'error', 3000);
+        }
     }
 
     dispose() {
@@ -72,6 +84,16 @@ window.EmployeePage = class {
         if (this.grid) {
             this.grid.dispose();
         }
+
+        // Log the available divisions
+        console.log('Available divisions during grid initialization:', this.allDivisions);
+
+        // Create a lookup data source for divisions
+        const divisionLookup = {
+            dataSource: this.allDivisions,
+            displayExpr: 'name',
+            valueExpr: 'id'
+        };
 
         this.grid = $('#employeeGrid').dxDataGrid({
             dataSource: {
@@ -184,20 +206,8 @@ window.EmployeePage = class {
                     alignment: 'center',
                     cellTemplate: (container, options) => {
                         const $buttonContainer = $('<div>')
-                            .addClass('d-flex justify-content-end align-items-center');
+                            .addClass('');
 
-                        // Assign Division Button
-                        $('<button>')
-                            .addClass('btn btn-icon-only btn-sm btn-primary mr-2')
-                            .attr({
-                                'title': 'Assign Division',
-                                'data-toggle': 'modal',
-                                'data-target': '#divisionModal',
-                                'data-employee-id': options.row.data.id,
-                                'data-employee-name': options.row.data.name
-                            })
-                            .append($('<i>').addClass('ni ni-building'))
-                            .appendTo($buttonContainer);
 
                         // Edit Button
                         $('<button>')
@@ -251,7 +261,7 @@ window.EmployeePage = class {
                 useIcons: true,
                 texts: {
                     confirmDeleteMessage: 'Are you sure you want to delete this employee?',
-                    saveRowChanges: 'Save Changes',
+                    saveRowChanges: 'Save',
                     cancelRowChanges: 'Cancel',
                     deleteRow: 'Delete',
                     editRow: 'Edit',
@@ -264,98 +274,110 @@ window.EmployeePage = class {
                     height: 'auto',
                     position: { my: 'center', at: 'center', of: window },
                     showCloseButton: true,
-                    toolbarItems: [{
-                        toolbar: 'bottom',
-                        location: 'after',
-                        widget: 'dxButton',
-                        options: {
-                            text: 'Save',
-                            type: 'success',
-                            stylingMode: 'contained',
-                            onClick: () => {
-                                this.grid.saveEditData();
+                    onHidden: () => {
+                        // Only reset form data if we're not in the middle of an add operation
+                        const changes = this.grid.option('editing.changes') || [];
+                        const isAdding = changes.some(c => c.type === 'insert');
+                        
+                        if (!isAdding) {
+                            const form = $('.dx-popup-content .dx-form').dxForm('instance');
+                            if (form) {
+                                form.resetValues();
                             }
                         }
-                    }, {
-                        toolbar: 'bottom',
-                        location: 'after',
-                        widget: 'dxButton',
-                        options: {
-                            text: 'Cancel',
-                            stylingMode: 'outlined',
-                            onClick: () => {
-                                this.grid.cancelEditData();
-                            }
-                        }
-                    }]
+                    }
                 },
                 form: {
                     labelLocation: 'top',
-                    colCount: 1,
+                    showColonAfterLabel: false,
+                    colCount: 2,
                     items: [
                         {
                             itemType: 'group',
                             caption: 'Basic Information',
-                            colCount: 2,
+                            colSpan: 1,
+                            cssClass: 'form-section',
                             items: [
                                 {
                                     dataField: 'name',
                                     label: { text: 'Full Name' },
-                                    validationRules: [{ type: 'required', message: 'Full name is required' }],
                                     editorOptions: {
-                                        placeholder: 'Enter employee full name',
-                                        mode: 'text',
                                         stylingMode: 'filled',
-                                        showClearButton: true,
-                                        valueChangeEvent: 'keyup change'
-                                    }
+                                        placeholder: 'Enter employee full name'
+                                    },
+                                    validationRules: [{ type: 'required', message: 'Full name is required' }]
                                 },
                                 {
                                     dataField: 'email',
                                     label: { text: 'Email Address' },
+                                    editorOptions: {
+                                        stylingMode: 'filled',
+                                        placeholder: 'Enter work email address'
+                                    },
                                     validationRules: [
                                         { type: 'required', message: 'Email address is required' },
                                         { type: 'email', message: 'Please enter a valid email address' }
-                                    ],
-                                    editorOptions: {
-                                        placeholder: 'Enter work email address',
-                                        mode: 'email',
-                                        stylingMode: 'filled',
-                                        showClearButton: true,
-                                        valueChangeEvent: 'keyup change'
-                                    }
+                                    ]
                                 }
                             ]
                         },
                         {
                             itemType: 'group',
                             caption: 'Contact Details',
-                            colCount: 2,
+                            colSpan: 1,
+                            cssClass: 'form-section',
                             items: [
                                 {
                                     dataField: 'phone',
                                     label: { text: 'Phone Number' },
-                                    validationRules: [
-                                        { type: 'required', message: 'Phone number is required' },
-                                        { 
-                                            type: 'pattern',
-                                            pattern: /^\+1 \(\d{3}\) \d{3}-\d{4}$/,
-                                            message: 'Please enter a valid phone number'
-                                        }
-                                    ],
                                     editorOptions: {
+                                        stylingMode: 'filled',
                                         placeholder: 'Enter phone number',
                                         mask: '+1 (000) 000-0000',
                                         maskRules: {"0": /[0-9]/},
-                                        maskInvalidMessage: 'Please enter a valid phone number',
-                                        stylingMode: 'filled',
-                                        showClearButton: true,
-                                        valueChangeEvent: 'keyup change'
-                                    }
+                                        maskInvalidMessage: 'Please enter a valid phone number'
+                                    },
+                                    validationRules: [{ type: 'required', message: 'Phone number is required' }]
+                                },
+                                {
+                                    dataField: 'division_id',
+                                    label: { text: 'Division' },
+                                    editorType: 'dxSelectBox',
+                                    editorOptions: {
+                                        dataSource: this.allDivisions,
+                                        displayExpr: 'name',
+                                        valueExpr: 'id',
+                                        placeholder: 'Select a division',
+                                        searchEnabled: true,
+                                        onValueChanged: (e) => {
+                                            if (e.value) {
+                                                const selectedDivision = this.allDivisions.find(d => d.id === e.value);
+                                                if (selectedDivision) {
+                                                    const form = $('.dx-popup-content .dx-form').dxForm('instance');
+                                                    if (form) {
+                                                        form.updateData('division', selectedDivision);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    validationRules: [{ type: 'required', message: 'Division is required' }]
                                 }
                             ]
                         }
                     ]
+                },
+                startEditAction: 'click',
+                refreshMode: 'reshape',
+                onInitNewRow: (e) => {
+                    console.log('Initializing new row');
+                    // Initialize default values for new row
+                    e.data = {
+                        name: '',
+                        email: '',
+                        phone: '',
+                        division_id: null
+                    };
                 }
             },
             toolbar: {
@@ -380,14 +402,194 @@ window.EmployeePage = class {
                     this.exportButtonsAdded = true;
                 }
             },
-            onInitialized: () => {
-                if (this.grid) {
-                    this.loadData();
+            onInitialized: (e) => {
+                this.grid = e.component;
+                console.log('Grid initialized');
+                this.loadData();
+            },
+            onEditingStart: (e) => {
+                console.log('Edit starting for row:', e.key);
+                console.log('Row data:', e.data);
+                
+                // Wait for the popup to be shown and form to be created
+                setTimeout(() => {
+                    // Get the form instance
+                    const form = $('.dx-popup-content .dx-form').dxForm('instance');
+                    if (!form) {
+                        console.error('Form instance not found');
+                        return;
+                    }
+
+                    // Get the division SelectBox instance
+                    const divisionEditor = form.getEditor('division_id');
+                    if (!divisionEditor) {
+                        console.error('Division editor not found');
+                        return;
+                    }
+
+                    // Initialize form data
+                    const formData = { ...e.data };
+                    console.log('Original data when editing starts:', formData);
+
+                    // Set division value
+                    if (formData.division_id) {
+                        divisionEditor.option('value', parseInt(formData.division_id));
+                    } else if (formData.division?.id) {
+                        divisionEditor.option('value', parseInt(formData.division.id));
+                    }
+
+                    // Set the form data
+                    form.option('formData', formData);
+
+                    // Update each field individually
+                    Object.entries(formData).forEach(([key, value]) => {
+                        if (value !== undefined) {
+                            form.updateData(key, value);
+                        }
+                    });
+
+                    // Force form to update UI
+                    form.repaint();
+
+                    console.log('Final form data after initialization:', form.option('formData'));
+                }, 100);
+            },
+            onRowUpdating: (e) => {
+                console.log('Row updating:', e);
+                
+                // Get the form instance
+                const $form = $('.dx-popup-content .dx-form');
+                const form = $form.length ? $form.dxForm('instance') : null;
+                
+                if (!form) {
+                    console.error('Form instance not found');
+                    return;
                 }
+
+                // Get all form data
+                const formData = form.option('formData') || {};
+                console.log('Form data before processing:', formData);
+
+                // Get the grid's editing data
+                const gridData = e.newData || {};
+                console.log('Grid data:', gridData);
+
+                // Merge form data with grid data, giving priority to form data
+                const cleanData = { ...e.oldData, ...gridData, ...formData };
+                console.log('Merged data:', cleanData);
+
+                // Handle division_id and division object
+                if (cleanData.division_id) {
+                    cleanData.division_id = parseInt(cleanData.division_id);
+                    const division = this.allDivisions.find(d => d.id === cleanData.division_id);
+                    if (division) {
+                        cleanData.division = division;
+                    }
+                } else if (cleanData.division?.id) {
+                    cleanData.division_id = parseInt(cleanData.division.id);
+                }
+
+                // Update the newData with the merged data
+                e.newData = cleanData;
             },
             onRowInserting: (e) => this.handleRowInserting(e),
-            onRowUpdating: (e) => this.handleRowUpdating(e),
-            onRowRemoving: (e) => this.handleRowRemoving(e)
+            onRowRemoving: (e) => this.handleRowRemoving(e),
+            onSaved: (e) => {
+                console.log('Save operation completed:', e);
+            },
+            onSaving: (e) => {
+                console.log('Saving event triggered:', e);
+                
+                const changes = e.changes || [];
+                console.log('Current changes:', changes);
+                
+                if (!changes.length) {
+                    console.log('No changes detected');
+                    return;
+                }
+
+                e.cancel = true;
+                e.promise = (async () => {
+                    try {
+                        const change = changes[0];
+
+                        // Handle deletion
+                        if (change.type === 'remove') {
+                            console.log('Deleting employee:', change.key);
+                            await vomoAPI.deleteEmployee(change.key);
+                            await this.loadData();
+                            DevExpress.ui.notify('Employee deleted successfully', 'success', 3000);
+                            return;
+                        }
+
+                        // Get form instance and data
+                        const form = $('.dx-popup-content .dx-form').dxForm('instance');
+                        if (!form) {
+                            throw new Error('Form instance not found');
+                        }
+
+                        // Get form data from both the form and changes
+                        const formData = form.option('formData') || {};
+                        const changeData = change.data || {};
+                        
+                        // Merge the data, prioritizing change data
+                        const mergedData = {
+                            ...formData,
+                            ...changeData
+                        };
+
+                        console.log('Merged form data:', mergedData);
+
+                        // Prepare API data with safe value handling
+                        const apiData = {
+                            name: mergedData.name || '',
+                            email: mergedData.email || '',
+                            phone: mergedData.phone || '',
+                            DivisionID: parseInt(mergedData.division_id || 0)
+                        };
+
+                        // Validate the data
+                        if (!apiData.name.trim()) {
+                            throw new Error('Employee name is required');
+                        }
+                        if (!apiData.email.trim()) {
+                            throw new Error('Email is required');
+                        }
+                        if (!apiData.phone) {
+                            throw new Error('Phone number is required');
+                        }
+                        if (!apiData.DivisionID) {
+                            throw new Error('Division is required');
+                        }
+
+                        // Clean up the data
+                        apiData.phone = apiData.phone.replace(/[^\d]/g, '');
+
+                        console.log('Sending to API:', apiData);
+
+                        // Create or update
+                        if (change.type === 'insert') {
+                            const result = await vomoAPI.createEmployee(apiData);
+                            if (!result?.id) {
+                                throw new Error('Failed to create employee - no ID returned');
+                            }
+                            DevExpress.ui.notify('Employee created successfully', 'success', 3000);
+                        } else if (change.type === 'update') {
+                            await vomoAPI.updateEmployee(change.key, apiData);
+                            DevExpress.ui.notify('Employee updated successfully', 'success', 3000);
+                        }
+
+                        // Close popup and refresh
+                        this.grid.option('editing.popup.visible', false);
+                        await this.loadData();
+
+                    } catch (error) {
+                        console.error('Error in saving:', error);
+                        DevExpress.ui.notify(error.message || 'Failed to save employee', 'error', 3000);
+                        throw error;
+                    }
+                })();
+            }
         }).dxDataGrid('instance');
 
         // Initial data load
@@ -554,33 +756,87 @@ window.EmployeePage = class {
 
     async handleRowInserting(e) {
         try {
-            const result = await vomoAPI.createEmployee(e.data);
-            e.data.id = result.id;
-            gridUtils.showSuccess('Employee created successfully');
-        } catch (error) {
-            gridUtils.handleGridError(error, 'creating employee');
-            e.cancel = true;
-        }
-    }
+            // Get the form instance
+            const $form = $('.dx-popup-content .dx-form');
+            const form = $form.length ? $form.dxForm('instance') : null;
+            
+            if (!form) {
+                throw new Error('Form instance not found');
+            }
 
-    async handleRowUpdating(e) {
-        try {
-            await vomoAPI.updateEmployee(e.key.id, {...e.oldData, ...e.newData});
-            gridUtils.showSuccess('Employee updated successfully');
+            // Get all form data
+            const formData = form.option('formData') || {};
+            console.log('Form data before processing:', formData);
+
+            // Get the grid's editing data
+            const gridData = e.data || {};
+            console.log('Grid data:', gridData);
+
+            // Merge form data with grid data, giving priority to form data
+            const cleanData = { ...gridData, ...formData };
+            console.log('Merged data:', cleanData);
+
+            // Remove any temporary fields
+            delete cleanData.__KEY__;
+
+            // Validate required fields
+            const requiredFields = {
+                name: { value: cleanData.name, message: 'Employee name is required' },
+                email: { value: cleanData.email, message: 'Email is required' },
+                phone: { value: cleanData.phone, message: 'Phone number is required' },
+                division_id: { value: cleanData.division_id, message: 'Division is required' }
+            };
+
+            // Check each required field
+            for (const [field, { value, message }] of Object.entries(requiredFields)) {
+                if (!value && value !== 0) {
+                    console.error(`Missing required field: ${field}`, cleanData);
+                    throw new Error(message);
+                }
+            }
+
+            // Format phone number - remove non-digits
+            cleanData.phone = cleanData.phone.replace(/[^\d]/g, '');
+
+            // Ensure division_id is properly set
+            if (!cleanData.division_id && cleanData.division?.id) {
+                cleanData.division_id = cleanData.division.id;
+            }
+
+            // Prepare API data with correct field names
+            const apiData = {
+                name: cleanData.name,
+                email: cleanData.email,
+                phone: cleanData.phone,
+                DivisionID: parseInt(cleanData.division_id) // Ensure division_id is included and converted to integer
+            };
+
+            console.log('Final data being sent to API:', apiData);
+
+            // Create the employee
+            const result = await vomoAPI.createEmployee(apiData);
+            
+            if (!result || !result.id) {
+                throw new Error('Failed to create employee - no ID returned');
+            }
+
+            // Update the data with the new ID and division info
+            e.data.id = result.id;
+            e.data.division = cleanData.division;
+
+            DevExpress.ui.notify('Employee created successfully', 'success', 3000);
         } catch (error) {
-            gridUtils.handleGridError(error, 'updating employee');
+            console.error('Error creating employee:', error);
             e.cancel = true;
+            DevExpress.ui.notify(error.message || 'Failed to create employee', 'error', 3000);
         }
     }
 
     async handleRowRemoving(e) {
-        try {
-            await vomoAPI.deleteEmployee(e.key.id);
-            gridUtils.showSuccess('Employee deleted successfully');
-        } catch (error) {
-            gridUtils.handleGridError(error, 'deleting employee');
-            e.cancel = true;
-        }
+        console.log('Row removing:', e);
+        // Clear any existing changes before deletion
+        this.grid.option('editing.changes', []);
+        this.grid.state({});
     }
 
     editEmployee(employee) {
@@ -600,6 +856,63 @@ window.EmployeePage = class {
                     }
                 });
         }
+    }
+
+    async loadDivisionsData() {
+        try {
+            console.log('Loading divisions...');
+            const divisions = await vomoAPI.getDivisions();
+            if (Array.isArray(divisions) && divisions.length > 0) {
+                this.allDivisions = divisions;
+                console.log('Successfully loaded divisions:', this.allDivisions);
+            } else {
+                console.warn('No divisions returned from API');
+                this.allDivisions = [];
+            }
+        } catch (error) {
+            console.error('Error loading divisions:', error);
+            DevExpress.ui.notify('Failed to load divisions', 'error', 3000);
+            this.allDivisions = [];
+        }
+    }
+
+    handleFieldChange(fieldName, value) {
+        console.log(`Field changed: ${fieldName}`, value);
+        
+        // Get the grid instance
+        const grid = this.grid;
+        if (!grid) {
+            console.error('Grid instance not found');
+            return;
+        }
+
+        // Get current editing row key
+        const editRowKey = grid.option('editing.editRowKey');
+        
+        // Get current changes
+        let changes = grid.option('editing.changes') || [];
+        
+        // Find existing change for this row
+        let currentChange = changes.find(c => c.key === editRowKey);
+        
+        // If no change exists for this row, create one
+        if (!currentChange) {
+            currentChange = {
+                type: editRowKey ? 'update' : 'insert',
+                key: editRowKey,
+                data: {}
+            };
+            changes.push(currentChange);
+        }
+        
+        // Update the change data
+        currentChange.data = {
+            ...currentChange.data,
+            [fieldName]: value
+        };
+        
+        console.log('Setting grid changes:', changes);
+        grid.option('editing.changes', changes);
     }
 };
 

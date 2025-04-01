@@ -95,7 +95,13 @@ window.RegionPage = class {
                                 $('<i>').addClass('ni ni-map-big mr-2 text-primary')
                             )
                             .append(
-                                $('<span>').text(options.data.name || '')
+                                $('<div>').addClass('d-flex flex-column')
+                                    .append(
+                                        $('<span>').addClass('font-weight-bold').text(options.data.name || '')
+                                    )
+                                    .append(
+                                        $('<small>').addClass('text-muted').text(options.data.description || 'No description')
+                                    )
                             )
                             .appendTo(container);
                     }
@@ -104,52 +110,55 @@ window.RegionPage = class {
                     dataField: 'description',
                     caption: 'Description',
                     validationRules: [{ type: 'required' }],
-                    cellTemplate: (container, options) => {
-                        $('<div>')
-                            .addClass('text-muted small')
-                            .text(options.data.description || 'No description provided')
-                            .appendTo(container);
-                    }
-                },             
+                    visible: false
+                },
                 {
                     dataField: 'zones',
                     caption: 'Zones',
+                    width: 300,
                     allowFiltering: false,
                     allowSorting: false,
                     cellTemplate: (container, options) => {
-                        const $container = $('<div>').addClass('zone-container');
+                        const $container = $('<div>').addClass('zone-container d-flex align-items-center');
                         
                         if (options.data.zones?.length) {
-                            options.data.zones.forEach(zone => {
-                                $('<span>')
-                                    .addClass('zone-badge')
-                                    .append(
-                                        $('<i>').addClass('fas fa-map-marker-alt')
-                                    )
-                                    .append(
-                                        $('<span>').text(' ' + zone.name)
-                                    )
-                                    .appendTo($container);
-                            });
-                        } else {
                             $('<div>')
-                                .addClass('text-muted small')
+                                .addClass('d-flex align-items-center')
                                 .append(
-                                    $('<i>').addClass('fas fa-info-circle mr-1')
+                                    $('<i>').addClass('fas fa-map-marker-alt mr-2 text-danger')
                                 )
                                 .append(
-                                    $('<span>').text('No zones assigned')
+                                    $('<div>').addClass('d-flex flex-column')
+                                        .append(
+                                            $('<span>').addClass('font-weight-bold small').text(`${options.data.zones.length} zones`)
+                                        )
+                                        .append(
+                                            $('<small>').addClass('text-muted')
+                                                .text(options.data.zones.map(z => z.name).join(', '))
+                                        )
+                                )
+                                .appendTo($container);
+                        } else {
+                            $('<div>')
+                                .addClass('d-flex align-items-center text-muted')
+                                .append(
+                                    $('<i>').addClass('fas fa-map mr-2')
+                                )
+                                .append(
+                                    $('<span>').addClass('small font-italic').text('No zones assigned')
                                 )
                                 .appendTo($container);
                         }
                         
-                        $container.appendTo(container);
+                        container.append($container);
                     }
                 },
                 {
                     type: 'buttons',
                     width: 140,
-                    alignment: 'center',
+                    alignment: 'right',
+                    fixed: true,
+                    fixedPosition: 'right',
                     cellTemplate: (container, options) => {
                         const $buttonContainer = $('<div>')
                             .addClass('d-flex justify-content-end align-items-center');
@@ -161,8 +170,8 @@ window.RegionPage = class {
                                 'title': 'Manage Zones',
                                 'data-toggle': 'modal',
                                 'data-target': '#zoneModal',
-                                'data-region-id': options.data.id,
-                                'data-region-name': options.data.name
+                                'data-region-id': options.row.data.id,
+                                'data-region-name': options.row.data.name
                             })
                             .append($('<i>').addClass('fas fa-map-marked-alt'))
                             .appendTo($buttonContainer);

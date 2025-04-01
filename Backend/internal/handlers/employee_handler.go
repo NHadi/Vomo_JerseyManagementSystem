@@ -39,7 +39,7 @@ type CreateEmployeeRequest struct {
 	Name       string `json:"name" binding:"required" example:"Alice Johnson"`
 	Email      string `json:"email" binding:"required,email" example:"alice.johnson@email.com"`
 	Phone      string `json:"phone" example:"123-456-7890"`
-	DivisionID int    `json:"division_id" binding:"required" example:"1"`
+	DivisionID int    `json:"DivisionID" binding:"required" example:"1"`
 }
 
 // UpdateEmployeeRequest represents the request structure for updating an employee
@@ -48,7 +48,7 @@ type UpdateEmployeeRequest struct {
 	Name       string `json:"name" binding:"required" example:"Alice Johnson"`
 	Email      string `json:"email" binding:"required,email" example:"alice.johnson@email.com"`
 	Phone      string `json:"phone" example:"123-456-7890"`
-	DivisionID int    `json:"division_id" binding:"required" example:"1"`
+	DivisionID int    `json:"DivisionID" binding:"required" example:"1"`
 }
 
 func toEmployeeResponse(e *employee.Employee, d *division.Division) EmployeeResponse {
