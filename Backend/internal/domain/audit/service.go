@@ -10,15 +10,15 @@ import (
 
 // AuditableValues represents the structure we want to store in audit trail
 type AuditableValues struct {
-	ID        int       `json:"id,omitempty"`
-	Name      string    `json:"name,omitempty"`
-	URL       string    `json:"url,omitempty"`
-	Icon      string    `json:"icon,omitempty"`
-	ParentID  *int      `json:"parent_id,omitempty"`
-	Sort      int       `json:"sort,omitempty"`
-	TenantID  int       `json:"tenant_id,omitempty"`
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	CreatedBy string    `json:"created_by,omitempty"`
+	ID        interface{} `json:"id,omitempty"`
+	Name      string      `json:"name,omitempty"`
+	URL       string      `json:"url,omitempty"`
+	Icon      string      `json:"icon,omitempty"`
+	ParentID  *int        `json:"parent_id,omitempty"`
+	Sort      int         `json:"sort,omitempty"`
+	TenantID  int         `json:"tenant_id,omitempty"`
+	CreatedAt time.Time   `json:"created_at,omitempty"`
+	CreatedBy string      `json:"created_by,omitempty"`
 }
 
 type Service struct {

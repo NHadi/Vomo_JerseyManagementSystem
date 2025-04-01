@@ -101,6 +101,11 @@ window.UserPage = class {
                     }
                 },
                 {
+                    dataField: 'password',
+                    visible: false,
+                    allowEditing: true
+                },
+                {
                     type: 'buttons',
                     width: 140,
                     alignment: 'right',
@@ -121,20 +126,29 @@ window.UserPage = class {
                             .appendTo($buttonContainer);
 
                         // Delete Button
-                        $('<button>')
+                        const deleteButton = $('<button>')
                             .addClass('btn btn-icon-only btn-sm btn-danger')
                             .attr('title', 'Delete User')
-                            .append($('<i>').addClass('fas fa-trash'))
-                            .on('click', () => {
+                            .append($('<i>').addClass('fas fa-trash'));
+
+                        // Check if this is the current user
+                        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                        if (currentUser.id === options.data.id) {
+                            deleteButton.prop('disabled', true)
+                                .addClass('disabled')
+                                .attr('title', 'Cannot delete your own account');
+                        } else {
+                            deleteButton.on('click', () => {
                                 DevExpress.ui.dialog.confirm("Are you sure you want to delete this user?", "Confirm deletion")
                                     .then((result) => {
                                         if (result) {
                                             this.grid.deleteRow(options.rowIndex);
                                         }
                                     });
-                            })
-                            .appendTo($buttonContainer);
+                            });
+                        }
 
+                        deleteButton.appendTo($buttonContainer);
                         container.append($buttonContainer);
                     }
                 }
@@ -227,6 +241,7 @@ window.UserPage = class {
                             items: [
                                 {
                                     dataField: 'password',
+                                    isRequired: true,
                                     label: {
                                         text: 'Password'
                                     },
@@ -238,7 +253,11 @@ window.UserPage = class {
                                         inputAttr: {
                                             'aria-label': 'Password'
                                         }
-                                    }
+                                    },
+                                    validationRules: [{ 
+                                        type: 'required',
+                                        message: 'Password is required'
+                                    }]
                                 },
                                 {
                                     dataField: 'role_id',
@@ -326,6 +345,10 @@ window.UserPage = class {
 
     async handleRowInserting(e) {
         try {
+            // Ensure password is included in the data
+            if (!e.data.password) {
+                throw new Error('Password is required');
+            }
             const result = await vomoAPI.createUser(e.data);
             e.data.id = result.id;
             gridUtils.showSuccess('User created successfully');
@@ -351,6 +374,11 @@ window.UserPage = class {
 
     async handleRowRemoving(e) {
         try {
+            // Check if trying to delete own account
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            if (currentUser.id === e.key.id) {
+                throw new Error('You cannot delete your own account while logged in');
+            }
             await vomoAPI.deleteUser(e.key.id);
             gridUtils.showSuccess('User deleted successfully');
         } catch (error) {
