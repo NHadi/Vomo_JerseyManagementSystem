@@ -1,5 +1,6 @@
 import { vomoAPI } from '../api/index.js';
 import { gridUtils } from '../utils/gridUtils.js';
+import { getBaseUrl } from '../api/config.js';
 
 window.OrderPage = class {
     constructor() {
@@ -14,6 +15,15 @@ window.OrderPage = class {
         
         // Bind event handlers
         this.bindEvents();
+
+                // Add styles
+                $('<style>')
+                .text(`
+                    
+    
+                  
+                `)
+                .appendTo('head');
     }
 
     dispose() {
@@ -31,6 +41,8 @@ window.OrderPage = class {
             this.orderItemsGrid = null;
         }
     }
+
+    
 
     bindEvents() {
         // Modal show event
@@ -357,17 +369,32 @@ window.OrderPage = class {
                                 cellTemplate: function(container, itemOptions) {
                                     const item = itemOptions.data;
                                     const customization = item.customization || {};
-                                    
+                                    const productDetail = item.product_detail || {};
+                                    const imageUrl = item.main_photo;
+                                    const fullImageUrl = imageUrl.startsWith('http') || imageUrl.startsWith(getBaseUrl())
+                                        ? imageUrl
+                                        : `${getBaseUrl()}${imageUrl}`;
+        
                                     $('<div>')
                                         .addClass('d-flex align-items-center')
                                         .append(
                                             $('<div>')
                                                 .addClass('item-image mr-3')
-                                                .append($('<i>').addClass('fas fa-tshirt fa-2x text-primary'))
-                                        )
+                                                .append(
+                                                    $('<img>')
+                                                        .attr('src', fullImageUrl)
+                                                        .attr('alt', options.data.name)
+                                                        .addClass('img-fluid rounded')
+                                                    )
+                                                )
                                         .append(
                                             $('<div>')
                                                 .addClass('item-details')
+                                                .append(
+                                                    $('<div>')
+                                                        .addClass('font-weight-bold mb-1')
+                                                        .text(`${productDetail.name}`)
+                                                )
                                                 .append(
                                                     $('<div>')
                                                         .addClass('font-weight-bold mb-1')
@@ -658,20 +685,35 @@ window.OrderPage = class {
                 {
                     dataField: 'customization',
                     caption: 'Jersey Details',
-                    cellTemplate: (container, options) => {
+                    cellTemplate: function(container, options) {
                         const item = options.data;
                         const customization = item.customization || {};
-                        
+                        const productDetail = item.product_detail || {};
+                        const imageUrl = item.main_photo;
+                        const fullImageUrl = imageUrl.startsWith('http') || imageUrl.startsWith(getBaseUrl())
+                            ? imageUrl
+                            : `${getBaseUrl()}${imageUrl}`;
+
                         $('<div>')
                             .addClass('d-flex align-items-center')
                             .append(
                                 $('<div>')
                                     .addClass('item-image mr-3')
-                                    .append($('<i>').addClass('fas fa-tshirt fa-2x text-primary'))
-                            )
+                                    .append(
+                                        $('<img>')
+                                            .attr('src', fullImageUrl)
+                                            .attr('alt', options.data.name)
+                                            .addClass('img-fluid rounded')
+                                        )
+                                    )
                             .append(
                                 $('<div>')
                                     .addClass('item-details')
+                                    .append(
+                                        $('<div>')
+                                            .addClass('font-weight-bold mb-1')
+                                            .text(`${productDetail.name}`)
+                                    )
                                     .append(
                                         $('<div>')
                                             .addClass('font-weight-bold mb-1')

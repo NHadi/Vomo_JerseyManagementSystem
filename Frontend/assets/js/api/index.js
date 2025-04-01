@@ -13,6 +13,7 @@ import { permissionAPI } from './modules/permissions.js';
 import { productCategoryAPI } from './modules/product-categories.js';
 import { userAPI } from './modules/users.js';
 import { orderAPI } from './modules/orders.js';
+import { taskAPI } from './modules/tasks.js';
 import { config } from './config.js';
 
 // Initialize the API namespace
@@ -32,6 +33,7 @@ export const vomoAPI = {
     ...productCategoryAPI,
     ...userAPI,
     ...orderAPI,
+    ...taskAPI,
     config
 };
 

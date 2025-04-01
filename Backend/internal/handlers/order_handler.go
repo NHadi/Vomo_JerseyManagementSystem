@@ -10,6 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ProductDetail represents the product details in the order item response
+// @Description Product detail model
+type ProductDetail struct {
+	Name        string `json:"name" example:"Product Name"`
+	Description string `json:"description" example:"Product Description"`
+}
 
 // OrderItemResponse represents the order item response structure
 // @Description Order item response model
@@ -34,6 +40,8 @@ type OrderItemResponse struct {
 	UpdatedAt           string          `json:"updated_at" example:"2024-03-24T21:41:49Z"`
 	UpdatedBy           string          `json:"updated_by" example:"admin"`
 	TenantID            int             `json:"tenant_id" example:"1"`
+	ProductDetail       ProductDetail   `json:"product_detail"`
+	MainPhoto           string          `json:"main_photo"`
 }
 
 // OrderResponse represents the order response structure
@@ -117,6 +125,14 @@ func toOrderItemResponse(item *order.OrderItem) OrderItemResponse {
 		UpdatedAt:           item.UpdatedAt.String(),
 		UpdatedBy:           item.UpdatedBy,
 		TenantID:            item.TenantID,
+		ProductDetail:       ProductDetail{Name: item.Product.Name, Description: item.Product.Description},
+	}
+
+	// Check if the product has images before accessing
+	if len(item.Product.Images) > 0 {
+		response.MainPhoto = item.Product.Images[0].ImageURL
+	} else {
+		response.MainPhoto = "" // or a default image URL
 	}
 
 	// Add tasks if they exist
