@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+
 // OrderItemResponse represents the order item response structure
 // @Description Order item response model
 type OrderItemResponse struct {
@@ -27,6 +28,7 @@ type OrderItemResponse struct {
 	Customization       json.RawMessage `json:"customization"`
 	CurrentTask         string          `json:"current_task" example:"layout"`
 	ProductionStatus    string          `json:"production_status" example:"pending"`
+	Tasks               []TaskResponse  `json:"tasks,omitempty"`
 	CreatedAt           string          `json:"created_at" example:"2024-03-24T21:41:49Z"`
 	CreatedBy           string          `json:"created_by" example:"admin"`
 	UpdatedAt           string          `json:"updated_at" example:"2024-03-24T21:41:49Z"`
@@ -95,7 +97,7 @@ type UpdateOrderRequest struct {
 }
 
 func toOrderItemResponse(item *order.OrderItem) OrderItemResponse {
-	return OrderItemResponse{
+	response := OrderItemResponse{
 		ID:                  item.ID,
 		OrderID:             item.OrderID,
 		ProductID:           item.ProductID,
@@ -116,6 +118,16 @@ func toOrderItemResponse(item *order.OrderItem) OrderItemResponse {
 		UpdatedBy:           item.UpdatedBy,
 		TenantID:            item.TenantID,
 	}
+
+	// Add tasks if they exist
+	if len(item.Tasks) > 0 {
+		response.Tasks = make([]TaskResponse, len(item.Tasks))
+		for i, t := range item.Tasks {
+			response.Tasks[i] = ToTaskResponse(&t)
+		}
+	}
+
+	return response
 }
 
 func toOrderResponse(o *order.Order) OrderResponse {

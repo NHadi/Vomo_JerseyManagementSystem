@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"vomo/internal/domain/common"
+	"vomo/internal/domain/task"
 )
 
 // OrderItem represents the order_items table
@@ -22,6 +23,7 @@ type OrderItem struct {
 	Customization       json.RawMessage `gorm:"type:jsonb;not null;default:'{}'" json:"customization"`
 	CurrentTask         string          `gorm:"type:varchar(20);not null;default:'layout'" json:"current_task"`
 	ProductionStatus    string          `gorm:"type:varchar(20);not null;default:'pending'" json:"production_status"`
+	Tasks               []task.Task     `gorm:"foreignKey:OrderItemID" json:"tasks,omitempty"`
 	common.TenantModel
 }
 

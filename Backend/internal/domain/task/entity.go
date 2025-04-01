@@ -3,19 +3,21 @@ package task
 import (
 	"context"
 	"vomo/internal/domain/common"
+	"vomo/internal/domain/employee"
 )
 
 // Task represents the production_tasks table
 type Task struct {
-	ID             int     `gorm:"primaryKey;autoIncrement:true;column:id" json:"id"`
-	OrderItemID    int     `gorm:"index" json:"order_item_id"`
-	TaskType       string  `gorm:"type:varchar(20);not null" json:"task_type"`
-	SequenceNumber int     `gorm:"not null" json:"sequence_number"`
-	EmployeeID     *int    `gorm:"index" json:"employee_id,omitempty"`
-	Status         string  `gorm:"type:varchar(20);not null;default:'pending'" json:"status"` // pending, in_progress, completed, rejected
-	StartedAt      *string `gorm:"type:timestamp with time zone" json:"started_at,omitempty"`
-	CompletedAt    *string `gorm:"type:timestamp with time zone" json:"completed_at,omitempty"`
-	Notes          string  `gorm:"type:text" json:"notes"`
+	ID             int                `gorm:"primaryKey;autoIncrement:true;column:id" json:"id"`
+	OrderItemID    int                `gorm:"index" json:"order_item_id"`
+	TaskType       string             `gorm:"type:varchar(20);not null" json:"task_type"`
+	SequenceNumber int                `gorm:"not null" json:"sequence_number"`
+	EmployeeID     *int               `gorm:"index" json:"employee_id,omitempty"`
+	Employee       *employee.Employee `gorm:"foreignKey:EmployeeID" json:"employee,omitempty"`
+	Status         string             `gorm:"type:varchar(20);not null;default:'pending'" json:"status"` // pending, in_progress, completed, rejected
+	StartedAt      *string            `gorm:"type:timestamp with time zone" json:"started_at,omitempty"`
+	CompletedAt    *string            `gorm:"type:timestamp with time zone" json:"completed_at,omitempty"`
+	Notes          string             `gorm:"type:text" json:"notes"`
 	common.TenantModel
 }
 

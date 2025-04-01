@@ -32,7 +32,7 @@ func (r *taskRepository) Create(task *task.Task, ctx context.Context) error {
 func (r *taskRepository) FindByID(id int, ctx context.Context) (*task.Task, error) {
 	var task task.Task
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).First(&task).Error
+	err := r.db.WithContext(ctx).Preload("Employee").Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).First(&task).Error
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (r *taskRepository) FindByID(id int, ctx context.Context) (*task.Task, erro
 func (r *taskRepository) FindAll(ctx context.Context) ([]task.Task, error) {
 	var tasks []task.Task
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("tenant_id = ?", userCtx.TenantID).Find(&tasks).Error
+	err := r.db.WithContext(ctx).Preload("Employee").Where("tenant_id = ?", userCtx.TenantID).Find(&tasks).Error
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (r *taskRepository) Delete(id int, ctx context.Context) error {
 func (r *taskRepository) FindByOrderItemID(orderItemID int, ctx context.Context) ([]task.Task, error) {
 	var tasks []task.Task
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("order_item_id = ? AND tenant_id = ?", orderItemID, userCtx.TenantID).Find(&tasks).Error
+	err := r.db.WithContext(ctx).Preload("Employee").Where("order_item_id = ? AND tenant_id = ?", orderItemID, userCtx.TenantID).Find(&tasks).Error
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (r *taskRepository) FindByOrderItemID(orderItemID int, ctx context.Context)
 func (r *taskRepository) FindByEmployeeID(employeeID int, ctx context.Context) ([]task.Task, error) {
 	var tasks []task.Task
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("employee_id = ? AND tenant_id = ?", employeeID, userCtx.TenantID).Find(&tasks).Error
+	err := r.db.WithContext(ctx).Preload("Employee").Where("employee_id = ? AND tenant_id = ?", employeeID, userCtx.TenantID).Find(&tasks).Error
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (r *taskRepository) FindByEmployeeID(employeeID int, ctx context.Context) (
 func (r *taskRepository) FindByStatus(status string, ctx context.Context) ([]task.Task, error) {
 	var tasks []task.Task
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("status = ? AND tenant_id = ?", status, userCtx.TenantID).Find(&tasks).Error
+	err := r.db.WithContext(ctx).Preload("Employee").Where("status = ? AND tenant_id = ?", status, userCtx.TenantID).Find(&tasks).Error
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (r *taskRepository) FindByStatus(status string, ctx context.Context) ([]tas
 func (r *taskRepository) FindByTaskType(taskType string, ctx context.Context) ([]task.Task, error) {
 	var tasks []task.Task
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
-	err := r.db.WithContext(ctx).Where("task_type = ? AND tenant_id = ?", taskType, userCtx.TenantID).Find(&tasks).Error
+	err := r.db.WithContext(ctx).Preload("Employee").Where("task_type = ? AND tenant_id = ?", taskType, userCtx.TenantID).Find(&tasks).Error
 	if err != nil {
 		return nil, err
 	}
