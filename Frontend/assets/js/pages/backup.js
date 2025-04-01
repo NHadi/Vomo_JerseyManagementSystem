@@ -66,7 +66,6 @@ window.BackupPage = class {
                 }
             },
             remoteOperations: false,
-            ...gridUtils.getCommonGridConfig(),
             columns: [
                 {
                     dataField: 'file_name',
@@ -174,9 +173,7 @@ window.BackupPage = class {
                 }
             },
             onInitialized: () => {
-                if (this.grid) {
-                    this.loadData();
-                }
+                this.loadData();
             },
             onRowRemoving: (e) => this.handleRowRemoving(e)
         }).dxDataGrid('instance');
@@ -250,4 +247,4 @@ window.BackupPage = class {
 // Initialize only if DevExtreme is loaded
 if (typeof DevExpress !== 'undefined' && !window.backupPageInstance) {
     window.backupPageInstance = new window.BackupPage();
-} 
+}
