@@ -413,7 +413,6 @@ window.EmployeePage = class {
                 
                 // Wait for the popup to be shown and form to be created
                 setTimeout(() => {
-                    // Get the form instance
                     const form = $('.dx-popup-content .dx-form').dxForm('instance');
                     if (!form) {
                         console.error('Form instance not found');
@@ -440,18 +439,6 @@ window.EmployeePage = class {
 
                     // Set the form data
                     form.option('formData', formData);
-
-                    // Update each field individually
-                    Object.entries(formData).forEach(([key, value]) => {
-                        if (value !== undefined) {
-                            form.updateData(key, value);
-                        }
-                    });
-
-                    // Force form to update UI
-                    form.repaint();
-
-                    console.log('Final form data after initialization:', form.option('formData'));
                 }, 100);
             },
             onRowUpdating: (e) => {
@@ -493,7 +480,7 @@ window.EmployeePage = class {
                 e.newData = cleanData;
             },
             onRowInserting: (e) => this.handleRowInserting(e),
-            onRowRemoving: (e) => this.handleRowRemoving(e),
+            onRowRemoving: null,
             onSaved: (e) => {
                 console.log('Save operation completed:', e);
             },
@@ -515,59 +502,58 @@ window.EmployeePage = class {
 
                         // Handle deletion
                         if (change.type === 'remove') {
-                            console.log('Deleting employee:', change.key);
-                            await vomoAPI.deleteEmployee(change.key);
-                            await this.loadData();
-                            DevExpress.ui.notify('Employee deleted successfully', 'success', 3000);
+                            const confirmed = await DevExpress.ui.dialog.confirm(
+                                "Are you sure you want to delete this employee?",
+                                "Confirm deletion"
+                            );
+                            
+                            if (confirmed) {
+                                await vomoAPI.deleteEmployee(change.key);
+                                DevExpress.ui.notify('Employee deleted successfully', 'success', 3000);
+                                // Clear changes and refresh grid
+                                this.grid.option('editing.changes', []);
+                                await this.loadData();
+                            }
                             return;
                         }
 
-                        // Get form instance and data
                         const form = $('.dx-popup-content .dx-form').dxForm('instance');
+                        
                         if (!form) {
                             throw new Error('Form instance not found');
                         }
 
-                        // Get form data from both the form and changes
+                        // Validate form
+                        const validationResult = form.validate();
+                        if (!validationResult.isValid) {
+                            return;
+                        }
+
+                        // Get form data
                         const formData = form.option('formData') || {};
                         const changeData = change.data || {};
                         
-                        // Merge the data, prioritizing change data
+                        // Merge the data
                         const mergedData = {
                             ...formData,
                             ...changeData
                         };
 
-                        console.log('Merged form data:', mergedData);
-
-                        // Prepare API data with safe value handling
+                        // Prepare API data
                         const apiData = {
-                            name: mergedData.name || '',
-                            email: mergedData.email || '',
-                            phone: mergedData.phone || '',
+                            name: (mergedData.name || '').trim(),
+                            email: (mergedData.email || '').trim(),
+                            phone: (mergedData.phone || '').replace(/[^\d]/g, ''),
                             DivisionID: parseInt(mergedData.division_id || 0)
                         };
 
-                        // Validate the data
-                        if (!apiData.name.trim()) {
-                            throw new Error('Employee name is required');
-                        }
-                        if (!apiData.email.trim()) {
-                            throw new Error('Email is required');
-                        }
-                        if (!apiData.phone) {
-                            throw new Error('Phone number is required');
-                        }
-                        if (!apiData.DivisionID) {
-                            throw new Error('Division is required');
-                        }
+                        // Validate required fields
+                        if (!apiData.name) throw new Error('Employee name is required');
+                        if (!apiData.email) throw new Error('Email is required');
+                        if (!apiData.phone) throw new Error('Phone number is required');
+                        if (!apiData.DivisionID) throw new Error('Division is required');
 
-                        // Clean up the data
-                        apiData.phone = apiData.phone.replace(/[^\d]/g, '');
-
-                        console.log('Sending to API:', apiData);
-
-                        // Create or update
+                        // Perform the operation
                         if (change.type === 'insert') {
                             const result = await vomoAPI.createEmployee(apiData);
                             if (!result?.id) {
@@ -579,8 +565,15 @@ window.EmployeePage = class {
                             DevExpress.ui.notify('Employee updated successfully', 'success', 3000);
                         }
 
-                        // Close popup and refresh
+                        // Close popup
                         this.grid.option('editing.popup.visible', false);
+                        
+                        // Clear form and grid state
+                        form.resetValues();
+                        this.grid.option('editing.changes', []);
+                        this.grid.cancelEditData();
+                        
+                        // Refresh data
                         await this.loadData();
 
                     } catch (error) {
@@ -830,13 +823,6 @@ window.EmployeePage = class {
             e.cancel = true;
             DevExpress.ui.notify(error.message || 'Failed to create employee', 'error', 3000);
         }
-    }
-
-    async handleRowRemoving(e) {
-        console.log('Row removing:', e);
-        // Clear any existing changes before deletion
-        this.grid.option('editing.changes', []);
-        this.grid.state({});
     }
 
     editEmployee(employee) {
