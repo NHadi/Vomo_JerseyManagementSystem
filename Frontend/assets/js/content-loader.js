@@ -136,6 +136,9 @@
                         case 'product':
                             await this.loadProductGrid();
                             break;
+                        case 'product-category':
+                            await this.loadProductCategoryGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -776,6 +779,63 @@
                     } catch (error) {
                         console.error('Failed to load product component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load product component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadProductCategoryGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.productCategoryPageInstance) {
+                window.productCategoryPageInstance.dispose();
+                window.productCategoryPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/product-category.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="product-category"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the product-category.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/product-category.js';
+                        script.setAttribute('data-page', 'product-category');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the product category page instance
+                            if (!window.productCategoryPageInstance) {
+                                window.productCategoryPageInstance = new window.ProductCategoryPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load product category module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load product category component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load product category component</div>');
                         reject(error);
                     }
                 });
