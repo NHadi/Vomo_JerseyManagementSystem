@@ -157,6 +157,9 @@
                         case 'stock-opname':
                             await this.loadStockOpnameGrid();
                             break;
+                        case 'stock-movement':
+                            await this.loadStockMovementGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -1253,6 +1256,63 @@
                     } catch (error) {
                         console.error('Failed to load stock opname component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load stock opname component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadStockMovementGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.stockMovementPageInstance) {
+                window.stockMovementPageInstance.dispose();
+                window.stockMovementPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/stock-movement.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="stock-movement"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the stock-movement.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/stock-movement.js';
+                        script.setAttribute('data-page', 'stock-movement');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the stock movement page instance
+                            if (!window.stockMovementPageInstance) {
+                                window.stockMovementPageInstance = new window.StockMovementPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load stock movement module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load stock movement component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load stock movement component</div>');
                         reject(error);
                     }
                 });

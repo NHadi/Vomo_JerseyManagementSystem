@@ -480,6 +480,29 @@ definitions:
     - opname_date
     - opname_number
     type: object
+  handlers.CreateSupplierRequest:
+    description: Create supplier request model
+    properties:
+      address:
+        example: 123 Supplier St
+        type: string
+      code:
+        example: SUP001
+        type: string
+      email:
+        example: supplier@example.com
+        type: string
+      name:
+        example: Supplier Name
+        type: string
+      phone:
+        example: "+1234567890"
+        type: string
+    required:
+    - code
+    - email
+    - name
+    type: object
   handlers.CreateTaskRequest:
     description: Create task request model
     properties:
@@ -548,26 +571,6 @@ definitions:
         type: integer
     required:
     - name
-    type: object
-  handlers.Customization:
-    description: Customization model
-    properties:
-      name:
-        example: SMITH
-        type: string
-      number:
-        example: "10"
-        type: string
-    type: object
-  handlers.DiscountRule:
-    description: Discount rule model
-    properties:
-      discount_percentage:
-        example: 10
-        type: number
-      quantity_threshold:
-        example: 5
-        type: integer
     type: object
   handlers.DivisionInfo:
     properties:
@@ -848,9 +851,11 @@ definitions:
         type: integer
     type: object
   handlers.OrderItemResponse:
+    description: Order item response model
     properties:
       applied_discount_rule:
-        $ref: '#/definitions/handlers.DiscountRule'
+        example: '{}'
+        type: string
       color:
         example: Red/White
         type: string
@@ -864,23 +869,26 @@ definitions:
         example: layout
         type: string
       customization:
-        $ref: '#/definitions/handlers.Customization'
+        example: '{}'
+        type: string
       discount_amount:
-        example: 24.99
+        example: 10
         type: number
       final_subtotal:
-        example: 224.96
+        example: 89.98
         type: number
       id:
         example: 1
         type: integer
+      main_photo:
+        type: string
       order_id:
         example: 1
         type: integer
       original_subtotal:
-        example: 249.95
+        example: 99.98
         type: number
-      product:
+      product_detail:
         $ref: '#/definitions/handlers.ProductDetail'
       product_id:
         example: 1
@@ -889,11 +897,15 @@ definitions:
         example: pending
         type: string
       quantity:
-        example: 5
+        example: 2
         type: integer
       size:
-        example: L
+        example: M
         type: string
+      tasks:
+        items:
+          $ref: '#/definitions/handlers.TaskResponse'
+        type: array
       tenant_id:
         example: 1
         type: integer
@@ -1384,6 +1396,43 @@ definitions:
         example: Operation completed successfully
         type: string
     type: object
+  handlers.SupplierResponse:
+    description: Supplier response model
+    properties:
+      address:
+        example: 123 Supplier St
+        type: string
+      code:
+        example: SUP001
+        type: string
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      email:
+        example: supplier@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Supplier Name
+        type: string
+      phone:
+        example: "+1234567890"
+        type: string
+      tenant_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
+    type: object
   handlers.TaskResponse:
     description: Task response model
     properties:
@@ -1794,6 +1843,29 @@ definitions:
     required:
     - opname_date
     - status
+    type: object
+  handlers.UpdateSupplierRequest:
+    description: Update supplier request model
+    properties:
+      address:
+        example: 123 Supplier St
+        type: string
+      code:
+        example: SUP001
+        type: string
+      email:
+        example: supplier@example.com
+        type: string
+      name:
+        example: Supplier Name
+        type: string
+      phone:
+        example: "+1234567890"
+        type: string
+    required:
+    - code
+    - email
+    - name
     type: object
   handlers.UpdateTaskRequest:
     description: Update task request model
@@ -6427,6 +6499,233 @@ paths:
       summary: Update stock opname detail
       tags:
       - StockOpname
+  /suppliers:
+    get:
+      description: Get all suppliers
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.SupplierResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all suppliers
+      tags:
+      - Supplier
+    post:
+      consumes:
+      - application/json
+      description: Create a new supplier with the provided details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Supplier Data
+        in: body
+        name: supplier
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateSupplierRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.SupplierResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new supplier
+      tags:
+      - Supplier
+  /suppliers/{id}:
+    delete:
+      description: Delete an existing supplier
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Supplier not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a supplier
+      tags:
+      - Supplier
+    get:
+      description: Get supplier details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SupplierResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Supplier not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a supplier by ID
+      tags:
+      - Supplier
+    put:
+      consumes:
+      - application/json
+      description: Update an existing supplier with new details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Supplier Data
+        in: body
+        name: supplier
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateSupplierRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SupplierResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Supplier not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a supplier
+      tags:
+      - Supplier
   /tasks:
     get:
       description: Get all tasks

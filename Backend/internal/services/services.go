@@ -25,6 +25,7 @@ type TaskService = *application.TaskService
 type ItemService = *application.ItemService
 type StockOpnameService = *application.StockOpnameService
 type StockMovementService = *application.StockMovementService
+type SupplierService = *application.SupplierService
 
 // Services holds all the application services
 type Services struct {
@@ -48,6 +49,7 @@ type Services struct {
 	ItemService            *application.ItemService
 	StockOpnameService     *application.StockOpnameService
 	StockMovementService   *application.StockMovementService
+	SupplierService        *application.SupplierService
 }
 
 func NewServices(db *gorm.DB, cfg *config.Config) *Services {
@@ -72,6 +74,7 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 	itemRepo := postgres.NewItemRepository(db)
 	stockOpnameRepo := postgres.NewStockOpnameRepository(db)
 	stockMovementRepo := postgres.NewStockMovementRepository(db)
+	supplierRepo := postgres.NewSupplierRepository(db)
 
 	// Initialize audit service first as it's needed by other services
 	auditService := audit.NewService(auditRepo)
@@ -96,6 +99,7 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 	itemService := application.NewItemService(itemRepo, auditService)
 	stockOpnameService := application.NewStockOpnameService(stockOpnameRepo, auditService)
 	stockMovementService := application.NewStockMovementService(stockMovementRepo, auditService)
+	supplierService := application.NewSupplierService(supplierRepo, auditService)
 
 	return &Services{
 		MenuService:            menuService,
@@ -118,5 +122,6 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 		ItemService:            itemService,
 		StockOpnameService:     stockOpnameService,
 		StockMovementService:   stockMovementService,
+		SupplierService:        supplierService,
 	}
 }

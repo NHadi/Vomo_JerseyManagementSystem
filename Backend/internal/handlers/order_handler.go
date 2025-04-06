@@ -28,10 +28,10 @@ type OrderItemResponse struct {
 	Color               string          `json:"color" example:"Red/White"`
 	UnitPrice           float64         `json:"unit_price" example:"49.99"`
 	OriginalSubtotal    float64         `json:"original_subtotal" example:"99.98"`
-	AppliedDiscountRule json.RawMessage `json:"applied_discount_rule"`
+	AppliedDiscountRule json.RawMessage `json:"applied_discount_rule" swaggertype:"string" example:"{}"`
 	DiscountAmount      float64         `json:"discount_amount" example:"10.00"`
 	FinalSubtotal       float64         `json:"final_subtotal" example:"89.98"`
-	Customization       json.RawMessage `json:"customization"`
+	Customization       json.RawMessage `json:"customization" swaggertype:"string" example:"{}"`
 	CurrentTask         string          `json:"current_task" example:"layout"`
 	ProductionStatus    string          `json:"production_status" example:"pending"`
 	Tasks               []TaskResponse  `json:"tasks,omitempty"`
