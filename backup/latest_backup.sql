@@ -20,6 +20,10 @@ ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_tenant_i
 ALTER TABLE IF EXISTS ONLY public.task_history DROP CONSTRAINT IF EXISTS task_history_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.task_history DROP CONSTRAINT IF EXISTS task_history_task_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.task_history DROP CONSTRAINT IF EXISTS task_history_employee_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.stock_opname DROP CONSTRAINT IF EXISTS stock_opname_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.stock_opname_detail DROP CONSTRAINT IF EXISTS stock_opname_detail_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.stock_opname_detail DROP CONSTRAINT IF EXISTS stock_opname_detail_stock_opname_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.stock_opname_detail DROP CONSTRAINT IF EXISTS stock_opname_detail_item_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.role_permissions DROP CONSTRAINT IF EXISTS role_permissions_role_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.role_permissions DROP CONSTRAINT IF EXISTS role_permissions_permission_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.role_menus DROP CONSTRAINT IF EXISTS role_menus_role_id_fkey;
@@ -38,6 +42,7 @@ ALTER TABLE IF EXISTS ONLY public.order_items DROP CONSTRAINT IF EXISTS order_it
 ALTER TABLE IF EXISTS ONLY public.master_zone DROP CONSTRAINT IF EXISTS master_zone_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.master_zone DROP CONSTRAINT IF EXISTS master_zone_region_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.master_user_menu DROP CONSTRAINT IF EXISTS master_user_menu_menu_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.master_supplier DROP CONSTRAINT IF EXISTS master_supplier_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.master_role DROP CONSTRAINT IF EXISTS master_role_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.master_region DROP CONSTRAINT IF EXISTS master_region_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.master_product DROP CONSTRAINT IF EXISTS master_product_tenant_id_fkey;
@@ -48,9 +53,12 @@ ALTER TABLE IF EXISTS ONLY public.master_office DROP CONSTRAINT IF EXISTS master
 ALTER TABLE IF EXISTS ONLY public.master_office DROP CONSTRAINT IF EXISTS master_office_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.master_menu DROP CONSTRAINT IF EXISTS master_menu_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.master_menu DROP CONSTRAINT IF EXISTS master_menu_parent_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.master_item DROP CONSTRAINT IF EXISTS master_item_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.master_employee DROP CONSTRAINT IF EXISTS master_employee_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.master_employee DROP CONSTRAINT IF EXISTS master_employee_division_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.master_division DROP CONSTRAINT IF EXISTS master_division_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.item_stock_movement DROP CONSTRAINT IF EXISTS item_stock_movement_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.item_stock_movement DROP CONSTRAINT IF EXISTS item_stock_movement_item_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.backup DROP CONSTRAINT IF EXISTS backup_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.audit_trail DROP CONSTRAINT IF EXISTS audit_trail_tenant_id_fkey;
 DROP INDEX IF EXISTS public.idx_zone_tenant;
@@ -58,6 +66,12 @@ DROP INDEX IF EXISTS public.idx_users_tenant;
 DROP INDEX IF EXISTS public.idx_task_history_tenant;
 DROP INDEX IF EXISTS public.idx_task_history_task;
 DROP INDEX IF EXISTS public.idx_task_history_employee;
+DROP INDEX IF EXISTS public.idx_stock_opname_tenant;
+DROP INDEX IF EXISTS public.idx_stock_opname_status;
+DROP INDEX IF EXISTS public.idx_stock_opname_detail_tenant;
+DROP INDEX IF EXISTS public.idx_stock_opname_detail_opname;
+DROP INDEX IF EXISTS public.idx_stock_opname_detail_item;
+DROP INDEX IF EXISTS public.idx_stock_opname_date;
 DROP INDEX IF EXISTS public.idx_role_tenant;
 DROP INDEX IF EXISTS public.idx_region_tenant;
 DROP INDEX IF EXISTS public.idx_production_tasks_type;
@@ -89,6 +103,15 @@ DROP INDEX IF EXISTS public.idx_order_items_product;
 DROP INDEX IF EXISTS public.idx_order_items_order;
 DROP INDEX IF EXISTS public.idx_order_items_current_task;
 DROP INDEX IF EXISTS public.idx_menu_tenant;
+DROP INDEX IF EXISTS public.idx_master_supplier_tenant;
+DROP INDEX IF EXISTS public.idx_master_supplier_code;
+DROP INDEX IF EXISTS public.idx_master_item_tenant;
+DROP INDEX IF EXISTS public.idx_master_item_code;
+DROP INDEX IF EXISTS public.idx_master_item_category;
+DROP INDEX IF EXISTS public.idx_item_stock_movement_type;
+DROP INDEX IF EXISTS public.idx_item_stock_movement_tenant;
+DROP INDEX IF EXISTS public.idx_item_stock_movement_reference;
+DROP INDEX IF EXISTS public.idx_item_stock_movement_item;
 DROP INDEX IF EXISTS public.idx_employee_tenant;
 DROP INDEX IF EXISTS public.idx_division_tenant;
 DROP INDEX IF EXISTS public.idx_backup_tenant;
@@ -99,6 +122,9 @@ DROP INDEX IF EXISTS public.idx_audit_trail_created_at;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_email_key;
 ALTER TABLE IF EXISTS ONLY public.task_history DROP CONSTRAINT IF EXISTS task_history_pkey;
+ALTER TABLE IF EXISTS ONLY public.stock_opname DROP CONSTRAINT IF EXISTS stock_opname_pkey;
+ALTER TABLE IF EXISTS ONLY public.stock_opname DROP CONSTRAINT IF EXISTS stock_opname_opname_number_tenant_id_key;
+ALTER TABLE IF EXISTS ONLY public.stock_opname_detail DROP CONSTRAINT IF EXISTS stock_opname_detail_pkey;
 ALTER TABLE IF EXISTS ONLY public.role_permissions DROP CONSTRAINT IF EXISTS role_permissions_role_id_permission_id_key;
 ALTER TABLE IF EXISTS ONLY public.role_permissions DROP CONSTRAINT IF EXISTS role_permissions_pkey;
 ALTER TABLE IF EXISTS ONLY public.role_menus DROP CONSTRAINT IF EXISTS role_menus_role_id_menu_id_key;
@@ -113,6 +139,8 @@ ALTER TABLE IF EXISTS ONLY public.master_zone DROP CONSTRAINT IF EXISTS master_z
 ALTER TABLE IF EXISTS ONLY public.master_user_menu DROP CONSTRAINT IF EXISTS master_user_menu_pkey;
 ALTER TABLE IF EXISTS ONLY public.master_tenant DROP CONSTRAINT IF EXISTS master_tenant_pkey;
 ALTER TABLE IF EXISTS ONLY public.master_tenant DROP CONSTRAINT IF EXISTS master_tenant_domain_key;
+ALTER TABLE IF EXISTS ONLY public.master_supplier DROP CONSTRAINT IF EXISTS master_supplier_pkey;
+ALTER TABLE IF EXISTS ONLY public.master_supplier DROP CONSTRAINT IF EXISTS master_supplier_code_tenant_id_key;
 ALTER TABLE IF EXISTS ONLY public.master_role DROP CONSTRAINT IF EXISTS master_role_pkey;
 ALTER TABLE IF EXISTS ONLY public.master_region DROP CONSTRAINT IF EXISTS master_region_pkey;
 ALTER TABLE IF EXISTS ONLY public.master_product DROP CONSTRAINT IF EXISTS master_product_pkey;
@@ -125,25 +153,37 @@ ALTER TABLE IF EXISTS ONLY public.master_office DROP CONSTRAINT IF EXISTS master
 ALTER TABLE IF EXISTS ONLY public.master_office DROP CONSTRAINT IF EXISTS master_office_email_key;
 ALTER TABLE IF EXISTS ONLY public.master_office DROP CONSTRAINT IF EXISTS master_office_code_key;
 ALTER TABLE IF EXISTS ONLY public.master_menu DROP CONSTRAINT IF EXISTS master_menu_pkey;
+ALTER TABLE IF EXISTS ONLY public.master_item DROP CONSTRAINT IF EXISTS master_item_pkey;
+ALTER TABLE IF EXISTS ONLY public.master_item DROP CONSTRAINT IF EXISTS master_item_code_tenant_id_key;
 ALTER TABLE IF EXISTS ONLY public.master_employee DROP CONSTRAINT IF EXISTS master_employee_pkey;
 ALTER TABLE IF EXISTS ONLY public.master_employee DROP CONSTRAINT IF EXISTS master_employee_email_key;
 ALTER TABLE IF EXISTS ONLY public.master_division DROP CONSTRAINT IF EXISTS master_division_pkey;
+ALTER TABLE IF EXISTS ONLY public.item_stock_movement DROP CONSTRAINT IF EXISTS item_stock_movement_pkey;
 ALTER TABLE IF EXISTS ONLY public.backup DROP CONSTRAINT IF EXISTS backup_pkey;
 ALTER TABLE IF EXISTS ONLY public.audit_trail DROP CONSTRAINT IF EXISTS audit_trail_pkey;
 ALTER TABLE IF EXISTS public.task_history ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.stock_opname_detail ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.stock_opname ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.production_tasks ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.product_images ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.payments ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.orders ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.order_items ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.master_tenant ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.master_supplier ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.master_office ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.master_menu ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.master_item ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.item_stock_movement ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.backup ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.audit_trail ALTER COLUMN id DROP DEFAULT;
 DROP TABLE IF EXISTS public.users;
 DROP SEQUENCE IF EXISTS public.task_history_id_seq;
 DROP TABLE IF EXISTS public.task_history;
+DROP SEQUENCE IF EXISTS public.stock_opname_id_seq;
+DROP SEQUENCE IF EXISTS public.stock_opname_detail_id_seq;
+DROP TABLE IF EXISTS public.stock_opname_detail;
+DROP TABLE IF EXISTS public.stock_opname;
 DROP TABLE IF EXISTS public.role_permissions;
 DROP SEQUENCE IF EXISTS public.role_permissions_id_seq;
 DROP TABLE IF EXISTS public.role_menus;
@@ -164,6 +204,8 @@ DROP TABLE IF EXISTS public.master_user_menu;
 DROP SEQUENCE IF EXISTS public.master_user_menu_id_seq;
 DROP SEQUENCE IF EXISTS public.master_tenant_id_seq;
 DROP TABLE IF EXISTS public.master_tenant;
+DROP SEQUENCE IF EXISTS public.master_supplier_id_seq;
+DROP TABLE IF EXISTS public.master_supplier;
 DROP TABLE IF EXISTS public.master_role;
 DROP SEQUENCE IF EXISTS public.master_role_id_seq;
 DROP TABLE IF EXISTS public.master_region;
@@ -178,10 +220,14 @@ DROP SEQUENCE IF EXISTS public.master_office_id_seq;
 DROP TABLE IF EXISTS public.master_office;
 DROP SEQUENCE IF EXISTS public.master_menu_id_seq;
 DROP TABLE IF EXISTS public.master_menu;
+DROP SEQUENCE IF EXISTS public.master_item_id_seq;
+DROP TABLE IF EXISTS public.master_item;
 DROP TABLE IF EXISTS public.master_employee;
 DROP SEQUENCE IF EXISTS public.master_employee_id_seq;
 DROP TABLE IF EXISTS public.master_division;
 DROP SEQUENCE IF EXISTS public.master_division_id_seq;
+DROP SEQUENCE IF EXISTS public.item_stock_movement_id_seq;
+DROP TABLE IF EXISTS public.item_stock_movement;
 DROP SEQUENCE IF EXISTS public.backup_id_seq;
 DROP TABLE IF EXISTS public.backup;
 DROP SEQUENCE IF EXISTS public.audit_trail_id_seq;
@@ -279,6 +325,48 @@ ALTER SEQUENCE public.backup_id_seq OWNED BY public.backup.id;
 
 
 --
+-- Name: item_stock_movement; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.item_stock_movement (
+    id integer NOT NULL,
+    item_id integer NOT NULL,
+    movement_type character varying(20) NOT NULL,
+    reference_type character varying(50) NOT NULL,
+    reference_id integer NOT NULL,
+    quantity integer NOT NULL,
+    balance integer NOT NULL,
+    notes text,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT valid_movement_type CHECK (((movement_type)::text = ANY ((ARRAY['in'::character varying, 'out'::character varying, 'adjustment'::character varying])::text[])))
+);
+
+
+--
+-- Name: item_stock_movement_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.item_stock_movement_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: item_stock_movement_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.item_stock_movement_id_seq OWNED BY public.item_stock_movement.id;
+
+
+--
 -- Name: master_division_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -334,6 +422,49 @@ CREATE TABLE public.master_employee (
     created_by character varying(255) NOT NULL,
     updated_by character varying(255) NOT NULL
 );
+
+
+--
+-- Name: master_item; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.master_item (
+    id integer NOT NULL,
+    code character varying(50) NOT NULL,
+    name character varying(100) NOT NULL,
+    description text,
+    unit character varying(20) NOT NULL,
+    min_stock integer DEFAULT 0,
+    max_stock integer,
+    reorder_point integer,
+    category character varying(50),
+    is_active boolean DEFAULT true,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL
+);
+
+
+--
+-- Name: master_item_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.master_item_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: master_item_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.master_item_id_seq OWNED BY public.master_item.id;
 
 
 --
@@ -570,6 +701,51 @@ CREATE TABLE public.master_role (
     created_by character varying(255) NOT NULL,
     updated_by character varying(255) NOT NULL
 );
+
+
+--
+-- Name: master_supplier; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.master_supplier (
+    id integer NOT NULL,
+    code character varying(50) NOT NULL,
+    name character varying(100) NOT NULL,
+    contact_person character varying(100),
+    phone character varying(20),
+    email character varying(255),
+    address text,
+    tax_number character varying(50),
+    bank_name character varying(100),
+    bank_account_number character varying(50),
+    bank_account_name character varying(100),
+    is_active boolean DEFAULT true,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL
+);
+
+
+--
+-- Name: master_supplier_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.master_supplier_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: master_supplier_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.master_supplier_id_seq OWNED BY public.master_supplier.id;
 
 
 --
@@ -934,6 +1110,85 @@ CREATE TABLE public.role_permissions (
 
 
 --
+-- Name: stock_opname; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.stock_opname (
+    id integer NOT NULL,
+    opname_number character varying(50) NOT NULL,
+    opname_date date NOT NULL,
+    status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
+    notes text,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT valid_opname_status CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))
+);
+
+
+--
+-- Name: stock_opname_detail; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.stock_opname_detail (
+    id integer NOT NULL,
+    stock_opname_id integer NOT NULL,
+    item_id integer NOT NULL,
+    system_qty integer DEFAULT 0 NOT NULL,
+    actual_qty integer DEFAULT 0 NOT NULL,
+    difference_qty integer GENERATED ALWAYS AS ((actual_qty - system_qty)) STORED,
+    notes text,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL
+);
+
+
+--
+-- Name: stock_opname_detail_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.stock_opname_detail_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: stock_opname_detail_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.stock_opname_detail_id_seq OWNED BY public.stock_opname_detail.id;
+
+
+--
+-- Name: stock_opname_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.stock_opname_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: stock_opname_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.stock_opname_id_seq OWNED BY public.stock_opname.id;
+
+
+--
 -- Name: task_history; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1003,6 +1258,20 @@ ALTER TABLE ONLY public.backup ALTER COLUMN id SET DEFAULT nextval('public.backu
 
 
 --
+-- Name: item_stock_movement id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_stock_movement ALTER COLUMN id SET DEFAULT nextval('public.item_stock_movement_id_seq'::regclass);
+
+
+--
+-- Name: master_item id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.master_item ALTER COLUMN id SET DEFAULT nextval('public.master_item_id_seq'::regclass);
+
+
+--
 -- Name: master_menu id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1014,6 +1283,13 @@ ALTER TABLE ONLY public.master_menu ALTER COLUMN id SET DEFAULT nextval('public.
 --
 
 ALTER TABLE ONLY public.master_office ALTER COLUMN id SET DEFAULT nextval('public.master_office_id_seq'::regclass);
+
+
+--
+-- Name: master_supplier id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.master_supplier ALTER COLUMN id SET DEFAULT nextval('public.master_supplier_id_seq'::regclass);
 
 
 --
@@ -1056,6 +1332,20 @@ ALTER TABLE ONLY public.product_images ALTER COLUMN id SET DEFAULT nextval('publ
 --
 
 ALTER TABLE ONLY public.production_tasks ALTER COLUMN id SET DEFAULT nextval('public.production_tasks_id_seq'::regclass);
+
+
+--
+-- Name: stock_opname id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stock_opname ALTER COLUMN id SET DEFAULT nextval('public.stock_opname_id_seq'::regclass);
+
+
+--
+-- Name: stock_opname_detail id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stock_opname_detail ALTER COLUMN id SET DEFAULT nextval('public.stock_opname_detail_id_seq'::regclass);
 
 
 --
@@ -1154,6 +1444,21 @@ COPY public.backup (id, file_name, size, created_at, created_by, tenant_id, upda
 4	db_backup_2025-03-27_01-42-03_9a8b67ae.dump	55488	2025-03-27 01:42:04.371803	developer	1	\N	\N
 36	db_backup_2025-03-30_14-57-45_2521a6e4.dump	64238	2025-03-30 07:57:46.54205	developer	1	\N	developer
 38	db_backup_2025-04-01_16-49-30_0c9ed976.dump	65964	2025-04-01 09:49:30.400806	developer	1	\N	developer
+39	db_backup_2025-04-06_20-05-29_10e99f9f.dump	118062	2025-04-06 13:05:30.496587	developer	1	\N	developer
+\.
+
+
+--
+-- Data for Name: item_stock_movement; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.item_stock_movement (id, item_id, movement_type, reference_type, reference_id, quantity, balance, notes, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	1	in	purchase_order	1	500	1500	PO receipt - Premium Fabrics Co.	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+2	2	in	purchase_order	1	400	1200	PO receipt - Premium Fabrics Co.	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+3	1	out	production	1	-50	1450	Production order #PRD-2024-001	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+4	2	out	production	1	-40	1160	Production order #PRD-2024-001	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+5	1	adjustment	stock_opname	1	-20	1430	Stock opname adjustment SO-2024-001	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+6	3	adjustment	stock_opname	1	-5	595	Stock opname adjustment SO-2024-001	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
 \.
 
 
@@ -1210,6 +1515,27 @@ COPY public.master_employee (id, name, email, phone, division_id, created_at, up
 
 
 --
+-- Data for Name: master_item; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.master_item (id, code, name, description, unit, min_stock, max_stock, reorder_point, category, is_active, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	FAB-001	Polyester Mesh Fabric	High-quality breathable mesh fabric for jerseys	yards	1000	5000	1500	fabric	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+2	FAB-002	Dri-Fit Material	Moisture-wicking performance fabric	yards	800	4000	1200	fabric	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+3	FAB-003	Cotton Blend Fabric	Comfortable cotton-polyester blend	yards	500	3000	800	fabric	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+4	THR-001	Polyester Thread White	Durable polyester thread for jersey stitching	spools	50	200	75	thread	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+5	THR-002	Polyester Thread Black	Durable polyester thread for jersey stitching	spools	50	200	75	thread	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+6	THR-003	Elastic Thread	Stretchable thread for jersey hems	spools	30	150	50	thread	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+7	ACC-001	Jersey Collar Material	Ribbed collar material	pieces	200	1000	300	accessory	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+8	ACC-002	Size Labels L	Size L labels	pieces	500	2000	700	label	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+9	ACC-003	Size Labels M	Size M labels	pieces	500	2000	700	label	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+10	ACC-004	Size Labels S	Size S labels	pieces	500	2000	700	label	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+11	PRT-001	Heat Transfer Vinyl White	White vinyl for number printing	rolls	10	50	15	printing	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+12	PRT-002	Heat Transfer Vinyl Black	Black vinyl for number printing	rolls	10	50	15	printing	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+13	PRT-003	Sublimation Ink Cyan	Cyan ink for sublimation printing	liters	5	20	8	printing	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+\.
+
+
+--
 -- Data for Name: master_menu; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -1237,7 +1563,6 @@ COPY public.master_menu (id, name, url, icon, parent_id, sort, created_at, updat
 21	Payment Detail	/payment-detail	ni ni-bullet-list-67	3	5	2025-03-22 08:00:31.935588	2025-03-22 08:00:31.935588	1	system	system
 22	Task	/task	ni ni-calendar-grid-58	3	6	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
 23	Task History	/task-history	ni ni-time-alarm	3	7	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
-24	Master Item	/master-item	ni ni-box-2	4	1	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
 25	Stock Name	/stock-name	ni ni-tag	4	2	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
 26	Master Supplier	/master-supplier	ni ni-delivery-fast	4	3	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
 27	Cash Flow	/cash-flow	ni ni-money-coins	5	1	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
@@ -1251,6 +1576,7 @@ COPY public.master_menu (id, name, url, icon, parent_id, sort, created_at, updat
 40	System		ni ni-settings	\N	6	2025-03-23 08:08:29.163802	2025-03-23 15:08:51.730413	1	admin	admin
 41	Audit Trail	/audit	ni ni-archive-2	40	1	2025-03-23 08:11:39.560894	2025-03-23 16:43:21.539038	1	admin	admin
 42	Backup Management	/backup	ni ni-money-coins	40	2	2025-03-26 16:36:35.692878	2025-03-26 16:36:35.692878	1	system	system
+24	Master Item	/item	ni ni-box-2	4	1	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
 \.
 
 
@@ -1361,6 +1687,18 @@ COPY public.master_region (id, name, description, created_at, updated_at, tenant
 COPY public.master_role (id, name, description, created_at, updated_at, tenant_id, created_by, updated_by) FROM stdin;
 1	Admin	System Administrator	2025-03-22 07:25:18.170058	2025-03-22 07:25:18.170058	1	system	system
 2	Developer	Developer	2025-03-23 17:47:47.545982	2025-03-24 23:48:37.858856	1	system	admin
+\.
+
+
+--
+-- Data for Name: master_supplier; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.master_supplier (id, code, name, contact_person, phone, email, address, tax_number, bank_name, bank_account_number, bank_account_name, is_active, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	SUP-001	Premium Fabrics Co.	John Smith	+1-555-0123	john@premiumfabrics.com	123 Textile Road, Fabric City	TAX123456	City Bank	1234567890	Premium Fabrics Co.	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+2	SUP-002	Sports Materials Inc.	Sarah Johnson	+1-555-0124	sarah@sportsmaterials.com	456 Sports Ave, Material Town	TAX789012	Metro Bank	0987654321	Sports Materials Inc.	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+3	SUP-003	Thread Masters	Mike Wilson	+1-555-0125	mike@threadmasters.com	789 Thread Street, Sewing City	TAX345678	National Bank	5678901234	Thread Masters LLC	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+4	SUP-004	Print Pro Supplies	Lisa Brown	+1-555-0126	lisa@printpro.com	321 Ink Road, Print Town	TAX901234	Global Bank	4321098765	Print Pro Supplies Inc.	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
 \.
 
 
@@ -1544,6 +1882,30 @@ COPY public.role_permissions (id, role_id, permission_id, created_at, created_by
 
 
 --
+-- Data for Name: stock_opname; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.stock_opname (id, opname_number, opname_date, status, notes, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	SO-2024-001	2024-03-15	completed	Monthly stock taking - March 2024	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+2	SO-2024-002	2024-03-30	in_progress	Emergency stock count - Fabric section	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+\.
+
+
+--
+-- Data for Name: stock_opname_detail; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.stock_opname_detail (id, stock_opname_id, item_id, system_qty, actual_qty, notes, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	1	1	1200	1180	Minor discrepancy in fabric count	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+2	1	2	900	900	Count matches system	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+3	1	3	600	595	Small difference found	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+4	1	4	60	58	Two spools missing	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+5	2	1	1000	980	Counting in progress	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+6	2	2	850	850	Verified count	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+\.
+
+
+--
 -- Data for Name: task_history; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -1581,7 +1943,14 @@ SELECT pg_catalog.setval('public.audit_trail_id_seq', 72, true);
 -- Name: backup_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.backup_id_seq', 38, true);
+SELECT pg_catalog.setval('public.backup_id_seq', 39, true);
+
+
+--
+-- Name: item_stock_movement_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.item_stock_movement_id_seq', 6, true);
 
 
 --
@@ -1596,6 +1965,13 @@ SELECT pg_catalog.setval('public.master_division_id_seq', 1, false);
 --
 
 SELECT pg_catalog.setval('public.master_employee_id_seq', 36, true);
+
+
+--
+-- Name: master_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.master_item_id_seq', 13, true);
 
 
 --
@@ -1645,6 +2021,13 @@ SELECT pg_catalog.setval('public.master_region_id_seq', 15, true);
 --
 
 SELECT pg_catalog.setval('public.master_role_id_seq', 7, true);
+
+
+--
+-- Name: master_supplier_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.master_supplier_id_seq', 4, true);
 
 
 --
@@ -1718,6 +2101,20 @@ SELECT pg_catalog.setval('public.role_permissions_id_seq', 70, true);
 
 
 --
+-- Name: stock_opname_detail_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.stock_opname_detail_id_seq', 6, true);
+
+
+--
+-- Name: stock_opname_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.stock_opname_id_seq', 2, true);
+
+
+--
 -- Name: task_history_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
@@ -1738,6 +2135,14 @@ ALTER TABLE ONLY public.audit_trail
 
 ALTER TABLE ONLY public.backup
     ADD CONSTRAINT backup_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: item_stock_movement item_stock_movement_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_stock_movement
+    ADD CONSTRAINT item_stock_movement_pkey PRIMARY KEY (id);
 
 
 --
@@ -1762,6 +2167,22 @@ ALTER TABLE ONLY public.master_employee
 
 ALTER TABLE ONLY public.master_employee
     ADD CONSTRAINT master_employee_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: master_item master_item_code_tenant_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.master_item
+    ADD CONSTRAINT master_item_code_tenant_id_key UNIQUE (code, tenant_id);
+
+
+--
+-- Name: master_item master_item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.master_item
+    ADD CONSTRAINT master_item_pkey PRIMARY KEY (id);
 
 
 --
@@ -1858,6 +2279,22 @@ ALTER TABLE ONLY public.master_region
 
 ALTER TABLE ONLY public.master_role
     ADD CONSTRAINT master_role_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: master_supplier master_supplier_code_tenant_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.master_supplier
+    ADD CONSTRAINT master_supplier_code_tenant_id_key UNIQUE (code, tenant_id);
+
+
+--
+-- Name: master_supplier master_supplier_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.master_supplier
+    ADD CONSTRAINT master_supplier_pkey PRIMARY KEY (id);
 
 
 --
@@ -1973,6 +2410,30 @@ ALTER TABLE ONLY public.role_permissions
 
 
 --
+-- Name: stock_opname_detail stock_opname_detail_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stock_opname_detail
+    ADD CONSTRAINT stock_opname_detail_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: stock_opname stock_opname_opname_number_tenant_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stock_opname
+    ADD CONSTRAINT stock_opname_opname_number_tenant_id_key UNIQUE (opname_number, tenant_id);
+
+
+--
+-- Name: stock_opname stock_opname_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stock_opname
+    ADD CONSTRAINT stock_opname_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: task_history task_history_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2043,6 +2504,69 @@ CREATE INDEX idx_division_tenant ON public.master_division USING btree (tenant_i
 --
 
 CREATE INDEX idx_employee_tenant ON public.master_employee USING btree (tenant_id);
+
+
+--
+-- Name: idx_item_stock_movement_item; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_item_stock_movement_item ON public.item_stock_movement USING btree (item_id);
+
+
+--
+-- Name: idx_item_stock_movement_reference; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_item_stock_movement_reference ON public.item_stock_movement USING btree (reference_type, reference_id);
+
+
+--
+-- Name: idx_item_stock_movement_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_item_stock_movement_tenant ON public.item_stock_movement USING btree (tenant_id);
+
+
+--
+-- Name: idx_item_stock_movement_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_item_stock_movement_type ON public.item_stock_movement USING btree (movement_type);
+
+
+--
+-- Name: idx_master_item_category; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_master_item_category ON public.master_item USING btree (category);
+
+
+--
+-- Name: idx_master_item_code; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_master_item_code ON public.master_item USING btree (code);
+
+
+--
+-- Name: idx_master_item_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_master_item_tenant ON public.master_item USING btree (tenant_id);
+
+
+--
+-- Name: idx_master_supplier_code; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_master_supplier_code ON public.master_supplier USING btree (code);
+
+
+--
+-- Name: idx_master_supplier_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_master_supplier_tenant ON public.master_supplier USING btree (tenant_id);
 
 
 --
@@ -2263,6 +2787,48 @@ CREATE INDEX idx_role_tenant ON public.master_role USING btree (tenant_id);
 
 
 --
+-- Name: idx_stock_opname_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_stock_opname_date ON public.stock_opname USING btree (opname_date);
+
+
+--
+-- Name: idx_stock_opname_detail_item; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_stock_opname_detail_item ON public.stock_opname_detail USING btree (item_id);
+
+
+--
+-- Name: idx_stock_opname_detail_opname; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_stock_opname_detail_opname ON public.stock_opname_detail USING btree (stock_opname_id);
+
+
+--
+-- Name: idx_stock_opname_detail_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_stock_opname_detail_tenant ON public.stock_opname_detail USING btree (tenant_id);
+
+
+--
+-- Name: idx_stock_opname_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_stock_opname_status ON public.stock_opname USING btree (status);
+
+
+--
+-- Name: idx_stock_opname_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_stock_opname_tenant ON public.stock_opname USING btree (tenant_id);
+
+
+--
 -- Name: idx_task_history_employee; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2314,6 +2880,22 @@ ALTER TABLE ONLY public.backup
 
 
 --
+-- Name: item_stock_movement item_stock_movement_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_stock_movement
+    ADD CONSTRAINT item_stock_movement_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.master_item(id);
+
+
+--
+-- Name: item_stock_movement item_stock_movement_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.item_stock_movement
+    ADD CONSTRAINT item_stock_movement_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
 -- Name: master_division master_division_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2335,6 +2917,14 @@ ALTER TABLE ONLY public.master_employee
 
 ALTER TABLE ONLY public.master_employee
     ADD CONSTRAINT master_employee_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
+-- Name: master_item master_item_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.master_item
+    ADD CONSTRAINT master_item_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
 
 
 --
@@ -2415,6 +3005,14 @@ ALTER TABLE ONLY public.master_region
 
 ALTER TABLE ONLY public.master_role
     ADD CONSTRAINT master_role_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
+-- Name: master_supplier master_supplier_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.master_supplier
+    ADD CONSTRAINT master_supplier_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
 
 
 --
@@ -2559,6 +3157,38 @@ ALTER TABLE ONLY public.role_permissions
 
 ALTER TABLE ONLY public.role_permissions
     ADD CONSTRAINT role_permissions_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.master_role(id);
+
+
+--
+-- Name: stock_opname_detail stock_opname_detail_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stock_opname_detail
+    ADD CONSTRAINT stock_opname_detail_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.master_item(id);
+
+
+--
+-- Name: stock_opname_detail stock_opname_detail_stock_opname_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stock_opname_detail
+    ADD CONSTRAINT stock_opname_detail_stock_opname_id_fkey FOREIGN KEY (stock_opname_id) REFERENCES public.stock_opname(id) ON DELETE CASCADE;
+
+
+--
+-- Name: stock_opname_detail stock_opname_detail_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stock_opname_detail
+    ADD CONSTRAINT stock_opname_detail_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
+-- Name: stock_opname stock_opname_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.stock_opname
+    ADD CONSTRAINT stock_opname_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
 
 
 --

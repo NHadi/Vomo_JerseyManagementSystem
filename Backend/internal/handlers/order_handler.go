@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"time"
 	"vomo/internal/application"
 	"vomo/internal/domain/order"
 
@@ -18,42 +17,31 @@ type ProductDetail struct {
 	Description string `json:"description" example:"Product Description"`
 }
 
-// DiscountRule represents the discount rule applied to an order item
-// @Description Discount rule model
-type DiscountRule struct {
-	QuantityThreshold  int     `json:"quantity_threshold" example:"5"`
-	DiscountPercentage float64 `json:"discount_percentage" example:"10"`
-}
-
-// Customization represents the customization details for an order item
-// @Description Customization model
-type Customization struct {
-	Name   string `json:"name" example:"SMITH"`
-	Number string `json:"number" example:"10"`
-}
-
 // OrderItemResponse represents the order item response structure
+// @Description Order item response model
 type OrderItemResponse struct {
-	ID                  int            `json:"id" example:"1"`
-	OrderID             int            `json:"order_id" example:"1"`
-	ProductID           int            `json:"product_id" example:"1"`
-	Quantity            int            `json:"quantity" example:"5"`
-	Size                string         `json:"size" example:"L"`
-	Color               string         `json:"color" example:"Red/White"`
-	UnitPrice           float64        `json:"unit_price" example:"49.99"`
-	OriginalSubtotal    float64        `json:"original_subtotal" example:"249.95"`
-	AppliedDiscountRule *DiscountRule  `json:"applied_discount_rule,omitempty"`
-	DiscountAmount      float64        `json:"discount_amount" example:"24.99"`
-	FinalSubtotal       float64        `json:"final_subtotal" example:"224.96"`
-	Customization       *Customization `json:"customization,omitempty"`
-	CurrentTask         string         `json:"current_task" example:"layout"`
-	ProductionStatus    string         `json:"production_status" example:"pending"`
-	CreatedAt           string         `json:"created_at" example:"2024-03-24T21:41:49Z"`
-	CreatedBy           string         `json:"created_by" example:"admin"`
-	UpdatedAt           string         `json:"updated_at" example:"2024-03-24T21:41:49Z"`
-	UpdatedBy           string         `json:"updated_by" example:"admin"`
-	TenantID            int            `json:"tenant_id" example:"1"`
-	Product             *ProductDetail `json:"product,omitempty"`
+	ID                  int             `json:"id" example:"1"`
+	OrderID             int             `json:"order_id" example:"1"`
+	ProductID           int             `json:"product_id" example:"1"`
+	Quantity            int             `json:"quantity" example:"2"`
+	Size                string          `json:"size" example:"M"`
+	Color               string          `json:"color" example:"Red/White"`
+	UnitPrice           float64         `json:"unit_price" example:"49.99"`
+	OriginalSubtotal    float64         `json:"original_subtotal" example:"99.98"`
+	AppliedDiscountRule json.RawMessage `json:"applied_discount_rule"`
+	DiscountAmount      float64         `json:"discount_amount" example:"10.00"`
+	FinalSubtotal       float64         `json:"final_subtotal" example:"89.98"`
+	Customization       json.RawMessage `json:"customization"`
+	CurrentTask         string          `json:"current_task" example:"layout"`
+	ProductionStatus    string          `json:"production_status" example:"pending"`
+	Tasks               []TaskResponse  `json:"tasks,omitempty"`
+	CreatedAt           string          `json:"created_at" example:"2024-03-24T21:41:49Z"`
+	CreatedBy           string          `json:"created_by" example:"admin"`
+	UpdatedAt           string          `json:"updated_at" example:"2024-03-24T21:41:49Z"`
+	UpdatedBy           string          `json:"updated_by" example:"admin"`
+	TenantID            int             `json:"tenant_id" example:"1"`
+	ProductDetail       ProductDetail   `json:"product_detail"`
+	MainPhoto           string          `json:"main_photo"`
 }
 
 // OrderResponse represents the order response structure
@@ -117,29 +105,7 @@ type UpdateOrderRequest struct {
 }
 
 func toOrderItemResponse(item *order.OrderItem) OrderItemResponse {
-	var appliedDiscountRule *DiscountRule
-	if item.AppliedDiscountRule != nil {
-		var rule map[string]interface{}
-		if err := json.Unmarshal(item.AppliedDiscountRule, &rule); err == nil {
-			appliedDiscountRule = &DiscountRule{
-				QuantityThreshold:  int(rule["quantity_threshold"].(float64)),
-				DiscountPercentage: rule["discount_percentage"].(float64),
-			}
-		}
-	}
-
-	var customization *Customization
-	if item.Customization != nil {
-		var custom map[string]interface{}
-		if err := json.Unmarshal(item.Customization, &custom); err == nil {
-			customization = &Customization{
-				Name:   custom["name"].(string),
-				Number: custom["number"].(string),
-			}
-		}
-	}
-
-	return OrderItemResponse{
+	response := OrderItemResponse{
 		ID:                  item.ID,
 		OrderID:             item.OrderID,
 		ProductID:           item.ProductID,
@@ -148,22 +114,36 @@ func toOrderItemResponse(item *order.OrderItem) OrderItemResponse {
 		Color:               item.Color,
 		UnitPrice:           item.UnitPrice,
 		OriginalSubtotal:    item.OriginalSubtotal,
-		AppliedDiscountRule: appliedDiscountRule,
+		AppliedDiscountRule: item.AppliedDiscountRule,
 		DiscountAmount:      item.DiscountAmount,
 		FinalSubtotal:       item.FinalSubtotal,
-		Customization:       customization,
+		Customization:       item.Customization,
 		CurrentTask:         item.CurrentTask,
 		ProductionStatus:    item.ProductionStatus,
-		CreatedAt:           item.CreatedAt.Format(time.RFC3339),
+		CreatedAt:           item.CreatedAt.String(),
 		CreatedBy:           item.CreatedBy,
-		UpdatedAt:           item.UpdatedAt.Format(time.RFC3339),
+		UpdatedAt:           item.UpdatedAt.String(),
 		UpdatedBy:           item.UpdatedBy,
 		TenantID:            item.TenantID,
-		Product: &ProductDetail{
-			Name:        item.Product.Name,
-			Description: item.Product.Description,
-		},
+		ProductDetail:       ProductDetail{Name: item.Product.Name, Description: item.Product.Description},
 	}
+
+	// Check if the product has images before accessing
+	if len(item.Product.Images) > 0 {
+		response.MainPhoto = item.Product.Images[0].ImageURL
+	} else {
+		response.MainPhoto = "" // or a default image URL
+	}
+
+	// Add tasks if they exist
+	if len(item.Tasks) > 0 {
+		response.Tasks = make([]TaskResponse, len(item.Tasks))
+		for i, t := range item.Tasks {
+			response.Tasks[i] = ToTaskResponse(&t)
+		}
+	}
+
+	return response
 }
 
 func toOrderResponse(o *order.Order) OrderResponse {

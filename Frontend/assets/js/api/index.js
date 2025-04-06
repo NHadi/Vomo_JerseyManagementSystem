@@ -14,6 +14,8 @@ import { productCategoryAPI } from './modules/product-categories.js';
 import { userAPI } from './modules/users.js';
 import { orderAPI } from './modules/orders.js';
 import { taskAPI } from './modules/tasks.js';
+import { itemAPI } from './modules/items.js';
+import { paymentAPI } from './modules/payments.js';
 import { config } from './config.js';
 
 // Initialize the API namespace
@@ -34,6 +36,8 @@ export const vomoAPI = {
     ...userAPI,
     ...orderAPI,
     ...taskAPI,
+    ...itemAPI,
+    ...paymentAPI,
     config
 };
 

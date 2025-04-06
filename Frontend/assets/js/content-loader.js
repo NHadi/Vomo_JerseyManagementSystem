@@ -148,6 +148,12 @@
                         case 'task':
                             await this.loadTaskGrid();
                             break;
+                        case 'item':
+                            await this.loadItemGrid();
+                            break;
+                        case 'payment':
+                            await this.loadPaymentGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -1073,6 +1079,120 @@
                     } catch (error) {
                         console.error('Failed to load permission component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load permission component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadItemGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.itemPageInstance) {
+                window.itemPageInstance.dispose();
+                window.itemPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/item.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="item"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the item.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/item.js';
+                        script.setAttribute('data-page', 'item');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the item page instance
+                            if (!window.itemPageInstance) {
+                                window.itemPageInstance = new window.ItemPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load item module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load item component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load item component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadPaymentGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.paymentPageInstance) {
+                window.paymentPageInstance.dispose();
+                window.paymentPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/payment.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="payment"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the payment.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/payment.js';
+                        script.setAttribute('data-page', 'payment');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the payment page instance
+                            if (!window.paymentPageInstance) {
+                                window.paymentPageInstance = new window.PaymentPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load payment module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load payment component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load payment component</div>');
                         reject(error);
                     }
                 });
