@@ -12,52 +12,76 @@ import (
 // SupplierResponse represents the supplier response structure
 // @Description Supplier response model
 type SupplierResponse struct {
-	ID        int    `json:"id" example:"1"`
-	Name      string `json:"name" example:"Supplier Name"`
-	Code      string `json:"code" example:"SUP001"`
-	Address   string `json:"address" example:"123 Supplier St"`
-	Phone     string `json:"phone" example:"+1234567890"`
-	Email     string `json:"email" example:"supplier@example.com"`
-	CreatedAt string `json:"created_at" example:"2024-03-24T21:41:49Z"`
-	CreatedBy string `json:"created_by" example:"admin"`
-	UpdatedAt string `json:"updated_at" example:"2024-03-24T21:41:49Z"`
-	UpdatedBy string `json:"updated_by" example:"admin"`
-	TenantID  int    `json:"tenant_id" example:"1"`
+	ID                int    `json:"id" example:"1"`
+	Code              string `json:"code" example:"SUP-001"`
+	Name              string `json:"name" example:"Premium Fabrics Co."`
+	ContactPerson     string `json:"contact_person" example:"John Smith"`
+	Phone             string `json:"phone" example:"+1-555-0123"`
+	Email             string `json:"email" example:"john@premiumfabrics.com"`
+	Address           string `json:"address" example:"123 Textile Road, Fabric City"`
+	TaxNumber         string `json:"tax_number" example:"TAX123456"`
+	BankName          string `json:"bank_name" example:"City Bank"`
+	BankAccountNumber string `json:"bank_account_number" example:"1234567890"`
+	BankAccountName   string `json:"bank_account_name" example:"Premium Fabrics Co."`
+	IsActive          bool   `json:"is_active" example:"true"`
+	TenantID          int    `json:"tenant_id" example:"1"`
+	CreatedAt         string `json:"created_at" example:"2024-03-24T21:41:49Z"`
+	CreatedBy         string `json:"created_by" example:"admin"`
+	UpdatedAt         string `json:"updated_at" example:"2024-03-24T21:41:49Z"`
+	UpdatedBy         string `json:"updated_by" example:"admin"`
 }
 
 // CreateSupplierRequest represents the request structure for creating a supplier
 // @Description Create supplier request model
 type CreateSupplierRequest struct {
-	Name    string `json:"name" binding:"required" example:"Supplier Name"`
-	Code    string `json:"code" binding:"required" example:"SUP001"`
-	Address string `json:"address" example:"123 Supplier St"`
-	Phone   string `json:"phone" example:"+1234567890"`
-	Email   string `json:"email" binding:"required,email" example:"supplier@example.com"`
+	Code              string `json:"code" binding:"required" example:"SUP-001"`
+	Name              string `json:"name" binding:"required" example:"Premium Fabrics Co."`
+	ContactPerson     string `json:"contact_person" example:"John Smith"`
+	Phone             string `json:"phone" example:"+1-555-0123"`
+	Email             string `json:"email" binding:"required,email" example:"john@premiumfabrics.com"`
+	Address           string `json:"address" example:"123 Textile Road, Fabric City"`
+	TaxNumber         string `json:"tax_number" example:"TAX123456"`
+	BankName          string `json:"bank_name" example:"City Bank"`
+	BankAccountNumber string `json:"bank_account_number" example:"1234567890"`
+	BankAccountName   string `json:"bank_account_name" example:"Premium Fabrics Co."`
+	IsActive          bool   `json:"is_active" example:"true"`
 }
 
 // UpdateSupplierRequest represents the request structure for updating a supplier
 // @Description Update supplier request model
 type UpdateSupplierRequest struct {
-	Name    string `json:"name" binding:"required" example:"Supplier Name"`
-	Code    string `json:"code" binding:"required" example:"SUP001"`
-	Address string `json:"address" example:"123 Supplier St"`
-	Phone   string `json:"phone" example:"+1234567890"`
-	Email   string `json:"email" binding:"required,email" example:"supplier@example.com"`
+	Code              string `json:"code" binding:"required" example:"SUP-001"`
+	Name              string `json:"name" binding:"required" example:"Premium Fabrics Co."`
+	ContactPerson     string `json:"contact_person" example:"John Smith"`
+	Phone             string `json:"phone" example:"+1-555-0123"`
+	Email             string `json:"email" binding:"required,email" example:"john@premiumfabrics.com"`
+	Address           string `json:"address" example:"123 Textile Road, Fabric City"`
+	TaxNumber         string `json:"tax_number" example:"TAX123456"`
+	BankName          string `json:"bank_name" example:"City Bank"`
+	BankAccountNumber string `json:"bank_account_number" example:"1234567890"`
+	BankAccountName   string `json:"bank_account_name" example:"Premium Fabrics Co."`
+	IsActive          bool   `json:"is_active" example:"true"`
 }
 
 func toSupplierResponse(s *supplier.Supplier) SupplierResponse {
 	return SupplierResponse{
-		ID:        s.ID,
-		Name:      s.Name,
-		Code:      s.Code,
-		Address:   s.Address,
-		Phone:     s.Phone,
-		Email:     s.Email,
-		CreatedAt: s.CreatedAt.String(),
-		CreatedBy: s.CreatedBy,
-		UpdatedAt: s.UpdatedAt.String(),
-		UpdatedBy: s.UpdatedBy,
-		TenantID:  s.TenantID,
+		ID:                s.ID,
+		Code:              s.Code,
+		Name:              s.Name,
+		ContactPerson:     s.ContactPerson,
+		Phone:             s.Phone,
+		Email:             s.Email,
+		Address:           s.Address,
+		TaxNumber:         s.TaxNumber,
+		BankName:          s.BankName,
+		BankAccountNumber: s.BankAccountNumber,
+		BankAccountName:   s.BankAccountName,
+		IsActive:          s.IsActive,
+		TenantID:          s.TenantID,
+		CreatedAt:         s.CreatedAt.String(),
+		CreatedBy:         s.CreatedBy,
+		UpdatedAt:         s.UpdatedAt.String(),
+		UpdatedBy:         s.UpdatedBy,
 	}
 }
 
@@ -84,11 +108,17 @@ func CreateSupplier(service *application.SupplierService) gin.HandlerFunc {
 		}
 
 		supplier := &supplier.Supplier{
-			Name:    req.Name,
-			Code:    req.Code,
-			Address: req.Address,
-			Phone:   req.Phone,
-			Email:   req.Email,
+			Code:              req.Code,
+			Name:              req.Name,
+			ContactPerson:     req.ContactPerson,
+			Phone:             req.Phone,
+			Email:             req.Email,
+			Address:           req.Address,
+			TaxNumber:         req.TaxNumber,
+			BankName:          req.BankName,
+			BankAccountNumber: req.BankAccountNumber,
+			BankAccountName:   req.BankAccountName,
+			IsActive:          req.IsActive,
 		}
 
 		if err := service.Create(supplier, c); err != nil {
@@ -197,11 +227,17 @@ func UpdateSupplier(service *application.SupplierService) gin.HandlerFunc {
 			return
 		}
 
-		supplier.Name = req.Name
 		supplier.Code = req.Code
-		supplier.Address = req.Address
+		supplier.Name = req.Name
+		supplier.ContactPerson = req.ContactPerson
 		supplier.Phone = req.Phone
 		supplier.Email = req.Email
+		supplier.Address = req.Address
+		supplier.TaxNumber = req.TaxNumber
+		supplier.BankName = req.BankName
+		supplier.BankAccountNumber = req.BankAccountNumber
+		supplier.BankAccountName = req.BankAccountName
+		supplier.IsActive = req.IsActive
 
 		if err := service.Update(supplier, c); err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})

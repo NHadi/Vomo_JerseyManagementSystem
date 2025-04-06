@@ -160,6 +160,9 @@
                         case 'stock-movement':
                             await this.loadStockMovementGrid();
                             break;
+                        case 'supplier':
+                            await this.loadSupplierGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -1398,6 +1401,63 @@
                 // Load dashboard content
                 $('#main-content').load('components/dashboard.html', () => {
                     resolve();
+                });
+            });
+        },
+
+        loadSupplierGrid: function() {
+            return new Promise((resolve, reject) => {
+                // Dispose existing instance if it exists
+                if (window.supplierPageInstance) {
+                    window.supplierPageInstance.dispose();
+                    window.supplierPageInstance = null;
+                }
+
+                $('#main-content').load('components/supplier.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="supplier"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the supplier.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/supplier.js';
+                        script.setAttribute('data-page', 'supplier');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the supplier page instance
+                            if (!window.supplierPageInstance) {
+                                window.supplierPageInstance = new window.SupplierPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load supplier module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load supplier component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load supplier component</div>');
+                        reject(error);
+                    }
                 });
             });
         }
