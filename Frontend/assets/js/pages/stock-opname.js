@@ -205,6 +205,137 @@ window.StockOpnamePage = class {
             .summary-value.negative {
                 color: #f5365c;
             }
+
+            /* Item Detail Row Styles */
+            .item-detail-row {
+                padding: 1rem;
+                transition: background-color 0.2s ease;
+            }
+
+            .item-detail-row:hover {
+                background-color: rgba(94, 114, 228, 0.05);
+            }
+
+            .item-icon-wrapper {
+                flex-shrink: 0;
+            }
+
+            .item-icon-wrapper .icon-shape {
+                width: 2.5rem;
+                height: 2.5rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Quantity Display Styles */
+            .quantity-display {
+                display: flex;
+                align-items: center;
+                font-family: "Monaco", "Courier New", monospace;
+            }
+
+            .quantity-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.375rem;
+                font-size: 0.75rem;
+                font-weight: 500;
+                background: rgba(0, 0, 0, 0.05);
+            }
+
+            .quantity-badge.system {
+                color: #8898aa;
+            }
+
+            .quantity-badge.actual {
+                color: #5e72e4;
+            }
+
+            .quantity-badge.difference.positive {
+                color: #2dce89;
+                background: rgba(45, 206, 137, 0.1);
+            }
+
+            .quantity-badge.difference.negative {
+                color: #f5365c;
+                background: rgba(245, 54, 92, 0.1);
+            }
+
+            .quantity-badge.difference.neutral {
+                color: #8898aa;
+            }
+
+            .quantity-label {
+                opacity: 0.8;
+            }
+
+            .quantity-value {
+                font-weight: 600;
+            }
+
+            /* Item Code Style */
+            .item-code {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.375rem;
+                font-size: 0.75rem;
+                font-weight: 500;
+                color: #8898aa;
+                background: rgba(136, 152, 170, 0.1);
+                font-family: "Monaco", "Courier New", monospace;
+            }
+
+            /* Discrepancy Badge Styles */
+            .discrepancy-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.25rem 0.5rem;
+                border-radius: 0.375rem;
+                font-size: 0.75rem;
+                font-weight: 500;
+            }
+
+            .discrepancy-badge.match {
+                color: #2dce89;
+                background: rgba(45, 206, 137, 0.1);
+            }
+
+            .discrepancy-badge.minor {
+                color: #fb6340;
+                background: rgba(251, 99, 64, 0.1);
+            }
+
+            .discrepancy-badge.major {
+                color: #f5365c;
+                background: rgba(245, 54, 92, 0.1);
+            }
+
+            /* Items List Container */
+            .items-list {
+                max-height: 500px;
+                overflow-y: auto;
+                padding: 0.5rem;
+            }
+
+            .items-list::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .items-list::-webkit-scrollbar-track {
+                background: #f8f9fe;
+            }
+
+            .items-list::-webkit-scrollbar-thumb {
+                background: #e9ecef;
+                border-radius: 3px;
+            }
+
+            .items-list::-webkit-scrollbar-thumb:hover {
+                background: #dee2e6;
+            }
         `)
         .appendTo('head');
     }
@@ -429,111 +560,242 @@ window.StockOpnamePage = class {
     }
 
     renderOpnameDetails(container, opname) {
-        const $detailContent = $('<div>').addClass('opname-detail-container p-4');
+        const $detailContent = $('<div>').addClass('master-detail-container p-4');
 
-        // Opname Information Section
-        const $opnameInfo = $('<div>')
-            .addClass('opname-info-card')
+        // Create the main layout with two columns
+        const $row = $('<div>').addClass('row').appendTo($detailContent);
+        
+        // Left column - Main info and summary
+        const $leftCol = $('<div>').addClass('col-lg-4').appendTo($row);
+        
+        // Right column - Items list
+        const $rightCol = $('<div>').addClass('col-lg-8').appendTo($row);
+
+        // Main Info Card
+        const $mainInfo = $('<div>')
+            .addClass('card shadow-sm mb-4')
+            .appendTo($leftCol);
+
+        // Header with status badge
+        $('<div>')
+            .addClass('card-header bg-gradient-primary text-white py-3')
             .append(
                 $('<div>')
-                    .addClass('card-header')
-                    .append($('<h5>').text('Opname Information'))
+                    .addClass('d-flex align-items-center')
+                    .append($('<i>').addClass('ni ni-clipboard-list mr-2'))
+                    .append($('<h3>').addClass('mb-0').text(opname.opname_number))
+            )
+            .appendTo($mainInfo);
+
+        // Status Badge
+        $('<div>')
+            .addClass('card-body border-bottom')
+            .append(
+                $('<div>')
+                    .addClass('d-flex align-items-center justify-content-between')
+                    .append($('<h6>').addClass('mb-0').text('Status'))
+                    .append($(this.formatStatus(opname.status)))
+            )
+            .appendTo($mainInfo);
+
+        // Basic Info
+        $('<div>')
+            .addClass('card-body')
+            .append(
+                $('<div>').addClass('info-group mb-3')
+                    .append($('<h6>').addClass('text-muted mb-1').text('Opname Date'))
+                    .append($('<p>').addClass('mb-0 font-weight-bold')
+                        .append($('<i>').addClass('ni ni-calendar-grid-58 mr-2 text-primary'))
+                        .append(new Date(opname.opname_date).toLocaleString())
+                    )
             )
             .append(
-                $('<div>')
-                    .addClass('card-body')
-                    .append(this.createInfoGroup('Opname Number', opname.opname_number))
-                    .append(this.createInfoGroup('Status', this.formatStatus(opname.status)))
-                    .append(this.createInfoGroup('Opname Date', new Date(opname.opname_date).toLocaleString()))
-                    .append(this.createInfoGroup('Created By', opname.created_by))
-            );
-
-        // Items List
-        const $itemsList = $('<div>')
-            .addClass('opname-info-card')
-            .append(
-                $('<div>')
-                    .addClass('card-header')
-                    .append($('<h5>').text('Items'))
+                $('<div>').addClass('info-group mb-3')
+                    .append($('<h6>').addClass('text-muted mb-1').text('Created By'))
+                    .append($('<p>').addClass('mb-0 font-weight-bold')
+                        .append($('<i>').addClass('ni ni-single-02 mr-2 text-primary'))
+                        .append(opname.created_by)
+                    )
             )
             .append(
-                $('<div>')
-                    .addClass('card-body')
-                    .append(this.createItemsList(opname.details))
-            );
+                $('<div>').addClass('info-group')
+                    .append($('<h6>').addClass('text-muted mb-1').text('Notes'))
+                    .append($('<p>').addClass('mb-0 text-sm').text(opname.notes || 'No notes available'))
+            )
+            .appendTo($mainInfo);
 
-        // Notes Section (if available)
-        if (opname.notes) {
-            const $notes = $('<div>')
-                .addClass('opname-info-card')
+        // Summary Card
+        const $summary = $('<div>')
+            .addClass('card shadow-sm')
+            .appendTo($leftCol);
+
+        $('<div>')
+            .addClass('card-header bg-light')
+            .append($('<h5>').addClass('mb-0').text('Summary'))
+            .appendTo($summary);
+
+        // Calculate summary data
+        const totalItems = opname.details.length;
+        const matchingItems = opname.details.filter(d => d.difference_qty === 0).length;
+        const discrepancies = opname.details.filter(d => d.difference_qty !== 0).length;
+
+        // Summary Stats
+        const $summaryBody = $('<div>').addClass('card-body p-0').appendTo($summary);
+        
+        // Summary Items
+        [
+            {
+                icon: 'ni ni-box-2',
+                label: 'Total Items',
+                value: totalItems,
+                color: 'primary'
+            },
+            {
+                icon: 'ni ni-check-bold',
+                label: 'Matching Items',
+                value: matchingItems,
+                color: 'success'
+            },
+            {
+                icon: 'ni ni-fat-remove',
+                label: 'Discrepancies',
+                value: discrepancies,
+                color: 'danger'
+            }
+        ].forEach(item => {
+            $('<div>')
+                .addClass('px-4 py-3 border-bottom')
                 .append(
                     $('<div>')
-                        .addClass('card-header')
-                        .append($('<h5>').text('Notes'))
+                        .addClass('d-flex align-items-center')
+                        .append(
+                            $('<div>')
+                                .addClass(`icon icon-shape icon-sm rounded-circle bg-${item.color} text-white mr-3`)
+                                .append($('<i>').addClass(item.icon))
+                        )
+                        .append(
+                            $('<div>')
+                                .addClass('flex-fill')
+                                .append($('<h6>').addClass('mb-0').text(item.label))
+                                .append($('<small>').addClass(`text-${item.color} font-weight-bold`).text(item.value))
+                        )
+                )
+                .appendTo($summaryBody);
+        });
+
+        // Items List Card
+        const $itemsCard = $('<div>')
+            .addClass('card shadow-sm')
+            .appendTo($rightCol);
+
+        $('<div>')
+            .addClass('card-header bg-light d-flex justify-content-between align-items-center')
+            .append($('<h5>').addClass('mb-0').text('Item Details'))
+            .appendTo($itemsCard);
+
+        // Items Table
+        const $tableResponsive = $('<div>').addClass('table-responsive').appendTo($itemsCard);
+        const $table = $('<table>')
+            .addClass('table table-hover table-sm align-items-center mb-0')
+            .appendTo($tableResponsive);
+
+        // Table Header
+        $('<thead>')
+            .addClass('thead-light')
+            .append(
+                $('<tr>')
+                    .append($('<th>').addClass('text-uppercase text-muted text-xxs font-weight-bold').text('Item'))
+                    .append($('<th>').addClass('text-uppercase text-muted text-xxs font-weight-bold').text('Code'))
+                    .append($('<th>').addClass('text-uppercase text-muted text-xxs font-weight-bold text-center').text('System Qty'))
+                    .append($('<th>').addClass('text-uppercase text-muted text-xxs font-weight-bold text-center').text('Actual Qty'))
+                    .append($('<th>').addClass('text-uppercase text-muted text-xxs font-weight-bold text-center').text('Difference'))
+                    .append($('<th>').addClass('text-uppercase text-muted text-xxs font-weight-bold').text('Status'))
+            )
+            .appendTo($table);
+
+        // Table Body
+        const $tbody = $('<tbody>').appendTo($table);
+
+        // Add items to table
+        opname.details.forEach(detail => {
+            const difference = detail.actual_qty - detail.system_qty;
+            const status = difference === 0 ? 'match' : Math.abs(difference) <= 5 ? 'minor' : 'major';
+            
+            $('<tr>')
+                .append(
+                    $('<td>')
+                        .append(
+                            $('<div>')
+                                .addClass('d-flex align-items-center')
+                                .append(
+                                    $('<div>')
+                                        .addClass('icon-shape icon-xs rounded-circle bg-light mr-2')
+                                        .append($('<i>').addClass('ni ni-box-2 text-primary'))
+                                )
+                                .append(
+                                    $('<span>')
+                                        .addClass('font-weight-bold text-sm')
+                                        .text(detail.item.name)
+                                )
+                        )
                 )
                 .append(
-                    $('<div>')
-                        .addClass('card-body')
-                        .append($('<p>').addClass('mb-0').text(opname.notes))
-                );
-            $detailContent.append($notes);
-        }
+                    $('<td>')
+                        .append(
+                            $('<span>')
+                                .addClass('item-code')
+                                .text(detail.item.code)
+                        )
+                )
+                .append(
+                    $('<td>')
+                        .addClass('text-center')
+                        .append(
+                            $('<span>')
+                                .addClass('font-weight-bold')
+                                .text(detail.system_qty)
+                        )
+                )
+                .append(
+                    $('<td>')
+                        .addClass('text-center')
+                        .append(
+                            $('<span>')
+                                .addClass('font-weight-bold')
+                                .text(detail.actual_qty)
+                        )
+                )
+                .append(
+                    $('<td>')
+                        .addClass('text-center')
+                        .append(
+                            $('<span>')
+                                .addClass(`font-weight-bold ${difference < 0 ? 'text-danger' : difference > 0 ? 'text-success' : ''}`)
+                                .text(difference > 0 ? `+${difference}` : difference)
+                        )
+                )
+                .append(
+                    $('<td>')
+                        .append(
+                            $('<span>')
+                                .addClass(`badge-item-status ${status}`)
+                                .append($('<i>').addClass(this.getStatusIcon(status)))
+                                .append(status.charAt(0).toUpperCase() + status.slice(1))
+                        )
+                )
+                .appendTo($tbody);
+        });
 
-        $detailContent.append($opnameInfo).append($itemsList);
         container.append($detailContent);
     }
 
-    createInfoGroup(label, value) {
-        return $('<div>')
-            .addClass('info-group')
-            .append($('<div>').addClass('info-label').text(label))
-            .append($('<div>').addClass('info-value').html(value));
-    }
-
-    createItemsList(details) {
-        const $itemsList = $('<div>').addClass('items-list');
-        
-        details.forEach(detail => {
-            const $itemRow = $('<div>')
-                .addClass('item-row')
-                .append(
-                    $('<div>')
-                        .addClass('item-icon')
-                        .append($('<i>').addClass('ni ni-box-2'))
-                )
-                .append(
-                    $('<div>')
-                        .addClass('item-details')
-                        .append(
-                            $('<div>')
-                                .addClass('font-weight-bold')
-                                .text(detail.item.name)
-                        )
-                        .append(
-                            $('<small>')
-                                .addClass('text-muted')
-                                .text(`Code: ${detail.item.code}`)
-                        )
-                )
-                .append(
-                    $('<div>')
-                        .addClass('item-quantity')
-                        .addClass(detail.difference_qty < 0 ? 'negative' : '')
-                        .text(`${detail.actual_qty} / ${detail.system_qty} (${detail.difference_qty})`)
-                );
-
-            if (detail.notes) {
-                $itemRow.append(
-                    $('<small>')
-                        .addClass('text-muted d-block mt-2')
-                        .text(detail.notes)
-                );
-            }
-
-            $itemsList.append($itemRow);
-        });
-
-        return $itemsList;
+    getStatusIcon(status) {
+        const icons = {
+            'match': 'fas fa-check mr-1',
+            'minor': 'fas fa-exclamation mr-1',
+            'major': 'fas fa-exclamation-triangle mr-1'
+        };
+        return icons[status] || 'fas fa-question mr-1';
     }
 
     formatStatus(status) {
@@ -609,44 +871,118 @@ window.StockOpnamePage = class {
         $itemsList.empty();
 
         details.forEach(detail => {
+            const difference = detail.actual_qty - detail.system_qty;
+            const status = difference === 0 ? 'match' : Math.abs(difference) <= 5 ? 'minor' : 'major';
+            
+            // Create item row with modern design
             const $itemRow = $('<div>')
-                .addClass('item-row')
+                .addClass('item-detail-row d-flex align-items-center py-3 border-bottom')
                 .append(
+                    // Item icon
                     $('<div>')
-                        .addClass('item-icon')
-                        .append($('<i>').addClass('ni ni-box-2'))
-                )
-                .append(
-                    $('<div>')
-                        .addClass('item-details')
+                        .addClass('item-icon-wrapper mr-3')
                         .append(
                             $('<div>')
-                                .addClass('font-weight-bold')
-                                .text(detail.item.name)
-                        )
-                        .append(
-                            $('<small>')
-                                .addClass('text-muted')
-                                .text(`Code: ${detail.item.code}`)
+                                .addClass('icon-shape icon-sm rounded-circle bg-light')
+                                .append($('<i>').addClass('ni ni-box-2 text-primary'))
                         )
                 )
                 .append(
+                    // Item info
                     $('<div>')
-                        .addClass('item-quantity')
-                        .addClass(detail.difference_qty < 0 ? 'negative' : '')
-                        .text(`${detail.actual_qty} / ${detail.system_qty} (${detail.difference_qty})`)
+                        .addClass('item-info flex-grow-1')
+                        .append(
+                            $('<div>')
+                                .addClass('d-flex justify-content-between align-items-center mb-1')
+                                .append(
+                                    $('<h6>')
+                                        .addClass('mb-0 font-weight-bold')
+                                        .text(detail.item.name)
+                                )
+                                .append(
+                                    this.createQuantityBadge(detail.actual_qty, detail.system_qty, difference)
+                                )
+                        )
+                        .append(
+                            $('<div>')
+                                .addClass('d-flex align-items-center')
+                                .append(
+                                    $('<span>')
+                                        .addClass('item-code mr-3')
+                                        .append($('<i>').addClass('ni ni-tag mr-1'))
+                                        .append(detail.item.code)
+                                )
+                                .append(
+                                    this.createDiscrepancyBadge(difference)
+                                )
+                        )
                 );
-
-            if (detail.notes) {
-                $itemRow.append(
-                    $('<small>')
-                        .addClass('text-muted d-block mt-2')
-                        .text(detail.notes)
-                );
-            }
 
             $itemsList.append($itemRow);
         });
+    }
+
+    createQuantityBadge(actual, system, difference) {
+        const $quantityWrapper = $('<div>').addClass('quantity-display');
+        
+        // System quantity
+        $quantityWrapper.append(
+            $('<span>')
+                .addClass('quantity-badge system mr-2')
+                .append(
+                    $('<span>').addClass('quantity-label mr-1').text('System:')
+                )
+                .append(
+                    $('<span>').addClass('quantity-value').text(system)
+                )
+        );
+
+        // Actual quantity
+        $quantityWrapper.append(
+            $('<span>')
+                .addClass('quantity-badge actual mr-2')
+                .append(
+                    $('<span>').addClass('quantity-label mr-1').text('Actual:')
+                )
+                .append(
+                    $('<span>').addClass('quantity-value').text(actual)
+                )
+        );
+
+        // Difference
+        const diffClass = difference < 0 ? 'negative' : difference > 0 ? 'positive' : 'neutral';
+        $quantityWrapper.append(
+            $('<span>')
+                .addClass(`quantity-badge difference ${diffClass}`)
+                .append(
+                    $('<span>').addClass('quantity-label mr-1').text('Diff:')
+                )
+                .append(
+                    $('<span>')
+                        .addClass('quantity-value')
+                        .text(difference > 0 ? `+${difference}` : difference)
+                )
+        );
+
+        return $quantityWrapper;
+    }
+
+    createDiscrepancyBadge(difference) {
+        if (difference === 0) {
+            return $('<span>')
+                .addClass('discrepancy-badge match')
+                .append($('<i>').addClass('fas fa-check mr-1'))
+                .append('Count matches system');
+        }
+
+        const isMinor = Math.abs(difference) <= 5;
+        const badgeClass = isMinor ? 'minor' : 'major';
+        const message = isMinor ? 'Small difference found' : 'Two spools missing';
+
+        return $('<span>')
+            .addClass(`discrepancy-badge ${badgeClass}`)
+            .append($('<i>').addClass(isMinor ? 'fas fa-exclamation mr-1' : 'fas fa-exclamation-triangle mr-1'))
+            .append(message);
     }
 
     updateTimeline(opname) {
