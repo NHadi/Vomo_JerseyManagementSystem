@@ -163,6 +163,9 @@
                         case 'supplier':
                             await this.loadSupplierGrid();
                             break;
+                        case 'makloon':
+                            await this.loadMakloonGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -1401,6 +1404,63 @@
                 // Load dashboard content
                 $('#main-content').load('components/dashboard.html', () => {
                     resolve();
+                });
+            });
+        },
+
+        loadMakloonGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.makloonPageInstance) {
+                window.makloonPageInstance.dispose();
+                window.makloonPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/makloon.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="makloon"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the makloon.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/makloon.js';
+                        script.setAttribute('data-page', 'makloon');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the makloon page instance
+                            if (!window.makloonPageInstance) {
+                                window.makloonPageInstance = new window.MakloonPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load makloon module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load makloon component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load makloon component</div>');
+                        reject(error);
+                    }
                 });
             });
         },
