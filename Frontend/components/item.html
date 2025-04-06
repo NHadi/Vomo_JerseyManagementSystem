@@ -652,4 +652,158 @@ select.form-control {
     -moz-appearance: none;
     appearance: none;
 }
+
+/* Grid Toolbar Styles */
+.dx-toolbar {
+    background: #fff;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+.dx-toolbar-items-container {
+    height: 38px !important;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.dx-toolbar-before {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dx-toolbar-after {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Add Item Button */
+.dx-button-mode-contained.dx-button-default {
+    height: 38px;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.15s ease;
+    margin: 0;
+}
+
+.dx-button-mode-contained.dx-button-default:hover {
+    background: #f6f9fc;
+    border-color: #e9ecef;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.dx-button-mode-contained.dx-button-default .dx-button-content {
+    padding: 0 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #525f7f;
+    line-height: 36px;
+    display: flex;
+    align-items: center;
+}
+
+.dx-button-mode-contained.dx-button-default .dx-icon {
+    color: #8898aa;
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+/* Export Button */
+.dx-button-mode-outlined {
+    height: 38px;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.15s ease;
+    margin: 0;
+}
+
+.dx-button-mode-outlined .dx-button-content {
+    padding: 0 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #525f7f;
+    line-height: 36px;
+    display: flex;
+    align-items: center;
+}
+
+.dx-button-mode-outlined:hover {
+    background: #f6f9fc;
+    border-color: #e9ecef;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+/* Search Box */
+.dx-texteditor.dx-editor-outlined {
+    height: 38px;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+    background: #fff;
+    min-width: 250px;
+    transition: all 0.15s ease;
+    margin: 0;
+}
+
+.dx-texteditor.dx-editor-outlined .dx-texteditor-input {
+    padding: 0 12px 0 36px;
+    font-size: 0.875rem;
+    color: #525f7f;
+    height: 36px;
+    line-height: 36px;
+}
+
+/* Remove extra margins and padding */
+.dx-toolbar-item {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.dx-toolbar-item:not(:first-child) {
+    margin-left: 8px !important;
+}
+
+/* Fix button icons alignment */
+.dx-button-content i,
+.dx-button-content .dx-icon {
+    margin-right: 8px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+/* Ensure consistent heights */
+.dx-button,
+.dx-texteditor {
+    height: 38px !important;
+}
+
+/* Grid Headers */
+.dx-datagrid-headers {
+    background: #f8f9fe;
+    border-top: 1px solid #e9ecef;
+}
+
+.dx-datagrid-headers .dx-datagrid-table .dx-row > td {
+    padding: 12px 16px;
+    font-weight: 600;
+    color: #8898aa;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border-bottom: 1px solid #e9ecef;
+}
+
 </style> 

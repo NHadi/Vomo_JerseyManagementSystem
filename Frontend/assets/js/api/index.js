@@ -16,6 +16,7 @@ import { orderAPI } from './modules/orders.js';
 import { taskAPI } from './modules/tasks.js';
 import { itemAPI } from './modules/items.js';
 import { paymentAPI } from './modules/payments.js';
+import { stockOpnameAPI } from './modules/stock-opnames.js';
 import { config } from './config.js';
 
 // Initialize the API namespace
@@ -38,6 +39,7 @@ export const vomoAPI = {
     ...taskAPI,
     ...itemAPI,
     ...paymentAPI,
+    ...stockOpnameAPI,
     config
 };
 

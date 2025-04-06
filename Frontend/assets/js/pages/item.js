@@ -247,7 +247,11 @@ window.ItemPage = class {
             ],
             showBorders: true,
             filterRow: { visible: true },
-            searchPanel: { visible: true },
+            searchPanel: {
+                visible: true,
+                width: 250,
+                placeholder: 'Search...'
+            },
             headerFilter: { visible: true },
             groupPanel: { visible: false },
             columnChooser: { enabled: true },
@@ -265,12 +269,39 @@ window.ItemPage = class {
                         options: {
                             icon: 'plus',
                             text: 'Add Item',
+                            type: 'default',
+                            stylingMode: 'contained',
                             onClick: () => this.grid.addRow()
                         }
                     },
-                    'searchPanel',
-                    'columnChooserButton'
+                    'searchPanel'
                 ]
+            },
+            export: {
+                enabled: true,
+                formats: ['xlsx', 'pdf']
+            },
+            onToolbarPreparing: (e) => {
+                const toolbarItems = e.toolbarOptions.items;
+                
+                // Move search box to the end
+                const searchBox = toolbarItems.find(i => i.name === "searchPanel");
+                if (searchBox) {
+                    searchBox.location = 'after';
+                }
+
+                // Find the export button and modify its properties
+                const exportButton = toolbarItems.find(i => i.name === "exportButton");
+                if (exportButton) {
+                    exportButton.location = 'before';
+                    exportButton.options = {
+                        ...exportButton.options,
+                        stylingMode: 'outlined',
+                        icon: 'export',
+                        text: 'Export',
+                        type: 'default'
+                    };
+                }
             },
             editing: {
                 mode: 'popup',

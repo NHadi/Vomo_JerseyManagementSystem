@@ -154,6 +154,9 @@
                         case 'payment':
                             await this.loadPaymentGrid();
                             break;
+                        case 'stock-opname':
+                            await this.loadStockOpnameGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -1193,6 +1196,63 @@
                     } catch (error) {
                         console.error('Failed to load payment component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load payment component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadStockOpnameGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.stockOpnamePageInstance) {
+                window.stockOpnamePageInstance.dispose();
+                window.stockOpnamePageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/stock-opname.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="stock-opname"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the stock-opname.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/stock-opname.js';
+                        script.setAttribute('data-page', 'stock-opname');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the stock opname page instance
+                            if (!window.stockOpnamePageInstance) {
+                                window.stockOpnamePageInstance = new window.StockOpnamePage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load stock opname module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load stock opname component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load stock opname component</div>');
                         reject(error);
                     }
                 });
