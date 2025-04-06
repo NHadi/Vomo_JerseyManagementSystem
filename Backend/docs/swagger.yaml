@@ -128,6 +128,34 @@ definitions:
     - email
     - name
     type: object
+  handlers.CreateItemRequest:
+    properties:
+      code:
+        example: ITM001
+        type: string
+      description:
+        example: Test item description
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      max_stock:
+        example: 100
+        type: integer
+      min_stock:
+        example: 10
+        type: integer
+      name:
+        example: Test Item
+        type: string
+      unit:
+        example: PCS
+        type: string
+    required:
+    - code
+    - name
+    - unit
+    type: object
   handlers.CreateMenuRequest:
     description: Create menu request model
     properties:
@@ -393,6 +421,65 @@ definitions:
     required:
     - name
     type: object
+  handlers.CreateStockMovementRequest:
+    properties:
+      item_id:
+        example: 1
+        type: integer
+      movement_type:
+        example: in
+        type: string
+      notes:
+        example: Initial stock
+        type: string
+      quantity:
+        example: 100
+        type: integer
+      reference_id:
+        example: 1
+        type: integer
+      reference_type:
+        example: purchase
+        type: string
+    required:
+    - item_id
+    - movement_type
+    - quantity
+    type: object
+  handlers.CreateStockOpnameDetailRequest:
+    properties:
+      actual_qty:
+        example: 95
+        type: integer
+      item_id:
+        example: 1
+        type: integer
+      notes:
+        example: Stock count mismatch
+        type: string
+      system_qty:
+        example: 100
+        type: integer
+    required:
+    - actual_qty
+    - item_id
+    - system_qty
+    type: object
+  handlers.CreateStockOpnameRequest:
+    properties:
+      notes:
+        example: Monthly stock count
+        type: string
+      opname_date:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      opname_number:
+        example: OPN/2024/001
+        type: string
+    required:
+    - opname_date
+    - opname_number
+    type: object
   handlers.CreateTaskRequest:
     description: Create task request model
     properties:
@@ -461,6 +548,26 @@ definitions:
         type: integer
     required:
     - name
+    type: object
+  handlers.Customization:
+    description: Customization model
+    properties:
+      name:
+        example: SMITH
+        type: string
+      number:
+        example: "10"
+        type: string
+    type: object
+  handlers.DiscountRule:
+    description: Discount rule model
+    properties:
+      discount_percentage:
+        example: 10
+        type: number
+      quantity_threshold:
+        example: 5
+        type: integer
     type: object
   handlers.DivisionInfo:
     properties:
@@ -582,6 +689,48 @@ definitions:
         example: 1
         type: integer
     type: object
+  handlers.ItemResponse:
+    properties:
+      code:
+        example: ITM001
+        type: string
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      description:
+        example: Test item description
+        type: string
+      id:
+        example: 1
+        type: integer
+      is_active:
+        example: true
+        type: boolean
+      max_stock:
+        example: 100
+        type: integer
+      min_stock:
+        example: 10
+        type: integer
+      name:
+        example: Test Item
+        type: string
+      tenant_id:
+        example: 1
+        type: integer
+      unit:
+        example: PCS
+        type: string
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
+    type: object
   handlers.LoginRequest:
     properties:
       email:
@@ -698,6 +847,66 @@ definitions:
         example: 1
         type: integer
     type: object
+  handlers.OrderItemResponse:
+    properties:
+      applied_discount_rule:
+        $ref: '#/definitions/handlers.DiscountRule'
+      color:
+        example: Red/White
+        type: string
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      current_task:
+        example: layout
+        type: string
+      customization:
+        $ref: '#/definitions/handlers.Customization'
+      discount_amount:
+        example: 24.99
+        type: number
+      final_subtotal:
+        example: 224.96
+        type: number
+      id:
+        example: 1
+        type: integer
+      order_id:
+        example: 1
+        type: integer
+      original_subtotal:
+        example: 249.95
+        type: number
+      product:
+        $ref: '#/definitions/handlers.ProductDetail'
+      product_id:
+        example: 1
+        type: integer
+      production_status:
+        example: pending
+        type: string
+      quantity:
+        example: 5
+        type: integer
+      size:
+        example: L
+        type: string
+      tenant_id:
+        example: 1
+        type: integer
+      unit_price:
+        example: 49.99
+        type: number
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
+    type: object
   handlers.OrderResponse:
     description: Order response model
     properties:
@@ -734,6 +943,10 @@ definitions:
       office_id:
         example: 1
         type: integer
+      order_items:
+        items:
+          $ref: '#/definitions/handlers.OrderItemResponse'
+        type: array
       order_number:
         example: ORD-001
         type: string
@@ -862,6 +1075,16 @@ definitions:
         type: string
       updated_by:
         example: admin
+        type: string
+    type: object
+  handlers.ProductDetail:
+    description: Product detail model
+    properties:
+      description:
+        example: Product Description
+        type: string
+      name:
+        example: Product Name
         type: string
     type: object
   handlers.ProductResponse:
@@ -1041,6 +1264,119 @@ definitions:
         example: john.doe@example.com
         type: string
     type: object
+  handlers.StockMovementResponse:
+    properties:
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      id:
+        example: 1
+        type: integer
+      item:
+        $ref: '#/definitions/handlers.ItemResponse'
+      movement_type:
+        example: in
+        type: string
+      notes:
+        example: Initial stock
+        type: string
+      quantity:
+        example: 100
+        type: integer
+      reference_id:
+        example: 1
+        type: integer
+      reference_type:
+        example: purchase
+        type: string
+      tenant_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
+    type: object
+  handlers.StockOpnameDetailResponse:
+    properties:
+      actual_qty:
+        example: 95
+        type: integer
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      difference_qty:
+        example: -5
+        type: integer
+      id:
+        example: 1
+        type: integer
+      item:
+        $ref: '#/definitions/handlers.ItemResponse'
+      notes:
+        example: Stock count mismatch
+        type: string
+      stock_opname_id:
+        example: 1
+        type: integer
+      system_qty:
+        example: 100
+        type: integer
+      tenant_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
+    type: object
+  handlers.StockOpnameResponse:
+    properties:
+      created_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      created_by:
+        example: admin
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/handlers.StockOpnameDetailResponse'
+        type: array
+      id:
+        example: 1
+        type: integer
+      notes:
+        example: Monthly stock count
+        type: string
+      opname_date:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      opname_number:
+        example: OPN/2024/001
+        type: string
+      status:
+        example: draft
+        type: string
+      tenant_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      updated_by:
+        example: admin
+        type: string
+    type: object
   handlers.SuccessResponse:
     description: Standard success response model
     properties:
@@ -1063,6 +1399,9 @@ definitions:
       employee_id:
         example: 1
         type: integer
+      employee_name:
+        example: John Doe
+        type: string
       id:
         example: 1
         type: integer
@@ -1095,6 +1434,18 @@ definitions:
         type: string
     type: object
   handlers.UpdateDivisionEmployeesRequest:
+    description: Update division employees request model
+    properties:
+      employee_ids:
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+    required:
+    - employee_ids
     type: object
   handlers.UpdateDivisionRequest:
     description: Update division request model
@@ -1127,6 +1478,30 @@ definitions:
     - DivisionID
     - email
     - name
+    type: object
+  handlers.UpdateItemRequest:
+    properties:
+      description:
+        example: Test item description
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      max_stock:
+        example: 100
+        type: integer
+      min_stock:
+        example: 10
+        type: integer
+      name:
+        example: Test Item
+        type: string
+      unit:
+        example: PCS
+        type: string
+    required:
+    - name
+    - unit
     type: object
   handlers.UpdateMenuRequest:
     description: Update menu request model
@@ -1393,6 +1768,32 @@ definitions:
         type: array
     required:
     - name
+    type: object
+  handlers.UpdateStockOpnameDetailRequest:
+    properties:
+      actual_qty:
+        example: 95
+        type: integer
+      notes:
+        example: Stock count mismatch
+        type: string
+    required:
+    - actual_qty
+    type: object
+  handlers.UpdateStockOpnameRequest:
+    properties:
+      notes:
+        example: Monthly stock count
+        type: string
+      opname_date:
+        example: "2024-03-24T21:41:49Z"
+        type: string
+      status:
+        example: in_progress
+        type: string
+    required:
+    - opname_date
+    - status
     type: object
   handlers.UpdateTaskRequest:
     description: Update task request model
@@ -2491,6 +2892,229 @@ paths:
       summary: Get employees by division
       tags:
       - Employee
+  /items:
+    get:
+      description: Get all items
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.ItemResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all items
+      tags:
+      - Item
+    post:
+      consumes:
+      - application/json
+      description: Create a new item with the provided details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Item Data
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateItemRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.ItemResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new item
+      tags:
+      - Item
+  /items/{id}:
+    delete:
+      description: Delete an existing item
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Item not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete an item
+      tags:
+      - Item
+    get:
+      description: Get item details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ItemResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Item not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get an item by ID
+      tags:
+      - Item
+    put:
+      consumes:
+      - application/json
+      description: Update an existing item with new details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Item Data
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ItemResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Item not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an item
+      tags:
+      - Item
   /menus:
     get:
       description: Get all menu items
@@ -5199,6 +5823,610 @@ paths:
       summary: Assign permissions to a role
       tags:
       - Permission
+  /stock-movements:
+    get:
+      description: Get all stock movements
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.StockMovementResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all stock movements
+      tags:
+      - StockMovement
+    post:
+      consumes:
+      - application/json
+      description: Create a new stock movement with the provided details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Stock Movement Data
+        in: body
+        name: movement
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateStockMovementRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.StockMovementResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new stock movement
+      tags:
+      - StockMovement
+  /stock-movements/{id}:
+    get:
+      description: Get stock movement details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Stock Movement ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.StockMovementResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Stock movement not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a stock movement by ID
+      tags:
+      - StockMovement
+  /stock-movements/by-item:
+    get:
+      description: Get all stock movements for a specific item
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Item ID
+        in: query
+        name: item_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.StockMovementResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get stock movements by item
+      tags:
+      - StockMovement
+  /stock-movements/by-reference:
+    get:
+      description: Get all stock movements for a specific reference
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Reference Type
+        in: query
+        name: reference_type
+        required: true
+        type: string
+      - description: Reference ID
+        in: query
+        name: reference_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.StockMovementResponse'
+            type: array
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get stock movements by reference
+      tags:
+      - StockMovement
+  /stock-opnames:
+    get:
+      description: Get all stock opnames
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.StockOpnameResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all stock opnames
+      tags:
+      - StockOpname
+    post:
+      consumes:
+      - application/json
+      description: Create a new stock opname with the provided details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Stock Opname Data
+        in: body
+        name: opname
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateStockOpnameRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.StockOpnameResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new stock opname
+      tags:
+      - StockOpname
+  /stock-opnames/{id}:
+    delete:
+      description: Delete an existing stock opname
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Stock Opname ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Stock opname not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a stock opname
+      tags:
+      - StockOpname
+    get:
+      description: Get stock opname details by ID
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Stock Opname ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.StockOpnameResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Stock opname not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get a stock opname by ID
+      tags:
+      - StockOpname
+    put:
+      consumes:
+      - application/json
+      description: Update an existing stock opname with new details
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Stock Opname ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Stock Opname Data
+        in: body
+        name: opname
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateStockOpnameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.StockOpnameResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Stock opname not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a stock opname
+      tags:
+      - StockOpname
+  /stock-opnames/{id}/details:
+    post:
+      consumes:
+      - application/json
+      description: Add a new detail to an existing stock opname
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Stock Opname ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Stock Opname Detail Data
+        in: body
+        name: detail
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateStockOpnameDetailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.StockOpnameDetailResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Stock opname not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add detail to stock opname
+      tags:
+      - StockOpname
+  /stock-opnames/{id}/details/{detail_id}:
+    delete:
+      description: Delete an existing stock opname detail
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Stock Opname ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.SuccessResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Stock opname detail not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete stock opname detail
+      tags:
+      - StockOpname
+    put:
+      consumes:
+      - application/json
+      description: Update an existing stock opname detail
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Stock Opname ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Detail ID
+        in: path
+        name: detail_id
+        required: true
+        type: integer
+      - description: Stock Opname Detail Data
+        in: body
+        name: detail
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateStockOpnameDetailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.StockOpnameDetailResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Stock opname detail not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update stock opname detail
+      tags:
+      - StockOpname
   /tasks:
     get:
       description: Get all tasks

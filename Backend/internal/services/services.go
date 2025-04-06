@@ -22,6 +22,9 @@ type ProductCategoryService = *application.ProductCategoryService
 type OrderService = *application.OrderService
 type PaymentService = *application.PaymentService
 type TaskService = *application.TaskService
+type ItemService = *application.ItemService
+type StockOpnameService = *application.StockOpnameService
+type StockMovementService = *application.StockMovementService
 
 // Services holds all the application services
 type Services struct {
@@ -42,6 +45,9 @@ type Services struct {
 	OrderService           *application.OrderService
 	PaymentService         *application.PaymentService
 	TaskService            *application.TaskService
+	ItemService            *application.ItemService
+	StockOpnameService     *application.StockOpnameService
+	StockMovementService   *application.StockMovementService
 }
 
 func NewServices(db *gorm.DB, cfg *config.Config) *Services {
@@ -63,6 +69,9 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 	orderRepo := postgres.NewOrderRepository(db)
 	paymentRepo := postgres.NewPaymentRepository(db)
 	taskRepo := postgres.NewTaskRepository(db)
+	itemRepo := postgres.NewItemRepository(db)
+	stockOpnameRepo := postgres.NewStockOpnameRepository(db)
+	stockMovementRepo := postgres.NewStockMovementRepository(db)
 
 	// Initialize audit service first as it's needed by other services
 	auditService := audit.NewService(auditRepo)
@@ -84,6 +93,9 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 	orderService := application.NewOrderService(orderRepo, auditService)
 	paymentService := application.NewPaymentService(paymentRepo, auditService)
 	taskService := application.NewTaskService(taskRepo, auditService)
+	itemService := application.NewItemService(itemRepo, auditService)
+	stockOpnameService := application.NewStockOpnameService(stockOpnameRepo, auditService)
+	stockMovementService := application.NewStockMovementService(stockMovementRepo, auditService)
 
 	return &Services{
 		MenuService:            menuService,
@@ -103,5 +115,8 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 		OrderService:           orderService,
 		PaymentService:         paymentService,
 		TaskService:            taskService,
+		ItemService:            itemService,
+		StockOpnameService:     stockOpnameService,
+		StockMovementService:   stockMovementService,
 	}
 }

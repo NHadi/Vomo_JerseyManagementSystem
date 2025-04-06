@@ -48,7 +48,7 @@ type UpdateDivisionRequest struct {
 // UpdateDivisionEmployeesRequest represents the request structure for updating division employees
 // @Description Update division employees request model
 type UpdateDivisionEmployeesRequest struct {
-	EmployeeIDs []int `json:"employee_ids" binding:"required" example:"[1,2,3]"`
+	EmployeeIDs []int `json:"employee_ids" binding:"required" example:"1,2,3"`
 }
 
 func toDivisionResponse(d *division.Division) DivisionResponse {
