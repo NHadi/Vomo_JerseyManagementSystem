@@ -308,76 +308,226 @@ window.ItemPage = class {
                 allowUpdating: true,
                 allowDeleting: true,
                 allowAdding: true,
+                useIcons: true,
+                texts: {
+                    confirmDeleteMessage: 'Are you sure you want to delete this item?',
+                    saveRowChanges: 'Save',
+                    cancelRowChanges: 'Cancel',
+                    deleteRow: 'Delete',
+                    editRow: 'Edit',
+                    addRow: 'New Item'
+                },
                 popup: {
                     title: 'Item Information',
                     showTitle: true,
-                    width: 700,
-                    height: 525
+                    width: 800,
+                    height: 'auto',
+                    position: { my: 'center', at: 'center', of: window },
+                    showCloseButton: true
                 },
                 form: {
+                    labelLocation: 'top',
+                    showColonAfterLabel: false,
+                    colCount: 2,
                     items: [
                         {
                             itemType: 'group',
-                            colCount: 2,
+                            caption: 'Basic Information',
+                            colSpan: 1,
+                            cssClass: 'form-section',
                             items: [
                                 {
                                     dataField: 'code',
+                                    label: { text: 'Item Code' },
                                     isRequired: true,
-                                    validationRules: [
-                                        { type: 'required', message: 'Item Code is required' },
-                                        { type: 'pattern', pattern: /^[A-Z]+-\d{3}$/, message: 'Format should be XXX-000' }
-                                    ]
+                                    editorOptions: {
+                                        placeholder: 'Enter item code (XXX-000)',
+                                        stylingMode: 'filled',
+                                        showClearButton: true,
+                                        mode: 'text'
+                                    }
                                 },
                                 {
                                     dataField: 'name',
-                                    isRequired: true
-                                },
-                                {
-                                    dataField: 'unit',
+                                    label: { text: 'Item Name' },
                                     isRequired: true,
-                                    editorType: 'dxSelectBox',
                                     editorOptions: {
-                                        items: ['pieces', 'yards', 'spools', 'rolls', 'liters'],
-                                        searchEnabled: true
-                                    }
-                                },
-                                {
-                                    dataField: 'is_active',
-                                    editorType: 'dxSwitch',
-                                    editorOptions: {
-                                        switchedOnText: 'Active',
-                                        switchedOffText: 'Inactive'
-                                    }
-                                },
-                                {
-                                    dataField: 'min_stock',
-                                    isRequired: true,
-                                    editorType: 'dxNumberBox',
-                                    editorOptions: {
-                                        min: 0,
-                                        showSpinButtons: true
-                                    }
-                                },
-                                {
-                                    dataField: 'max_stock',
-                                    isRequired: true,
-                                    editorType: 'dxNumberBox',
-                                    editorOptions: {
-                                        min: 0,
-                                        showSpinButtons: true
+                                        placeholder: 'Enter item name',
+                                        stylingMode: 'filled',
+                                        showClearButton: true,
+                                        mode: 'text'
                                     }
                                 },
                                 {
                                     dataField: 'description',
+                                    label: { text: 'Description' },
                                     editorType: 'dxTextArea',
-                                    colSpan: 2,
                                     editorOptions: {
-                                        height: 100
+                                        placeholder: 'Enter item description',
+                                        stylingMode: 'filled',
+                                        height: 100,
+                                        maxLength: 500,
+                                        showClearButton: true
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            itemType: 'group',
+                            caption: 'Stock Settings',
+                            colSpan: 1,
+                            cssClass: 'form-section',
+                            items: [
+                                {
+                                    dataField: 'unit',
+                                    label: { text: 'Unit of Measure' },
+                                    isRequired: true,
+                                    editorType: 'dxSelectBox',
+                                    editorOptions: {
+                                        items: ['pieces', 'yards', 'spools', 'rolls', 'liters'],
+                                        searchEnabled: true,
+                                        placeholder: 'Select unit',
+                                        stylingMode: 'filled',
+                                        showClearButton: true
+                                    }
+                                },
+                                {
+                                    dataField: 'min_stock',
+                                    label: { text: 'Minimum Stock Level' },
+                                    isRequired: true,
+                                    editorType: 'dxNumberBox',
+                                    editorOptions: {
+                                        min: 0,
+                                        showSpinButtons: true,
+                                        stylingMode: 'filled',
+                                        placeholder: 'Enter minimum stock'
+                                    }
+                                },
+                                {
+                                    dataField: 'max_stock',
+                                    label: { text: 'Maximum Stock Level' },
+                                    isRequired: true,
+                                    editorType: 'dxNumberBox',
+                                    editorOptions: {
+                                        min: 0,
+                                        showSpinButtons: true,
+                                        stylingMode: 'filled',
+                                        placeholder: 'Enter maximum stock'
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            itemType: 'group',
+                            caption: 'Status',
+                            colSpan: 2,
+                            cssClass: 'form-section',
+                            items: [
+                                {
+                                    dataField: 'is_active',
+                                    label: { text: 'Item Status' },
+                                    editorType: 'dxSwitch',
+                                    editorOptions: {
+                                        switchedOnText: 'Active',
+                                        switchedOffText: 'Inactive',
+                                        width: 100,
+                                        value: true
                                     }
                                 }
                             ]
                         }
                     ]
+                }
+            },
+            onInitNewRow: (e) => {
+                e.data = {
+                    is_active: true,
+                    min_stock: 0,
+                    max_stock: 0
+                };
+            },
+            onRowValidating: (e) => {
+                const data = { ...e.oldData, ...e.newData };
+                
+                // Validate required fields
+                const requiredFields = ['code', 'name', 'unit', 'min_stock', 'max_stock'];
+                const missingFields = requiredFields.filter(field => {
+                    const value = data[field];
+                    return value === undefined || value === null || value === '';
+                });
+
+                if (missingFields.length > 0) {
+                    e.isValid = false;
+                    e.errorText = `Please fill in all required fields: ${missingFields.join(', ')}`;
+                    return;
+                }
+
+                // Validate item code format
+                const codePattern = /^[A-Z]+-\d{3}$/;
+                if (!codePattern.test(data.code)) {
+                    e.isValid = false;
+                    e.errorText = 'Item code must be in format XXX-000 (e.g. ABC-123)';
+                    return;
+                }
+
+                // Validate stock levels
+                if (data.max_stock <= data.min_stock) {
+                    e.isValid = false;
+                    e.errorText = 'Maximum stock must be greater than minimum stock';
+                    return;
+                }
+            },
+            onRowInserting: async (e) => {
+                try {
+                    const result = await vomoAPI.createItem(e.data);
+                    e.data.id = result.id;
+                    this.items.push(e.data);
+                    DevExpress.ui.notify('Item created successfully', 'success', 3000);
+                } catch (error) {
+                    e.cancel = true;
+                    DevExpress.ui.notify(error.message || 'Failed to create item', 'error', 3000);
+                }
+            },
+            onRowUpdating: async (e) => {
+                try {
+                    // Get the item ID from the old data
+                    const itemId = e.oldData.id;
+                    
+                    // Create updated data without the id field
+                    const { id, ...dataToUpdate } = { ...e.oldData, ...e.newData };
+                    
+                    console.log('Updating item with ID:', itemId, 'Data:', dataToUpdate);
+                    
+                    if (!itemId) {
+                        throw new Error('Item ID is missing');
+                    }
+
+                    await vomoAPI.updateItem(itemId, dataToUpdate);
+                    
+                    // Update local data
+                    const index = this.items.findIndex(item => item.id === itemId);
+                    if (index !== -1) {
+                        this.items[index] = { ...dataToUpdate, id: itemId };
+                    }
+                    
+                    DevExpress.ui.notify('Item updated successfully', 'success', 3000);
+                } catch (error) {
+                    console.error('Update error:', error);
+                    e.cancel = true;
+                    DevExpress.ui.notify(error.message || 'Failed to update item', 'error', 3000);
+                }
+            },
+            onRowRemoving: async (e) => {
+                try {
+                    await vomoAPI.deleteItem(e.key);
+                    const index = this.items.findIndex(item => item.id === e.key);
+                    if (index !== -1) {
+                        this.items.splice(index, 1);
+                    }
+                    DevExpress.ui.notify('Item deleted successfully', 'success', 3000);
+                } catch (error) {
+                    e.cancel = true;
+                    DevExpress.ui.notify(error.message || 'Failed to delete item', 'error', 3000);
                 }
             },
             onContentReady: (e) => {
@@ -388,9 +538,6 @@ window.ItemPage = class {
                 this.updateStats();
             },
             onInitialized: () => this.loadData(),
-            onRowInserting: (e) => this.handleRowInserting(e),
-            onRowUpdating: (e) => this.handleRowUpdating(e),
-            onRowRemoving: (e) => this.handleRowRemoving(e),
             onOptionChanged: (e) => {
                 if (e.fullName === 'groupPanel.visible') {
                     $('#btnGrouping').toggleClass('btn-info btn-primary');
@@ -431,34 +578,6 @@ window.ItemPage = class {
         } catch (error) {
             console.error('Error loading items:', error);
             DevExpress.ui.notify('Failed to load items', 'error', 3000);
-        }
-    }
-
-    async handleRowInserting(e) {
-        try {
-            const result = await vomoAPI.createItem(e.data);
-            e.data.id = result.id;
-            this.items.push(e.data);
-            DevExpress.ui.notify('Item created successfully', 'success', 3000);
-        } catch (error) {
-            console.error('Error creating item:', error);
-            e.cancel = true;
-            DevExpress.ui.notify('Failed to create item', 'error', 3000);
-        }
-    }
-
-    async handleRowUpdating(e) {
-        try {
-            await vomoAPI.updateItem(e.key, {...e.oldData, ...e.newData});
-            const index = this.items.findIndex(item => item.id === e.key);
-            if (index !== -1) {
-                this.items[index] = {...this.items[index], ...e.newData};
-            }
-            DevExpress.ui.notify('Item updated successfully', 'success', 3000);
-        } catch (error) {
-            console.error('Error updating item:', error);
-            e.cancel = true;
-            DevExpress.ui.notify('Failed to update item', 'error', 3000);
         }
     }
 

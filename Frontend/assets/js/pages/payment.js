@@ -781,8 +781,245 @@ window.PaymentPage = class {
     }
 
     printReceipt(payment) {
-        // Implement receipt printing functionality
-        console.log('Print receipt for payment:', payment);
+        // Create a new window for printing
+        const printWindow = window.open('', '_blank');
+        
+        // Create the receipt HTML
+        const receiptHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Payment Receipt - ${payment.reference_number}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 20px;
+                        color: #333;
+                    }
+                    .receipt-header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        border-bottom: 2px solid #eee;
+                        padding-bottom: 20px;
+                    }
+                    .receipt-title {
+                        font-size: 24px;
+                        color: #5e72e4;
+                        margin: 0;
+                    }
+                    .receipt-subtitle {
+                        color: #666;
+                        margin: 5px 0;
+                    }
+                    .receipt-details {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 30px;
+                    }
+                    .company-info {
+                        flex: 1;
+                    }
+                    .info-title {
+                        font-weight: bold;
+                        margin-bottom: 10px;
+                    }
+                    .payment-info {
+                        background: #f8f9fc;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin-bottom: 30px;
+                    }
+                    .payment-row {
+                        display: flex;
+                        margin-bottom: 10px;
+                    }
+                    .payment-label {
+                        width: 150px;
+                        font-weight: bold;
+                        color: #8898aa;
+                    }
+                    .payment-value {
+                        flex: 1;
+                    }
+                    .status-badge {
+                        display: inline-block;
+                        padding: 5px 10px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        font-weight: 600;
+                    }
+                    .status-completed {
+                        background: rgba(45, 206, 137, 0.1);
+                        color: #2dce89;
+                    }
+                    .status-pending {
+                        background: rgba(251, 99, 64, 0.1);
+                        color: #fb6340;
+                    }
+                    .status-failed {
+                        background: rgba(245, 54, 92, 0.1);
+                        color: #f5365c;
+                    }
+                    .timeline {
+                        margin-top: 30px;
+                    }
+                    .timeline-item {
+                        position: relative;
+                        padding-left: 30px;
+                        margin-bottom: 20px;
+                    }
+                    .timeline-item:before {
+                        content: '';
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        bottom: -20px;
+                        width: 2px;
+                        background: #e9ecef;
+                    }
+                    .timeline-item:last-child:before {
+                        display: none;
+                    }
+                    .timeline-point {
+                        position: absolute;
+                        left: -5px;
+                        top: 0;
+                        width: 12px;
+                        height: 12px;
+                        border-radius: 50%;
+                        background: #5e72e4;
+                        border: 2px solid white;
+                    }
+                    .timeline-content {
+                        background: white;
+                        border-radius: 6px;
+                        padding: 15px;
+                        box-shadow: 0 2px 4px rgba(50, 50, 93, 0.1);
+                    }
+                    .timeline-title {
+                        font-weight: 600;
+                        margin-bottom: 5px;
+                    }
+                    .timeline-date {
+                        font-size: 12px;
+                        color: #8898aa;
+                    }
+                    .footer {
+                        margin-top: 50px;
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                    }
+                    @media print {
+                        body {
+                            padding: 0;
+                        }
+                        .no-print {
+                            display: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="receipt-header">
+                    <h1 class="receipt-title">PAYMENT RECEIPT</h1>
+                    <p class="receipt-subtitle">Reference #${payment.reference_number}</p>
+                    <p class="receipt-subtitle">Date: ${new Date(payment.payment_date).toLocaleDateString()}</p>
+                </div>
+
+                <div class="receipt-details">
+                    <div class="company-info">
+                        <div class="info-title">From:</div>
+                        <div>Vomo</div>
+                        <div>123 Business Street</div>
+                        <div>City, State, ZIP</div>
+                        <div>Phone: (123) 456-7890</div>
+                        <div>Email: info@vomo.com</div>
+                    </div>
+                </div>
+
+                <div class="payment-info">
+                    <div class="payment-row">
+                        <div class="payment-label">Order ID:</div>
+                        <div class="payment-value">${payment.order_id}</div>
+                    </div>
+                    <div class="payment-row">
+                        <div class="payment-label">Payment Method:</div>
+                        <div class="payment-value">
+                            <i class="fas ${this.getPaymentMethodIcon(payment.payment_method)}"></i>
+                            ${this.formatPaymentMethod(payment.payment_method)}
+                        </div>
+                    </div>
+                    <div class="payment-row">
+                        <div class="payment-label">Amount:</div>
+                        <div class="payment-value">
+                            <span style="font-size: 18px; font-weight: bold; color: #2dce89;">
+                                $${payment.amount.toFixed(2)}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="payment-row">
+                        <div class="payment-label">Status:</div>
+                        <div class="payment-value">
+                            <span class="status-badge status-${payment.status}">
+                                ${payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                            </span>
+                        </div>
+                    </div>
+                    ${payment.notes ? `
+                        <div class="payment-row">
+                            <div class="payment-label">Notes:</div>
+                            <div class="payment-value">${payment.notes}</div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-point"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Payment Created</div>
+                            <div class="timeline-date">${new Date(payment.created_at).toLocaleString()}</div>
+                            <div class="timeline-date">Created by: ${payment.created_by}</div>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-point"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Payment Processed</div>
+                            <div class="timeline-date">${new Date(payment.payment_date).toLocaleString()}</div>
+                        </div>
+                    </div>
+                    ${payment.status === 'completed' ? `
+                        <div class="timeline-item">
+                            <div class="timeline-point"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Payment Completed</div>
+                                <div class="timeline-date">${new Date(payment.updated_at).toLocaleString()}</div>
+                                <div class="timeline-date">Updated by: ${payment.updated_by}</div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="footer">
+                    <p>Thank you for your payment!</p>
+                    <p>This is a computer-generated receipt. No signature is required.</p>
+                </div>
+
+                <div class="no-print" style="text-align: center; margin-top: 20px;">
+                    <button onclick="window.print()" style="padding: 10px 20px; background: #5e72e4; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Print Receipt
+                    </button>
+                </div>
+            </body>
+            </html>
+        `;
+
+        // Write the HTML to the new window
+        printWindow.document.write(receiptHTML);
+        printWindow.document.close();
     }
 };
 

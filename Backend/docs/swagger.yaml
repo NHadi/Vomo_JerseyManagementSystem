@@ -484,19 +484,37 @@ definitions:
     description: Create supplier request model
     properties:
       address:
-        example: 123 Supplier St
+        example: 123 Textile Road, Fabric City
+        type: string
+      bank_account_name:
+        example: Premium Fabrics Co.
+        type: string
+      bank_account_number:
+        example: "1234567890"
+        type: string
+      bank_name:
+        example: City Bank
         type: string
       code:
-        example: SUP001
+        example: SUP-001
+        type: string
+      contact_person:
+        example: John Smith
         type: string
       email:
-        example: supplier@example.com
+        example: john@premiumfabrics.com
         type: string
+      is_active:
+        example: true
+        type: boolean
       name:
-        example: Supplier Name
+        example: Premium Fabrics Co.
         type: string
       phone:
-        example: "+1234567890"
+        example: +1-555-0123
+        type: string
+      tax_number:
+        example: TAX123456
         type: string
     required:
     - code
@@ -1400,10 +1418,22 @@ definitions:
     description: Supplier response model
     properties:
       address:
-        example: 123 Supplier St
+        example: 123 Textile Road, Fabric City
+        type: string
+      bank_account_name:
+        example: Premium Fabrics Co.
+        type: string
+      bank_account_number:
+        example: "1234567890"
+        type: string
+      bank_name:
+        example: City Bank
         type: string
       code:
-        example: SUP001
+        example: SUP-001
+        type: string
+      contact_person:
+        example: John Smith
         type: string
       created_at:
         example: "2024-03-24T21:41:49Z"
@@ -1412,16 +1442,22 @@ definitions:
         example: admin
         type: string
       email:
-        example: supplier@example.com
+        example: john@premiumfabrics.com
         type: string
       id:
         example: 1
         type: integer
+      is_active:
+        example: true
+        type: boolean
       name:
-        example: Supplier Name
+        example: Premium Fabrics Co.
         type: string
       phone:
-        example: "+1234567890"
+        example: +1-555-0123
+        type: string
+      tax_number:
+        example: TAX123456
         type: string
       tenant_id:
         example: 1
@@ -1647,6 +1683,20 @@ definitions:
     - subtotal
     - total_amount
     type: object
+  handlers.UpdateOrderStatusRequest:
+    properties:
+      additional_message:
+        example: Your order will be ready in 2 days
+        type: string
+      send_notification:
+        example: true
+        type: boolean
+      status:
+        example: in_production
+        type: string
+    required:
+    - status
+    type: object
   handlers.UpdatePaymentRequest:
     description: Update payment request model
     properties:
@@ -1848,19 +1898,37 @@ definitions:
     description: Update supplier request model
     properties:
       address:
-        example: 123 Supplier St
+        example: 123 Textile Road, Fabric City
+        type: string
+      bank_account_name:
+        example: Premium Fabrics Co.
+        type: string
+      bank_account_number:
+        example: "1234567890"
+        type: string
+      bank_name:
+        example: City Bank
         type: string
       code:
-        example: SUP001
+        example: SUP-001
+        type: string
+      contact_person:
+        example: John Smith
         type: string
       email:
-        example: supplier@example.com
+        example: john@premiumfabrics.com
         type: string
+      is_active:
+        example: true
+        type: boolean
       name:
-        example: Supplier Name
+        example: Premium Fabrics Co.
         type: string
       phone:
-        example: "+1234567890"
+        example: +1-555-0123
+        type: string
+      tax_number:
+        example: TAX123456
         type: string
     required:
     - code
@@ -4052,6 +4120,60 @@ paths:
       security:
       - BearerAuth: []
       summary: Update an order
+      tags:
+      - Order
+  /orders/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: Update an order's status and optionally send WhatsApp notification
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Status Update Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateOrderStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.OrderResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Order not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update order status
       tags:
       - Order
   /orders/by-customer:

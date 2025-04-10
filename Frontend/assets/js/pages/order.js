@@ -1518,11 +1518,129 @@ window.OrderPage = class {
         }
     }
 
-    updateOrderStatus() {
+    async updateOrderStatus() {
         if (this.currentOrder) {
-            // Implement status update functionality
-            console.log('Update status for order:', this.currentOrder);
+            // Create status update modal
+            const statusModal = `
+                <div class="modal fade" id="statusUpdateModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Update Order Status</h5>
+                                <button type="button" class="close" data-dismiss="modal">
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label>New Status</label>
+                                    <select class="form-control" id="newStatus">
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="in_production">In Production</option>
+                                        <option value="quality_check">Quality Check</option>
+                                        <option value="ready_for_delivery">Ready for Delivery</option>
+                                        <option value="delivered">Delivered</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Send WhatsApp Notification</label>
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="sendWhatsApp" checked>
+                                        <label class="custom-control-label" for="sendWhatsApp">Send notification to customer</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Additional Message (Optional)</label>
+                                    <textarea class="form-control" id="additionalMessage" rows="3" placeholder="Add any additional information for the customer..."></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" id="confirmStatusUpdate">Update Status</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add modal to body if not exists
+            if (!$('#statusUpdateModal').length) {
+                $('body').append(statusModal);
+            }
+
+            // Show modal
+            $('#statusUpdateModal').modal('show');
+
+            // Handle status update confirmation
+            $('#confirmStatusUpdate').off('click').on('click', async () => {
+                const newStatus = $('#newStatus').val();
+                const sendWhatsApp = $('#sendWhatsApp').is(':checked');
+                const additionalMessage = $('#additionalMessage').val();
+
+                try {
+                    // Update order status
+                    await vomoAPI.updateOrderStatus(this.currentOrder.id, newStatus);
+
+                    // Send WhatsApp notification if enabled
+                    if (sendWhatsApp) {
+                        await this.sendWhatsAppNotification(this.currentOrder, newStatus, additionalMessage);
+                    }
+
+                    // Show success message
+                    DevExpress.ui.notify('Order status updated successfully', 'success', 3000);
+
+                    // Refresh order details
+                    this.loadOrderDetails(this.currentOrder.id);
+
+                    // Close modal
+                    $('#statusUpdateModal').modal('hide');
+                } catch (error) {
+                    console.error('Error updating order status:', error);
+                    DevExpress.ui.notify('Failed to update order status', 'error', 3000);
+                }
+            });
         }
+    }
+
+    async sendWhatsAppNotification(order, newStatus, additionalMessage = '') {
+        try {
+            // Get status message template
+            const statusMessage = this.getStatusMessage(order, newStatus, additionalMessage);
+
+            // Send WhatsApp message
+            await vomoAPI.sendWhatsAppMessage({
+                to: order.customer_phone,
+                message: statusMessage
+            });
+
+            DevExpress.ui.notify('WhatsApp notification sent successfully', 'success', 3000);
+        } catch (error) {
+            console.error('Error sending WhatsApp notification:', error);
+            DevExpress.ui.notify('Failed to send WhatsApp notification', 'error', 3000);
+        }
+    }
+
+    getStatusMessage(order, newStatus, additionalMessage = '') {
+        const statusMessages = {
+            pending: `Dear ${order.customer_name},\n\nYour order #${order.order_number} has been received and is pending confirmation. We will process it shortly.\n\nThank you for choosing us!`,
+            confirmed: `Dear ${order.customer_name},\n\nYour order #${order.order_number} has been confirmed. We will start processing your order soon.\n\nThank you for your patience!`,
+            in_production: `Dear ${order.customer_name},\n\nYour order #${order.order_number} is now in production. We will keep you updated on the progress.\n\nThank you for your patience!`,
+            quality_check: `Dear ${order.customer_name},\n\nYour order #${order.order_number} is undergoing quality check. We will notify you once it passes inspection.\n\nThank you for your patience!`,
+            ready_for_delivery: `Dear ${order.customer_name},\n\nYour order #${order.order_number} is ready for delivery. We will arrange the delivery soon.\n\nThank you for choosing us!`,
+            delivered: `Dear ${order.customer_name},\n\nYour order #${order.order_number} has been delivered. We hope you are satisfied with our service!\n\nThank you for choosing us!`,
+            cancelled: `Dear ${order.customer_name},\n\nWe regret to inform you that your order #${order.order_number} has been cancelled. Please contact us for more information.\n\nWe apologize for any inconvenience caused.`
+        };
+
+        let message = statusMessages[newStatus] || statusMessages.pending;
+
+        // Add additional message if provided
+        if (additionalMessage) {
+            message += `\n\nAdditional Information:\n${additionalMessage}`;
+        }
+
+        return message;
     }
 
     printOrder() {

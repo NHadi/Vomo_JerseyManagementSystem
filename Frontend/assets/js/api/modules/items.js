@@ -42,9 +42,24 @@ export const itemAPI = {
 
     async updateItem(itemId, itemData) {
         try {
-            const response = await fetch(`${config.baseUrl}/items/${itemId}`, {
+            if (!itemId) {
+                throw new Error('Item ID is required for update');
+            }
+
+            // Ensure itemId is treated as a number
+            const id = Number(itemId);
+            if (isNaN(id)) {
+                throw new Error('Invalid item ID');
+            }
+
+            console.log('API Update - ID:', id, 'Data:', itemData);
+
+            const response = await fetch(`${config.baseUrl}/items/${id}`, {
                 method: 'PUT',
-                headers: getAuthHeaders(),
+                headers: {
+                    ...getAuthHeaders(),
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(itemData)
             });
 
