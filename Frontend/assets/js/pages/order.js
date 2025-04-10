@@ -258,7 +258,7 @@ window.OrderPage = class {
                         hint: 'Print Order',
                         icon: 'fas fa-print',
                         onClick: (e) => {
-                            this.printOrder(e.row.data);
+                            this.printInvoice(e.row.data);
                         }
                     }]
                 }
@@ -1527,9 +1527,181 @@ window.OrderPage = class {
 
     printOrder() {
         if (this.currentOrder) {
-            // Implement print functionality
-            console.log('Print order:', this.currentOrder);
+            this.printInvoice(this.currentOrder);
         }
+    }
+
+    printInvoice(order) {
+        // Create a new window for printing
+        const printWindow = window.open('', '_blank');
+        
+        // Create the invoice HTML
+        const invoiceHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Invoice - Order #${order.order_number}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 20px;
+                        color: #333;
+                    }
+                    .invoice-header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        border-bottom: 2px solid #eee;
+                        padding-bottom: 20px;
+                    }
+                    .invoice-title {
+                        font-size: 24px;
+                        color: #5e72e4;
+                        margin: 0;
+                    }
+                    .invoice-subtitle {
+                        color: #666;
+                        margin: 5px 0;
+                    }
+                    .invoice-details {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 30px;
+                    }
+                    .company-info, .customer-info {
+                        flex: 1;
+                    }
+                    .info-title {
+                        font-weight: bold;
+                        margin-bottom: 10px;
+                    }
+                    .items-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 30px;
+                    }
+                    .items-table th, .items-table td {
+                        border: 1px solid #ddd;
+                        padding: 10px;
+                        text-align: left;
+                    }
+                    .items-table th {
+                        background-color: #f8f9fc;
+                    }
+                    .total-section {
+                        text-align: right;
+                        margin-top: 20px;
+                    }
+                    .total-row {
+                        margin: 5px 0;
+                    }
+                    .total-label {
+                        display: inline-block;
+                        width: 150px;
+                        font-weight: bold;
+                    }
+                    .total-value {
+                        display: inline-block;
+                        width: 100px;
+                    }
+                    .footer {
+                        margin-top: 50px;
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                    }
+                    @media print {
+                        body {
+                            padding: 0;
+                        }
+                        .no-print {
+                            display: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="invoice-header">
+                    <h1 class="invoice-title">INVOICE</h1>
+                    <p class="invoice-subtitle">Order #${order.order_number}</p>
+                    <p class="invoice-subtitle">Date: ${new Date(order.created_at).toLocaleDateString()}</p>
+                </div>
+
+                <div class="invoice-details">
+                    <div class="company-info">
+                        <div class="info-title">From:</div>
+                        <div>Vomo</div>
+                        <div>123 Business Street</div>
+                        <div>City, State, ZIP</div>
+                        <div>Phone: (123) 456-7890</div>
+                        <div>Email: info@vomo.com</div>
+                    </div>
+                    <div class="customer-info">
+                        <div class="info-title">To:</div>
+                        <div>${order.customer_name}</div>
+                        <div>${order.customer_email}</div>
+                        <div>${order.customer_phone}</div>
+                        <div>${order.delivery_address}</div>
+                    </div>
+                </div>
+
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Size</th>
+                            <th>Color</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.order_items.map(item => `
+                            <tr>
+                                <td>${item.product_detail?.name || 'Custom Item'}</td>
+                                <td>${item.size}</td>
+                                <td>${item.color}</td>
+                                <td>${item.quantity}</td>
+                                <td>$${item.unit_price.toFixed(2)}</td>
+                                <td>$${(item.quantity * item.unit_price).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <div class="total-section">
+                    <div class="total-row">
+                        <span class="total-label">Subtotal:</span>
+                        <span class="total-value">$${order.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Discount:</span>
+                        <span class="total-value">-$${order.discount_amount.toFixed(2)}</span>
+                    </div>
+                    <div class="total-row" style="font-size: 18px; font-weight: bold;">
+                        <span class="total-label">Total Amount:</span>
+                        <span class="total-value">$${order.total_amount.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <p>Thank you for your business!</p>
+                    <p>This is a computer-generated invoice. No signature is required.</p>
+                </div>
+
+                <div class="no-print" style="text-align: center; margin-top: 20px;">
+                    <button onclick="window.print()" style="padding: 10px 20px; background: #5e72e4; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Print Invoice
+                    </button>
+                </div>
+            </body>
+            </html>
+        `;
+
+        // Write the HTML to the new window
+        printWindow.document.write(invoiceHTML);
+        printWindow.document.close();
     }
 
     cancelOrder() {
