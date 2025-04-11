@@ -50,6 +50,14 @@ type Services struct {
 	StockOpnameService     *application.StockOpnameService
 	StockMovementService   *application.StockMovementService
 	SupplierService        *application.SupplierService
+
+	// Accounting Services
+	TransactionCategoryService *application.TransactionCategoryService
+	CashFlowService            *application.CashFlowService
+	PurchaseOrderService       *application.PurchaseOrderService
+	PettyCashService           *application.PettyCashService
+	PettyCashRequestService    *application.PettyCashRequestService
+	WorkOrderService           *application.WorkOrderService
 }
 
 func NewServices(db *gorm.DB, cfg *config.Config) *Services {
@@ -76,6 +84,14 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 	stockMovementRepo := postgres.NewStockMovementRepository(db)
 	supplierRepo := postgres.NewSupplierRepository(db)
 
+	// Initialize accounting repositories
+	transactionCategoryRepo := postgres.NewTransactionCategoryRepository(db)
+	cashFlowRepo := postgres.NewCashFlowRepository(db)
+	purchaseOrderRepo := postgres.NewPurchaseOrderRepository(db)
+	pettyCashRepo := postgres.NewPettyCashRepository(db)
+	pettyCashRequestRepo := postgres.NewPettyCashRequestRepository(db)
+	workOrderRepo := postgres.NewWorkOrderRepository(db)
+
 	// Initialize audit service first as it's needed by other services
 	auditService := audit.NewService(auditRepo)
 
@@ -101,6 +117,14 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 	stockMovementService := application.NewStockMovementService(stockMovementRepo, auditService)
 	supplierService := application.NewSupplierService(supplierRepo, auditService)
 
+	// Initialize accounting services
+	transactionCategoryService := application.NewTransactionCategoryService(transactionCategoryRepo, auditService)
+	cashFlowService := application.NewCashFlowService(cashFlowRepo, auditService)
+	purchaseOrderService := application.NewPurchaseOrderService(purchaseOrderRepo, supplierService, itemService, auditService)
+	pettyCashService := application.NewPettyCashService(pettyCashRepo, auditService)
+	pettyCashRequestService := application.NewPettyCashRequestService(pettyCashRequestRepo, auditService)
+	workOrderService := application.NewWorkOrderService(workOrderRepo, auditService)
+
 	return &Services{
 		MenuService:            menuService,
 		UserService:            userService,
@@ -123,5 +147,13 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 		StockOpnameService:     stockOpnameService,
 		StockMovementService:   stockMovementService,
 		SupplierService:        supplierService,
+
+		// Accounting Services
+		TransactionCategoryService: transactionCategoryService,
+		CashFlowService:            cashFlowService,
+		PurchaseOrderService:       purchaseOrderService,
+		PettyCashService:           pettyCashService,
+		PettyCashRequestService:    pettyCashRequestService,
+		WorkOrderService:           workOrderService,
 	}
 }

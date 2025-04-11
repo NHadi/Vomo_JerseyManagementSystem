@@ -20,6 +20,7 @@ import { stockOpnameAPI } from './modules/stock-opnames.js';
 import { stockMovementAPI } from './modules/stock-movements.js';
 import { supplierAPI } from './modules/suppliers.js';
 import { config } from './config.js';
+import { cashFlowAPI } from './modules/cash-flows.js';
 
 // Initialize the API namespace
 export const vomoAPI = {
@@ -44,7 +45,8 @@ export const vomoAPI = {
     ...stockOpnameAPI,
     ...stockMovementAPI,
     ...supplierAPI,
-    config
+    ...cashFlowAPI,
+    config,
 };
 
 // Export to window object for global access

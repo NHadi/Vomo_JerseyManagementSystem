@@ -37,5 +37,6 @@ func SetupRoutes(router *gin.RouterGroup, services *services.Services) {
 		SetupItemRoutes(protected, services.ItemService)
 		SetupStockOpnameRoutes(protected, services.StockOpnameService)
 		SetupStockMovementRoutes(protected, services.StockMovementService)
+		SetupAccountingRoutes(protected, services)
 	}
 }

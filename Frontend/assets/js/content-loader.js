@@ -169,6 +169,9 @@
                         case 'model-builder':
                             await this.loadMLServicesGrid();
                             break;
+                        case 'cash-flow':
+                            await this.loadCashFlowGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -1579,6 +1582,63 @@
                         reject(error);
                     }
                 });
+            });
+        },
+
+        loadCashFlowGrid: async function() {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    // Load the cash flow component HTML
+                    const response = await fetch('./components/cash-flow.html');
+                    if (!response.ok) {
+                        throw new Error('Failed to load cash flow component');
+                    }
+                    const html = await response.text();
+                    $('#main-content').html(html);
+
+                    // Wait for DevExpress to be available
+                    await new Promise(resolve => {
+                        const checkDevExtreme = () => {
+                            if (typeof DevExpress !== 'undefined') {
+                                resolve();
+                            } else {
+                                setTimeout(checkDevExtreme, 100);
+                            }
+                        };
+                        checkDevExtreme();
+                    });
+
+                    // Remove any existing script
+                    const existingScript = document.querySelector('script[data-page="cash-flow"]');
+                    if (existingScript) {
+                        existingScript.remove();
+                    }
+
+                    // Create a script element with type="module" to load the cash-flow.js module
+                    const script = document.createElement('script');
+                    script.type = 'module';
+                    script.src = './assets/js/pages/cash-flow.js';
+                    script.setAttribute('data-page', 'cash-flow');
+                    
+                    // Handle script load/error
+                    script.onload = () => {
+                        // Initialize the cash flow page instance
+                        if (!window.cashFlowPageInstance) {
+                            window.cashFlowPageInstance = new window.CashFlowPage();
+                        }
+                        resolve();
+                    };
+                    script.onerror = (error) => {
+                        console.error('Failed to load cash flow module:', error);
+                        reject(error);
+                    };
+                    
+                    document.body.appendChild(script);
+                } catch (error) {
+                    console.error('Failed to load cash flow component:', error);
+                    $('#main-content').html('<div class="alert alert-danger">Failed to load cash flow component</div>');
+                    reject(error);
+                }
             });
         }
     };
