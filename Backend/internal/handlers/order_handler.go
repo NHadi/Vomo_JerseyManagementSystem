@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 	"vomo/internal/application"
 	"vomo/internal/domain/order"
+	"vomo/internal/infrastructure/whatsapp"
 
 	"github.com/gin-gonic/gin"
 )
@@ -102,6 +104,13 @@ type UpdateOrderRequest struct {
 	PaymentStatus        string  `json:"payment_status" binding:"required" example:"unpaid"`
 	ExpectedDeliveryDate string  `json:"expected_delivery_date" example:"2024-03-25"`
 	Notes                string  `json:"notes" example:"Please deliver in the morning"`
+}
+
+// UpdateOrderStatusRequest represents the request structure for updating order status
+type UpdateOrderStatusRequest struct {
+	Status            string `json:"status" binding:"required" example:"in_production"`
+	SendNotification  bool   `json:"send_notification" example:"true"`
+	AdditionalMessage string `json:"additional_message" example:"Your order will be ready in 2 days"`
 }
 
 func toOrderItemResponse(item *order.OrderItem) OrderItemResponse {
@@ -503,5 +512,150 @@ func GetOrdersByPaymentStatus(service *application.OrderService) gin.HandlerFunc
 		}
 
 		c.JSON(http.StatusOK, response)
+	}
+}
+
+// @Summary Update order status
+// @Description Update an order's status and optionally send WhatsApp notification
+// @Tags Order
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param X-Tenant-ID header string true "Tenant ID"
+// @Param id path int true "Order ID"
+// @Param request body UpdateOrderStatusRequest true "Status Update Data"
+// @Success 200 {object} OrderResponse
+// @Failure 400 {object} ErrorResponse "Invalid request parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "Order not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /orders/{id}/status [put]
+func UpdateOrderStatus(service *application.OrderService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid order ID"})
+			return
+		}
+
+		var req UpdateOrderStatusRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		// Validate status
+		validStatuses := map[string]bool{
+			"pending":            true,
+			"confirmed":          true,
+			"in_production":      true,
+			"quality_check":      true,
+			"ready_for_delivery": true,
+			"delivered":          true,
+			"cancelled":          true,
+		}
+
+		if !validStatuses[req.Status] {
+			c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid status value"})
+			return
+		}
+
+		// Get existing order
+		order, err := service.FindByID(id, c)
+		if err != nil {
+			c.JSON(http.StatusNotFound, ErrorResponse{Error: "Order not found"})
+			return
+		}
+
+		// Update status
+		order.Status = req.Status
+
+		// Update the order
+		if err := service.Update(order, c); err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		// Send WhatsApp notification if requested
+		if err := sendWhatsAppNotification(order, req.Status, req.AdditionalMessage); err != nil {
+			// Log the error but don't fail the request
+			log.Printf("Failed to send WhatsApp notification: %v", err)
+		}
+
+		// Fetch the updated order
+		updatedOrder, err := service.FindByID(id, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to fetch updated order"})
+			return
+		}
+
+		c.JSON(http.StatusOK, toOrderResponse(updatedOrder))
+	}
+}
+
+func sendWhatsAppNotification(order *order.Order, status string, additionalMessage string) error {
+	// Initialize WhatsApp client
+	whatsappClient := whatsapp.NewClient()
+
+	// Get template name and parameters based on status
+	templateName, params := getTemplateParams(order, status, additionalMessage)
+
+	// Send message using template
+	return whatsappClient.SendMessage(order.CustomerPhone, templateName, params)
+}
+
+func getTemplateParams(order *order.Order, status string, additionalMessage string) (string, []string) {
+	// Map status to template name and parameters
+	switch status {
+	case "pending":
+		return "order_pending", []string{
+			order.CustomerName,
+			order.OrderNumber,
+			additionalMessage,
+		}
+	case "confirmed":
+		return "order_confirmed", []string{
+			order.CustomerName,
+			order.OrderNumber,
+			additionalMessage,
+		}
+	case "in_production":
+		return "order_in_production", []string{
+			order.CustomerName,
+			order.OrderNumber,
+			additionalMessage,
+		}
+	case "quality_check":
+		return "order_quality_check", []string{
+			order.CustomerName,
+			order.OrderNumber,
+			additionalMessage,
+		}
+	case "ready_for_delivery":
+		return "order_ready", []string{
+			order.CustomerName,
+			order.OrderNumber,
+			additionalMessage,
+		}
+	case "delivered":
+		return "order_delivered", []string{
+			order.CustomerName,
+			order.OrderNumber,
+			additionalMessage,
+		}
+	case "cancelled":
+		return "order_cancelled", []string{
+			order.CustomerName,
+			order.OrderNumber,
+			additionalMessage,
+		}
+	default:
+		return "order_status_update", []string{
+			order.CustomerName,
+			order.OrderNumber,
+			status,
+			additionalMessage,
+		}
 	}
 }

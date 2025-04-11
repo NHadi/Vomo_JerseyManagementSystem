@@ -3265,6 +3265,89 @@ const docTemplate = `{
                 }
             }
         },
+        "/orders/{id}/status": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an order's status and optionally send WhatsApp notification",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Order"
+                ],
+                "summary": "Update order status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "X-Tenant-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status Update Data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UpdateOrderStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.OrderResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Order not found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/payments": {
             "get": {
                 "security": [
@@ -9403,23 +9486,47 @@ const docTemplate = `{
             "properties": {
                 "address": {
                     "type": "string",
-                    "example": "123 Supplier St"
+                    "example": "123 Textile Road, Fabric City"
+                },
+                "bank_account_name": {
+                    "type": "string",
+                    "example": "Premium Fabrics Co."
+                },
+                "bank_account_number": {
+                    "type": "string",
+                    "example": "1234567890"
+                },
+                "bank_name": {
+                    "type": "string",
+                    "example": "City Bank"
                 },
                 "code": {
                     "type": "string",
-                    "example": "SUP001"
+                    "example": "SUP-001"
+                },
+                "contact_person": {
+                    "type": "string",
+                    "example": "John Smith"
                 },
                 "email": {
                     "type": "string",
-                    "example": "supplier@example.com"
+                    "example": "john@premiumfabrics.com"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
                 },
                 "name": {
                     "type": "string",
-                    "example": "Supplier Name"
+                    "example": "Premium Fabrics Co."
                 },
                 "phone": {
                     "type": "string",
-                    "example": "+1234567890"
+                    "example": "+1-555-0123"
+                },
+                "tax_number": {
+                    "type": "string",
+                    "example": "TAX123456"
                 }
             }
         },
@@ -10652,11 +10759,27 @@ const docTemplate = `{
             "properties": {
                 "address": {
                     "type": "string",
-                    "example": "123 Supplier St"
+                    "example": "123 Textile Road, Fabric City"
+                },
+                "bank_account_name": {
+                    "type": "string",
+                    "example": "Premium Fabrics Co."
+                },
+                "bank_account_number": {
+                    "type": "string",
+                    "example": "1234567890"
+                },
+                "bank_name": {
+                    "type": "string",
+                    "example": "City Bank"
                 },
                 "code": {
                     "type": "string",
-                    "example": "SUP001"
+                    "example": "SUP-001"
+                },
+                "contact_person": {
+                    "type": "string",
+                    "example": "John Smith"
                 },
                 "created_at": {
                     "type": "string",
@@ -10668,19 +10791,27 @@ const docTemplate = `{
                 },
                 "email": {
                     "type": "string",
-                    "example": "supplier@example.com"
+                    "example": "john@premiumfabrics.com"
                 },
                 "id": {
                     "type": "integer",
                     "example": 1
                 },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "name": {
                     "type": "string",
-                    "example": "Supplier Name"
+                    "example": "Premium Fabrics Co."
                 },
                 "phone": {
                     "type": "string",
-                    "example": "+1234567890"
+                    "example": "+1-555-0123"
+                },
+                "tax_number": {
+                    "type": "string",
+                    "example": "TAX123456"
                 },
                 "tenant_id": {
                     "type": "integer",
@@ -10986,6 +11117,26 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.UpdateOrderStatusRequest": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "additional_message": {
+                    "type": "string",
+                    "example": "Your order will be ready in 2 days"
+                },
+                "send_notification": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "status": {
+                    "type": "string",
+                    "example": "in_production"
+                }
+            }
+        },
         "handlers.UpdatePaymentRequest": {
             "description": "Update payment request model",
             "type": "object",
@@ -11265,23 +11416,47 @@ const docTemplate = `{
             "properties": {
                 "address": {
                     "type": "string",
-                    "example": "123 Supplier St"
+                    "example": "123 Textile Road, Fabric City"
+                },
+                "bank_account_name": {
+                    "type": "string",
+                    "example": "Premium Fabrics Co."
+                },
+                "bank_account_number": {
+                    "type": "string",
+                    "example": "1234567890"
+                },
+                "bank_name": {
+                    "type": "string",
+                    "example": "City Bank"
                 },
                 "code": {
                     "type": "string",
-                    "example": "SUP001"
+                    "example": "SUP-001"
+                },
+                "contact_person": {
+                    "type": "string",
+                    "example": "John Smith"
                 },
                 "email": {
                     "type": "string",
-                    "example": "supplier@example.com"
+                    "example": "john@premiumfabrics.com"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
                 },
                 "name": {
                     "type": "string",
-                    "example": "Supplier Name"
+                    "example": "Premium Fabrics Co."
                 },
                 "phone": {
                     "type": "string",
-                    "example": "+1234567890"
+                    "example": "+1-555-0123"
+                },
+                "tax_number": {
+                    "type": "string",
+                    "example": "TAX123456"
                 }
             }
         },
