@@ -88,6 +88,8 @@ func (r *WorkOrderRepository) FindAll(ctx context.Context) ([]accounting.WorkOrd
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
 
 	err := r.db.WithContext(ctx).
+		Preload("Order").
+		Preload("Employee").
 		Where("tenant_id = ?", userCtx.TenantID).
 		Find(&workOrders).Error
 	if err != nil {

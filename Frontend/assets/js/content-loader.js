@@ -172,6 +172,9 @@
                         case 'cash-flow':
                             await this.loadCashFlowGrid();
                             break;
+                        case 'purchase-list':
+                            await this.loadPurchaseOrder();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -1639,6 +1642,63 @@
                     $('#main-content').html('<div class="alert alert-danger">Failed to load cash flow component</div>');
                     reject(error);
                 }
+            });
+        },
+
+        loadPurchaseOrder: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.purchaseOrderPageInstance) {
+                window.purchaseOrderPageInstance.dispose();
+                window.purchaseOrderPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/purchase-order.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="purchase-order"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the purchase-order.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/purchase-order.js';
+                        script.setAttribute('data-page', 'purchase-order');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the purchase order page instance
+                            if (!window.purchaseOrderPageInstance) {
+                                window.purchaseOrderPageInstance = new window.PurchaseOrderPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load purchase order module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load purchase order component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load purchase order component</div>');
+                        reject(error);
+                    }
+                });
             });
         }
     };

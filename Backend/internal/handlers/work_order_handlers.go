@@ -11,27 +11,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// WorkOrderResponse represents the work order response structure
+// WorkOrderResponse represents the work order response structure with expanded relationships
 type WorkOrderResponse struct {
-	ID              int                 `json:"id" example:"1"`
-	SPKNumber       string              `json:"spk_number" example:"SPK-2024-001"`
-	OrderID         int                 `json:"order_id" example:"1"`
-	CustomerName    string              `json:"customer_name" example:"John Doe"`
-	WorkType        string              `json:"work_type" example:"production"`
-	Description     string              `json:"description" example:"Production of 100 jerseys"`
-	StartDate       string              `json:"start_date" example:"2024-03-24T21:41:49Z"`
-	EndDate         string              `json:"end_date" example:"2024-03-26T21:41:49Z"`
-	Status          string              `json:"status" example:"draft"`
-	AssignedTo      int                 `json:"assigned_to" example:"1"`
-	EstimatedCost   float64             `json:"estimated_cost" example:"1000.00"`
-	ActualCost      float64             `json:"actual_cost" example:"950.00"`
-	CompletionNotes string              `json:"completion_notes" example:"Completed on time"`
+	ID              int                 `json:"id"`
+	SPKNumber       string              `json:"spk_number"`
+	Order           OrderInfo           `json:"order"` // Expanded order details
+	CustomerName    string              `json:"customer_name"`
+	WorkType        string              `json:"work_type"`
+	Description     string              `json:"description"`
+	StartDate       string              `json:"start_date"`
+	EndDate         string              `json:"end_date"`
+	Status          string              `json:"status"`
+	AssignedTo      EmployeeInfo        `json:"assigned_to"` // Expanded employee details
+	EstimatedCost   float64             `json:"estimated_cost"`
+	ActualCost      float64             `json:"actual_cost"`
+	CompletionNotes string              `json:"completion_notes"`
 	Tasks           []WorkOrderTaskItem `json:"tasks"`
 	Items           []WorkOrderItemInfo `json:"items"`
-	CreatedAt       string              `json:"created_at" example:"2024-03-24T21:41:49Z"`
-	CreatedBy       string              `json:"created_by" example:"admin"`
-	UpdatedAt       string              `json:"updated_at" example:"2024-03-24T21:41:49Z"`
-	UpdatedBy       string              `json:"updated_by" example:"admin"`
+	CreatedAt       string              `json:"created_at"`
+	CreatedBy       string              `json:"created_by"`
+	UpdatedAt       string              `json:"updated_at"`
+	UpdatedBy       string              `json:"updated_by"`
 }
 
 // WorkOrderTaskItem represents a task in the work order
@@ -100,6 +100,31 @@ type UpdateWorkOrderRequest struct {
 	Items         []WorkOrderItemInput `json:"items"`
 }
 
+// OrderInfo represents the essential order information
+type OrderInfo struct {
+	ID                   int             `json:"id"`
+	OrderNumber          string          `json:"order_number"`
+	CustomerEmail        string          `json:"customer_email"`
+	CustomerPhone        string          `json:"customer_phone"`
+	DeliveryAddress      string          `json:"delivery_address"`
+	Status               string          `json:"status"`
+	PaymentStatus        string          `json:"payment_status"`
+	ExpectedDeliveryDate string          `json:"expected_delivery_date"`
+	TotalAmount          float64         `json:"total_amount"`
+	OrderItems           []OrderItemInfo `json:"order_items"`
+}
+
+// OrderItemInfo represents the essential order item information
+type OrderItemInfo struct {
+	ID               int     `json:"id"`
+	ProductName      string  `json:"product_name"`
+	Quantity         int     `json:"quantity"`
+	Size             string  `json:"size"`
+	Color            string  `json:"color"`
+	ProductionStatus string  `json:"production_status"`
+	FinalSubtotal    float64 `json:"final_subtotal"`
+}
+
 // Convert from models to accounting types
 func toAccountingWorkOrder(m *accounting.WorkOrder) *accounting.WorkOrder {
 	return m
@@ -155,17 +180,38 @@ func toWorkOrderResponse(w interface{}) WorkOrderResponse {
 		}
 	}
 
+	// Convert Order to OrderInfo
+	orderInfo := OrderInfo{
+		ID:                   workOrder.Order.ID,
+		OrderNumber:          workOrder.Order.OrderNumber,
+		CustomerEmail:        workOrder.Order.CustomerEmail,
+		CustomerPhone:        workOrder.Order.CustomerPhone,
+		DeliveryAddress:      workOrder.Order.DeliveryAddress,
+		Status:               workOrder.Order.Status,
+		PaymentStatus:        workOrder.Order.PaymentStatus,
+		ExpectedDeliveryDate: workOrder.Order.ExpectedDeliveryDate,
+		TotalAmount:          workOrder.Order.TotalAmount,
+	}
+
+	// Convert Employee to EmployeeInfo
+	employeeInfo := EmployeeInfo{
+		ID:    workOrder.Employee.ID,
+		Name:  workOrder.Employee.Name,
+		Email: workOrder.Employee.Email,
+		Phone: workOrder.Employee.Phone,
+	}
+
 	return WorkOrderResponse{
 		ID:              workOrder.ID,
 		SPKNumber:       workOrder.SPKNumber,
-		OrderID:         workOrder.OrderID,
+		Order:           orderInfo,
 		CustomerName:    workOrder.CustomerName,
 		WorkType:        workOrder.WorkType,
 		Description:     workOrder.Description,
 		StartDate:       workOrder.StartDate.Format(time.RFC3339),
 		EndDate:         workOrder.EndDate.Format(time.RFC3339),
 		Status:          workOrder.Status,
-		AssignedTo:      workOrder.AssignedTo,
+		AssignedTo:      employeeInfo,
 		EstimatedCost:   workOrder.EstimatedCost,
 		ActualCost:      workOrder.ActualCost,
 		CompletionNotes: workOrder.CompletionNotes,

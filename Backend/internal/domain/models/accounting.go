@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+	"vomo/internal/domain/employee"
+	"vomo/internal/domain/order"
 )
 
 // TransactionCategory represents the base transaction category model
@@ -128,24 +130,26 @@ func (PettyCashRequest) TableName() string {
 
 // WorkOrder (SPK - Surat Perintah Kerja) represents the base work order model
 type WorkOrder struct {
-	ID              int       `gorm:"primaryKey"`
-	SPKNumber       string    `gorm:"size:50;not null;unique"`
-	OrderID         int       `gorm:"not null"`
-	CustomerName    string    `gorm:"size:100;not null"`
-	WorkType        string    `gorm:"size:50;not null"` // e.g., production, service, maintenance
-	Description     string    `gorm:"type:text;not null"`
-	StartDate       time.Time `gorm:"not null"`
-	EndDate         time.Time `gorm:"not null"`
-	Status          string    `gorm:"size:20;not null;default:'draft'"` // draft, in_progress, completed, cancelled
-	AssignedTo      int       `gorm:"not null"`                         // Employee ID
-	EstimatedCost   float64   `gorm:"type:decimal(12,2);not null"`
-	ActualCost      float64   `gorm:"type:decimal(12,2)"`
-	CompletionNotes string    `gorm:"type:text"`
-	TenantID        int       `gorm:"not null"`
-	CreatedAt       time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	CreatedBy       string    `gorm:"size:255;not null"`
-	UpdatedAt       time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedBy       string    `gorm:"size:255;not null"`
+	ID              int             `gorm:"primaryKey"`
+	SPKNumber       string          `gorm:"size:50;not null;unique"`
+	OrderID         int             `gorm:"not null"`
+	Order           order.Order     `gorm:"foreignKey:OrderID"`
+	CustomerName    string          `gorm:"size:100;not null"`
+	WorkType        string          `gorm:"size:50;not null"` // e.g., production, service, maintenance
+	Description     string          `gorm:"type:text;not null"`
+	StartDate       time.Time       `gorm:"not null"`
+	EndDate         time.Time       `gorm:"not null"`
+	Status          string          `gorm:"size:20;not null;default:'draft'"` // draft, in_progress, completed, cancelled
+	AssignedTo      int             `gorm:"not null"`                         // Employee ID
+	Employee        employee.Employee `gorm:"foreignKey:AssignedTo"`
+	EstimatedCost   float64         `gorm:"type:decimal(12,2);not null"`
+	ActualCost      float64         `gorm:"type:decimal(12,2)"`
+	CompletionNotes string          `gorm:"type:text"`
+	TenantID        int             `gorm:"not null"`
+	CreatedAt       time.Time       `gorm:"default:CURRENT_TIMESTAMP"`
+	CreatedBy       string          `gorm:"size:255;not null"`
+	UpdatedAt       time.Time       `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedBy       string          `gorm:"size:255;not null"`
 }
 
 // TableName specifies the table name for the WorkOrder model

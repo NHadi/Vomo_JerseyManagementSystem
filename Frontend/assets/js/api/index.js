@@ -21,6 +21,7 @@ import { stockMovementAPI } from './modules/stock-movements.js';
 import { supplierAPI } from './modules/suppliers.js';
 import { config } from './config.js';
 import { cashFlowAPI } from './modules/cash-flows.js';
+import { purchaseOrderAPI } from './modules/purchase-orders.js';
 
 // Initialize the API namespace
 export const vomoAPI = {
@@ -46,6 +47,7 @@ export const vomoAPI = {
     ...stockMovementAPI,
     ...supplierAPI,
     ...cashFlowAPI,
+    ...purchaseOrderAPI,
     config,
 };
 
