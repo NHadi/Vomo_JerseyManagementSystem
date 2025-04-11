@@ -166,6 +166,9 @@
                         case 'makloon':
                             await this.loadMakloonGrid();
                             break;
+                        case 'model-builder':
+                            await this.loadMLServicesGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -1459,6 +1462,63 @@
                     } catch (error) {
                         console.error('Failed to load makloon component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load makloon component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadMLServicesGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.mlServicesPageInstance) {
+                window.mlServicesPageInstance.dispose();
+                window.mlServicesPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/ml_services.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="ml_services"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the ml_services.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/ml_services.js';
+                        script.setAttribute('data-page', 'ml_services');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the ML services page instance
+                            if (!window.mlServicesPageInstance) {
+                                window.mlServicesPageInstance = new window.MLServicesPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load ML services module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load ML services component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load ML services component</div>');
                         reject(error);
                     }
                 });

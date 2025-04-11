@@ -258,7 +258,7 @@ window.OrderPage = class {
                         hint: 'Print Order',
                         icon: 'fas fa-print',
                         onClick: (e) => {
-                            this.printOrder(e.row.data);
+                            this.printInvoice(e.row.data);
                         }
                     }]
                 }
@@ -1518,18 +1518,308 @@ window.OrderPage = class {
         }
     }
 
-    updateOrderStatus() {
+    async updateOrderStatus() {
         if (this.currentOrder) {
-            // Implement status update functionality
-            console.log('Update status for order:', this.currentOrder);
+            // Create status update modal
+            const statusModal = `
+                <div class="modal fade" id="statusUpdateModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Update Order Status</h5>
+                                <button type="button" class="close" data-dismiss="modal">
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label>New Status</label>
+                                    <select class="form-control" id="newStatus">
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="in_production">In Production</option>
+                                        <option value="quality_check">Quality Check</option>
+                                        <option value="ready_for_delivery">Ready for Delivery</option>
+                                        <option value="delivered">Delivered</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Send WhatsApp Notification</label>
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="sendWhatsApp" checked>
+                                        <label class="custom-control-label" for="sendWhatsApp">Send notification to customer</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Additional Message (Optional)</label>
+                                    <textarea class="form-control" id="additionalMessage" rows="3" placeholder="Add any additional information for the customer..."></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" id="confirmStatusUpdate">Update Status</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add modal to body if not exists
+            if (!$('#statusUpdateModal').length) {
+                $('body').append(statusModal);
+            }
+
+            // Show modal
+            $('#statusUpdateModal').modal('show');
+
+            // Handle status update confirmation
+            $('#confirmStatusUpdate').off('click').on('click', async () => {
+                const newStatus = $('#newStatus').val();
+                const sendWhatsApp = $('#sendWhatsApp').is(':checked');
+                const additionalMessage = $('#additionalMessage').val();
+
+                try {
+                    // Update order status
+                    await vomoAPI.updateOrderStatus(this.currentOrder.id, newStatus);
+
+                    // Send WhatsApp notification if enabled
+                    if (sendWhatsApp) {
+                        await this.sendWhatsAppNotification(this.currentOrder, newStatus, additionalMessage);
+                    }
+
+                    // Show success message
+                    DevExpress.ui.notify('Order status updated successfully', 'success', 3000);
+
+                    // Refresh order details
+                    this.loadOrderDetails(this.currentOrder.id);
+
+                    // Close modal
+                    $('#statusUpdateModal').modal('hide');
+                } catch (error) {
+                    console.error('Error updating order status:', error);
+                    DevExpress.ui.notify('Failed to update order status', 'error', 3000);
+                }
+            });
         }
+    }
+
+    async sendWhatsAppNotification(order, newStatus, additionalMessage = '') {
+        try {
+            // Get status message template
+            const statusMessage = this.getStatusMessage(order, newStatus, additionalMessage);
+
+            // Send WhatsApp message
+            await vomoAPI.sendWhatsAppMessage({
+                to: order.customer_phone,
+                message: statusMessage
+            });
+
+            DevExpress.ui.notify('WhatsApp notification sent successfully', 'success', 3000);
+        } catch (error) {
+            console.error('Error sending WhatsApp notification:', error);
+            DevExpress.ui.notify('Failed to send WhatsApp notification', 'error', 3000);
+        }
+    }
+
+    getStatusMessage(order, newStatus, additionalMessage = '') {
+        const statusMessages = {
+            pending: `Dear ${order.customer_name},\n\nYour order #${order.order_number} has been received and is pending confirmation. We will process it shortly.\n\nThank you for choosing us!`,
+            confirmed: `Dear ${order.customer_name},\n\nYour order #${order.order_number} has been confirmed. We will start processing your order soon.\n\nThank you for your patience!`,
+            in_production: `Dear ${order.customer_name},\n\nYour order #${order.order_number} is now in production. We will keep you updated on the progress.\n\nThank you for your patience!`,
+            quality_check: `Dear ${order.customer_name},\n\nYour order #${order.order_number} is undergoing quality check. We will notify you once it passes inspection.\n\nThank you for your patience!`,
+            ready_for_delivery: `Dear ${order.customer_name},\n\nYour order #${order.order_number} is ready for delivery. We will arrange the delivery soon.\n\nThank you for choosing us!`,
+            delivered: `Dear ${order.customer_name},\n\nYour order #${order.order_number} has been delivered. We hope you are satisfied with our service!\n\nThank you for choosing us!`,
+            cancelled: `Dear ${order.customer_name},\n\nWe regret to inform you that your order #${order.order_number} has been cancelled. Please contact us for more information.\n\nWe apologize for any inconvenience caused.`
+        };
+
+        let message = statusMessages[newStatus] || statusMessages.pending;
+
+        // Add additional message if provided
+        if (additionalMessage) {
+            message += `\n\nAdditional Information:\n${additionalMessage}`;
+        }
+
+        return message;
     }
 
     printOrder() {
         if (this.currentOrder) {
-            // Implement print functionality
-            console.log('Print order:', this.currentOrder);
+            this.printInvoice(this.currentOrder);
         }
+    }
+
+    printInvoice(order) {
+        // Create a new window for printing
+        const printWindow = window.open('', '_blank');
+        
+        // Create the invoice HTML
+        const invoiceHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Invoice - Order #${order.order_number}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 20px;
+                        color: #333;
+                    }
+                    .invoice-header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        border-bottom: 2px solid #eee;
+                        padding-bottom: 20px;
+                    }
+                    .invoice-title {
+                        font-size: 24px;
+                        color: #5e72e4;
+                        margin: 0;
+                    }
+                    .invoice-subtitle {
+                        color: #666;
+                        margin: 5px 0;
+                    }
+                    .invoice-details {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 30px;
+                    }
+                    .company-info, .customer-info {
+                        flex: 1;
+                    }
+                    .info-title {
+                        font-weight: bold;
+                        margin-bottom: 10px;
+                    }
+                    .items-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 30px;
+                    }
+                    .items-table th, .items-table td {
+                        border: 1px solid #ddd;
+                        padding: 10px;
+                        text-align: left;
+                    }
+                    .items-table th {
+                        background-color: #f8f9fc;
+                    }
+                    .total-section {
+                        text-align: right;
+                        margin-top: 20px;
+                    }
+                    .total-row {
+                        margin: 5px 0;
+                    }
+                    .total-label {
+                        display: inline-block;
+                        width: 150px;
+                        font-weight: bold;
+                    }
+                    .total-value {
+                        display: inline-block;
+                        width: 100px;
+                    }
+                    .footer {
+                        margin-top: 50px;
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                    }
+                    @media print {
+                        body {
+                            padding: 0;
+                        }
+                        .no-print {
+                            display: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="invoice-header">
+                    <h1 class="invoice-title">INVOICE</h1>
+                    <p class="invoice-subtitle">Order #${order.order_number}</p>
+                    <p class="invoice-subtitle">Date: ${new Date(order.created_at).toLocaleDateString()}</p>
+                </div>
+
+                <div class="invoice-details">
+                    <div class="company-info">
+                        <div class="info-title">From:</div>
+                        <div>Vomo</div>
+                        <div>123 Business Street</div>
+                        <div>City, State, ZIP</div>
+                        <div>Phone: (123) 456-7890</div>
+                        <div>Email: info@vomo.com</div>
+                    </div>
+                    <div class="customer-info">
+                        <div class="info-title">To:</div>
+                        <div>${order.customer_name}</div>
+                        <div>${order.customer_email}</div>
+                        <div>${order.customer_phone}</div>
+                        <div>${order.delivery_address}</div>
+                    </div>
+                </div>
+
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Size</th>
+                            <th>Color</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.order_items.map(item => `
+                            <tr>
+                                <td>${item.product_detail?.name || 'Custom Item'}</td>
+                                <td>${item.size}</td>
+                                <td>${item.color}</td>
+                                <td>${item.quantity}</td>
+                                <td>$${item.unit_price.toFixed(2)}</td>
+                                <td>$${(item.quantity * item.unit_price).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <div class="total-section">
+                    <div class="total-row">
+                        <span class="total-label">Subtotal:</span>
+                        <span class="total-value">$${order.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="total-row">
+                        <span class="total-label">Discount:</span>
+                        <span class="total-value">-$${order.discount_amount.toFixed(2)}</span>
+                    </div>
+                    <div class="total-row" style="font-size: 18px; font-weight: bold;">
+                        <span class="total-label">Total Amount:</span>
+                        <span class="total-value">$${order.total_amount.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <p>Thank you for your business!</p>
+                    <p>This is a computer-generated invoice. No signature is required.</p>
+                </div>
+
+                <div class="no-print" style="text-align: center; margin-top: 20px;">
+                    <button onclick="window.print()" style="padding: 10px 20px; background: #5e72e4; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Print Invoice
+                    </button>
+                </div>
+            </body>
+            </html>
+        `;
+
+        // Write the HTML to the new window
+        printWindow.document.write(invoiceHTML);
+        printWindow.document.close();
     }
 
     cancelOrder() {
