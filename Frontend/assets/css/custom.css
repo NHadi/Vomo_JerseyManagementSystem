@@ -1,0 +1,56 @@
+.nav-link.active {
+    background-color: #5e72e4;
+    border-radius: 0.375rem;
+    color: #fff !important;
+}
+
+.nav-link.active i {
+    color: #fff !important;
+}
+
+/* Remove all background colors from parent items */
+.nav-item.active {
+    background-color: transparent !important;
+}
+
+.nav-item.active > .nav-link {
+    background-color: transparent !important;
+    color: #67748e !important;
+}
+
+.nav-item.active > .nav-link i {
+    color: #67748e !important;
+}
+
+/* Only show blue background on the specific active link */
+.nav-item .collapse .nav-link.active,
+.nav-item .collapsing .nav-link.active {
+    background-color: #5e72e4 !important;
+    color: #fff !important;
+}
+
+.nav-item .collapse .nav-link.active i,
+.nav-item .collapsing .nav-link.active i {
+    color: #fff !important;
+}
+
+/* Keep parent items expanded but not highlighted */
+.nav-item .collapse.show,
+.nav-item .collapsing {
+    display: block;
+}
+
+.nav-item .nav-link.active:hover {
+    color: #fff !important;
+}
+
+.sidenav .nav-item .collapse .nav .nav-item .nav-link.active,
+.sidenav .nav-item .collapsing .nav .nav-item .nav-link.active {
+    background-color: #5e72e4;
+    color: #fff !important;
+}
+
+.sidenav .nav-item .collapse .nav .nav-item .nav-link.active i,
+.sidenav .nav-item .collapsing .nav .nav-item .nav-link.active i {
+    color: #fff !important;
+} 

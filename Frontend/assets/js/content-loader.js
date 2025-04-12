@@ -1405,6 +1405,28 @@
             
             // Show/hide stats container
             $('#stats-container').toggle(menu.url === '/');
+
+            // Remove active class from all menu items
+            $('.sidenav .nav-item').removeClass('active');
+            $('.sidenav .nav-item .nav-link').removeClass('active');
+            
+            // Find and activate the current menu item
+            const currentPath = menu.url.replace(/^\/+/, '');
+            const menuLink = $(`.sidenav .nav-link[href*="${currentPath}"]`);
+            
+            if (menuLink.length) {
+                // Add active class to the menu item
+                menuLink.closest('.nav-item').addClass('active');
+                menuLink.addClass('active');
+                
+                // If it's a submenu item, expand the parent menu
+                const parentCollapse = menuLink.closest('.collapse');
+                if (parentCollapse.length) {
+                    parentCollapse.addClass('show');
+                    parentCollapse.prev('.nav-link').attr('aria-expanded', 'true');
+                    parentCollapse.prev('.nav-link').closest('.nav-item').addClass('active');
+                }
+            }
         },
 
         findParentMenu: function(menus, childId) {
