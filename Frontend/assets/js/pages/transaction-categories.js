@@ -192,6 +192,7 @@ window.TransactionCategoryPage = class {
                         icon: 'fas fa-edit',
                         onClick: (e) => {
                             const categoryId = e.row.data.id;
+                            $('#addCategoryModal').modal('show');
                             this.loadCategoryForEdit(categoryId);
                         }
                     }, {
@@ -322,7 +323,17 @@ window.TransactionCategoryPage = class {
     async loadCategoryForEdit(categoryId) {
         try {
             const category = await vomoAPI.getTransactionCategory(categoryId);
-            this.editCategory(category);
+            this.currentCategory = category;
+            
+            // Update modal title
+            $('#addCategoryModalLabel').text('Edit Transaction Category');
+            
+            // Fill form fields
+            $('#input-code').val(category.code);
+            $('#input-name').val(category.name);
+            $('#input-type').val(category.type);
+            $('#input-description').val(category.description);
+            $('#input-active').prop('checked', category.is_active);
         } catch (error) {
             console.error('Error loading category for edit:', error);
             DevExpress.ui.notify('Failed to load category details', 'error', 3000);
