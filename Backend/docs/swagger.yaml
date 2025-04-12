@@ -1,5 +1,18 @@
 basePath: /api
 definitions:
+  accounting.BudgetUtilization:
+    properties:
+      days_until_refresh:
+        type: integer
+      remaining_budget:
+        type: number
+      total_budget:
+        type: number
+      used_budget:
+        type: number
+      utilization_rate:
+        type: number
+    type: object
   accounting.CashFlow:
     properties:
       amount:
@@ -28,6 +41,40 @@ definitions:
       updatedBy:
         type: string
     type: object
+  accounting.CategorySummary:
+    properties:
+      amount:
+        type: number
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      percentage:
+        type: number
+    type: object
+  accounting.CategoryTrendMetrics:
+    properties:
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      growth_rate:
+        type: number
+      last_month:
+        type: number
+      this_month:
+        type: number
+    type: object
+  accounting.MonthlyExpenditure:
+    properties:
+      amount:
+        type: number
+      month:
+        description: YYYY-MM format
+        type: string
+      requests:
+        type: integer
+    type: object
   accounting.PettyCash:
     properties:
       alertThreshold:
@@ -38,6 +85,8 @@ definitions:
         type: number
       budgetPeriod:
         type: string
+      channel:
+        $ref: '#/definitions/channel.Channel'
       channelID:
         type: integer
       createdAt:
@@ -46,12 +95,16 @@ definitions:
         type: string
       currentBalance:
         type: number
+      division:
+        $ref: '#/definitions/division.Division'
       divisionID:
         type: integer
       id:
         type: integer
       initialBalance:
         type: number
+      office:
+        $ref: '#/definitions/office.Office'
       officeID:
         type: integer
       periodEndDate:
@@ -79,6 +132,8 @@ definitions:
         type: string
       categoryID:
         type: integer
+      channel:
+        $ref: '#/definitions/channel.Channel'
       channelID:
         type: integer
       completedAt:
@@ -87,6 +142,8 @@ definitions:
         type: string
       createdBy:
         type: string
+      division:
+        $ref: '#/definitions/division.Division'
       divisionID:
         type: integer
       employeeID:
@@ -95,6 +152,8 @@ definitions:
         type: integer
       notes:
         type: string
+      office:
+        $ref: '#/definitions/office.Office'
       officeID:
         type: integer
       paymentMethod:
@@ -125,10 +184,41 @@ definitions:
         type: string
       tenantID:
         type: integer
+      transactionCategory:
+        $ref: '#/definitions/accounting.TransactionCategory'
       updatedAt:
         type: string
       updatedBy:
         type: string
+    type: object
+  accounting.PettyCashSummary:
+    properties:
+      budget_utilization:
+        $ref: '#/definitions/accounting.BudgetUtilization'
+      category_breakdown:
+        items:
+          $ref: '#/definitions/accounting.CategorySummary'
+        type: array
+      monthly_expenditures:
+        items:
+          $ref: '#/definitions/accounting.MonthlyExpenditure'
+        type: array
+      pending_requests:
+        type: integer
+      recent_transactions:
+        items:
+          $ref: '#/definitions/accounting.RecentTransaction'
+        type: array
+      top_expenses:
+        items:
+          $ref: '#/definitions/accounting.TopExpense'
+        type: array
+      total_balance:
+        type: number
+      total_expenditure:
+        type: number
+      trend_analysis:
+        $ref: '#/definitions/accounting.TrendAnalysis'
     type: object
   accounting.PurchaseOrder:
     properties:
@@ -187,6 +277,94 @@ definitions:
       updatedBy:
         type: string
     type: object
+  accounting.RecentTransaction:
+    properties:
+      amount:
+        type: number
+      date:
+        type: string
+      employee_name:
+        type: string
+      id:
+        type: integer
+      purpose:
+        type: string
+      request_number:
+        type: string
+      status:
+        type: string
+    type: object
+  accounting.TopExpense:
+    properties:
+      amount:
+        type: number
+      category_name:
+        type: string
+      date:
+        type: string
+      employee_name:
+        type: string
+      purpose:
+        type: string
+      request_number:
+        type: string
+    type: object
+  accounting.TransactionCategory:
+    properties:
+      code:
+        type: string
+      createdAt:
+        type: string
+      createdBy:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      isActive:
+        type: boolean
+      name:
+        type: string
+      tenantID:
+        type: integer
+      type:
+        description: income or expense
+        type: string
+      updatedAt:
+        type: string
+      updatedBy:
+        type: string
+    type: object
+  accounting.TrendAnalysis:
+    properties:
+      category_trend:
+        items:
+          $ref: '#/definitions/accounting.CategoryTrendMetrics'
+        type: array
+      daily_average:
+        type: number
+      growth_rate:
+        type: number
+      monthly_average:
+        type: number
+      weekly_average:
+        type: number
+      weekly_trend:
+        items:
+          $ref: '#/definitions/accounting.WeeklyExpenditures'
+        type: array
+    type: object
+  accounting.WeeklyExpenditures:
+    properties:
+      request_count:
+        type: integer
+      total_amount:
+        type: number
+      week_end:
+        type: string
+      week_start:
+        type: string
+    type: object
   backup.Backup:
     properties:
       created_at:
@@ -199,6 +377,73 @@ definitions:
         type: integer
       size:
         type: integer
+      tenant_id:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
+  channel.Channel:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      tenant_id:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
+  division.Division:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      employees:
+        items:
+          $ref: '#/definitions/employee.Employee'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      tenant_id:
+        type: integer
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
+  employee.Employee:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      division_id:
+        type: integer
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone:
+        type: string
       tenant_id:
         type: integer
       updated_at:
@@ -326,17 +571,6 @@ definitions:
       name:
         example: Soccer Jersey
         type: string
-    type: object
-  handlers.CategorySummary:
-    properties:
-      amount:
-        type: number
-      category_id:
-        type: integer
-      category_name:
-        type: string
-      percentage:
-        type: number
     type: object
   handlers.CompleteWorkOrderRequest:
     properties:
@@ -1012,40 +1246,6 @@ definitions:
         example: Invalid request parameters
         type: string
     type: object
-  handlers.ExpenditureDetail:
-    properties:
-      amount:
-        type: number
-      category_name:
-        type: string
-      date:
-        type: string
-      employee_name:
-        type: string
-      id:
-        type: integer
-      payment_method:
-        type: string
-      purpose:
-        type: string
-      receipt_urls:
-        items:
-          type: string
-        type: array
-      request_number:
-        type: string
-      status:
-        type: string
-    type: object
-  handlers.ExpenditureSummary:
-    properties:
-      average_amount:
-        type: number
-      total_amount:
-        type: number
-      total_transactions:
-        type: integer
-    type: object
   handlers.ImageInfo:
     properties:
       id:
@@ -1161,16 +1361,6 @@ definitions:
       url:
         example: /dashboard
         type: string
-    type: object
-  handlers.MonthlyExpenditure:
-    properties:
-      amount:
-        type: number
-      month:
-        description: YYYY-MM format
-        type: string
-      requests:
-        type: integer
     type: object
   handlers.OfficeInfo:
     properties:
@@ -1478,32 +1668,6 @@ definitions:
       updated_by:
         example: admin
         type: string
-    type: object
-  handlers.PettyCashExpenditureResponse:
-    properties:
-      expenditures:
-        items:
-          $ref: '#/definitions/handlers.ExpenditureDetail'
-        type: array
-      summary:
-        $ref: '#/definitions/handlers.ExpenditureSummary'
-    type: object
-  handlers.PettyCashSummaryResponse:
-    properties:
-      category_breakdown:
-        items:
-          $ref: '#/definitions/handlers.CategorySummary'
-        type: array
-      monthly_expenditures:
-        items:
-          $ref: '#/definitions/handlers.MonthlyExpenditure'
-        type: array
-      pending_requests:
-        type: integer
-      total_balance:
-        type: number
-      total_expenditure:
-        type: number
     type: object
   handlers.ProductCategoryResponse:
     description: Product category response model
@@ -6335,87 +6499,9 @@ paths:
       summary: Update a petty cash record
       tags:
       - PettyCash
-  /petty-cash/expenditure:
-    get:
-      description: Get detailed list of petty cash expenditures
-      parameters:
-      - description: Tenant ID
-        in: header
-        name: X-Tenant-ID
-        required: true
-        type: string
-      - description: Start date (YYYY-MM-DD)
-        in: query
-        name: start_date
-        type: string
-      - description: End date (YYYY-MM-DD)
-        in: query
-        name: end_date
-        type: string
-      - description: Filter by category ID
-        in: query
-        name: category_id
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.PettyCashExpenditureResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Get petty cash expenditures
-      tags:
-      - PettyCash
-  /petty-cash/expenditure/summary:
-    get:
-      description: Get summary statistics for petty cash expenditures
-      parameters:
-      - description: Tenant ID
-        in: header
-        name: X-Tenant-ID
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.ExpenditureSummary'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Get petty cash expenditure summary
-      tags:
-      - PettyCash
   /petty-cash/summary:
     get:
-      description: Get summary and statistics for petty cash management
+      description: Get comprehensive summary and analytics for petty cash management
       parameters:
       - description: Tenant ID
         in: header
@@ -6428,7 +6514,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.PettyCashSummaryResponse'
+            $ref: '#/definitions/accounting.PettyCashSummary'
         "401":
           description: Unauthorized
           schema:
@@ -6443,7 +6529,7 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Get petty cash summary
+      summary: Get detailed petty cash summary
       tags:
       - PettyCash
   /product-categories:

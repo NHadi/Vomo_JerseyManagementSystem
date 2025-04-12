@@ -85,3 +85,7 @@ func (s *PettyCashService) Delete(id int, ctx context.Context) error {
 func (s *PettyCashService) FindByOffice(officeID int, ctx context.Context) (*accounting.PettyCash, error) {
 	return s.repo.FindByOffice(officeID, ctx)
 }
+
+func (s *PettyCashService) GetSummary(ctx context.Context) (*accounting.PettyCashSummary, error) {
+	return s.repo.GetPettyCashSummary(ctx)
+}

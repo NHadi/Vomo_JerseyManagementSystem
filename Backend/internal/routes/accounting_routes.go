@@ -72,7 +72,7 @@ func SetupAccountingRoutes(router *gin.RouterGroup, services *services.Services)
 		pettyCash.DELETE("/:id", handlers.DeletePettyCash(services.PettyCashService))
 
 		// Summary/Recapitulation (Rekapitulasi)
-		pettyCash.GET("/summary", handlers.GetPettyCashSummary(services.PettyCashService, services.PettyCashRequestService))
+		pettyCash.GET("/summary", handlers.GetPettyCashSummary(services.PettyCashService))
 
 		// Transactions (Transaksi)
 		transactions := pettyCash.Group("/transactions")
@@ -94,13 +94,6 @@ func SetupAccountingRoutes(router *gin.RouterGroup, services *services.Services)
 			categories.GET("", handlers.GetAllTransactionCategories(services.TransactionCategoryService))
 			categories.PUT("/:id", handlers.UpdateTransactionCategory(services.TransactionCategoryService))
 			categories.DELETE("/:id", handlers.DeleteTransactionCategory(services.TransactionCategoryService))
-		}
-
-		// Expenditure (Pengeluaran)
-		expenditure := pettyCash.Group("/expenditure")
-		{
-			expenditure.GET("", handlers.GetPettyCashExpenditures(services.PettyCashRequestService))
-			expenditure.GET("/summary", handlers.GetPettyCashExpenditureSummary(services.PettyCashRequestService))
 		}
 	}
 	// Petty Cash Requests

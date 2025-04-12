@@ -101,6 +101,7 @@ type PettyCashRepository interface {
 	Update(pettyCash *PettyCash, ctx context.Context) error
 	Delete(id int, ctx context.Context) error
 	FindByOffice(officeID int, ctx context.Context) (*PettyCash, error)
+	GetPettyCashSummary(ctx context.Context) (*PettyCashSummary, error)
 }
 
 // PettyCashRequestRepository defines the interface for petty cash request persistence operations

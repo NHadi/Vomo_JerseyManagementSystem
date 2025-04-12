@@ -172,5 +172,23 @@ export const pettyCashAPI = {
             console.error('Delete transaction error:', error);
             throw error;
         }
+    },
+
+    async getPettyCashSummary() {
+        try {
+            const response = await fetch(`${config.baseUrl}/petty-cash/summary`, {
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to fetch petty cash summary');
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Get petty cash summary error:', error);
+            throw error;
+        }
     }
 }; 

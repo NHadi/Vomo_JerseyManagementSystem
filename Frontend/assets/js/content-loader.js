@@ -184,6 +184,12 @@
                         case 'transaction-category':
                             await this.loadTransactionCategoriesGrid();
                             break;
+                        case 'petty-cash-request':
+                            await this.loadPettyCashRequestsGrid();
+                            break;
+                        case 'petty-cash-summary':
+                            await this.loadPettyCashSummary();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -1882,6 +1888,120 @@
                     } catch (error) {
                         console.error('Failed to load transaction categories component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load transaction categories component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadPettyCashRequestsGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.pettyCashRequestsPageInstance) {
+                window.pettyCashRequestsPageInstance.dispose();
+                window.pettyCashRequestsPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/petty-cash-requests.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="petty-cash-requests"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the petty-cash-requests.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/petty-cash-requests.js';
+                        script.setAttribute('data-page', 'petty-cash-requests');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the petty cash requests page instance
+                            if (!window.pettyCashRequestsPageInstance) {
+                                window.pettyCashRequestsPageInstance = new window.PettyCashRequestsPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load petty cash requests module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load petty cash requests component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load petty cash requests component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadPettyCashSummary: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.pettyCashSummaryPageInstance) {
+                window.pettyCashSummaryPageInstance.dispose();
+                window.pettyCashSummaryPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/petty-cash-summary.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="petty-cash-summary"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the petty-cash-summary.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/petty-cash-summary.js';
+                        script.setAttribute('data-page', 'petty-cash-summary');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the petty cash summary page instance
+                            if (!window.pettyCashSummaryPageInstance) {
+                                window.pettyCashSummaryPageInstance = new window.PettyCashSummaryPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load petty cash summary module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load petty cash summary component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load petty cash summary component</div>');
                         reject(error);
                     }
                 });

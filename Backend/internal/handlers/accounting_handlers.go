@@ -154,6 +154,10 @@ type PettyCashSummaryResponse struct {
 	PendingRequests     int                  `json:"pending_requests"`
 	CategoryBreakdown   []CategorySummary    `json:"category_breakdown"`
 	MonthlyExpenditures []MonthlyExpenditure `json:"monthly_expenditures"`
+	TopExpenses         []TopExpense         `json:"top_expenses"`
+	RecentTransactions  []RecentTransaction  `json:"recent_transactions"`
+	BudgetUtilization   BudgetUtilization    `json:"budget_utilization"`
+	TrendAnalysis       TrendAnalysis        `json:"trend_analysis"`
 }
 
 type CategorySummary struct {
@@ -167,6 +171,57 @@ type MonthlyExpenditure struct {
 	Month    string  `json:"month"` // YYYY-MM format
 	Amount   float64 `json:"amount"`
 	Requests int     `json:"requests"`
+}
+
+type TopExpense struct {
+	RequestNumber string  `json:"request_number"`
+	Amount        float64 `json:"amount"`
+	Purpose       string  `json:"purpose"`
+	CategoryName  string  `json:"category_name"`
+	Date          string  `json:"date"`
+	EmployeeName  string  `json:"employee_name"`
+}
+
+type RecentTransaction struct {
+	ID            int     `json:"id"`
+	RequestNumber string  `json:"request_number"`
+	Amount        float64 `json:"amount"`
+	Purpose       string  `json:"purpose"`
+	Status        string  `json:"status"`
+	Date          string  `json:"date"`
+	EmployeeName  string  `json:"employee_name"`
+}
+
+type BudgetUtilization struct {
+	TotalBudget      float64 `json:"total_budget"`
+	UsedBudget       float64 `json:"used_budget"`
+	RemainingBudget  float64 `json:"remaining_budget"`
+	UtilizationRate  float64 `json:"utilization_rate"`
+	DaysUntilRefresh int     `json:"days_until_refresh"`
+}
+
+type TrendAnalysis struct {
+	DailyAverage   float64                `json:"daily_average"`
+	WeeklyAverage  float64                `json:"weekly_average"`
+	MonthlyAverage float64                `json:"monthly_average"`
+	GrowthRate     float64                `json:"growth_rate"`
+	WeeklyTrend    []WeeklyExpenditures   `json:"weekly_trend"`
+	CategoryTrend  []CategoryTrendMetrics `json:"category_trend"`
+}
+
+type WeeklyExpenditures struct {
+	WeekStart    string  `json:"week_start"`
+	WeekEnd      string  `json:"week_end"`
+	TotalAmount  float64 `json:"total_amount"`
+	RequestCount int     `json:"request_count"`
+}
+
+type CategoryTrendMetrics struct {
+	CategoryID   int     `json:"category_id"`
+	CategoryName string  `json:"category_name"`
+	LastMonth    float64 `json:"last_month"`
+	ThisMonth    float64 `json:"this_month"`
+	GrowthRate   float64 `json:"growth_rate"`
 }
 
 // PettyCashExpenditureResponse represents the expenditure list response
@@ -969,241 +1024,23 @@ func RejectPettyCashRequest(service *application.PettyCashRequestService) gin.Ha
 	}
 }
 
-// @Summary Get petty cash summary
-// @Description Get summary and statistics for petty cash management
+// @Summary Get detailed petty cash summary
+// @Description Get comprehensive summary and analytics for petty cash management
 // @Tags PettyCash
 // @Produce json
 // @Security BearerAuth
 // @Param X-Tenant-ID header string true "Tenant ID"
-// @Success 200 {object} PettyCashSummaryResponse
+// @Success 200 {object} accounting.PettyCashSummary
 // @Failure 401 {object} ErrorResponse "Unauthorized"
 // @Failure 403 {object} ErrorResponse "Forbidden"
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /petty-cash/summary [get]
-func GetPettyCashSummary(pettyCashService *application.PettyCashService, requestService *application.PettyCashRequestService) gin.HandlerFunc {
+func GetPettyCashSummary(service *application.PettyCashService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get all petty cash records
-		pettyCashList, err := pettyCashService.FindAll(c)
+		summary, err := service.GetSummary(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
 			return
-		}
-
-		// Get all requests
-		requests, err := requestService.FindAll(c)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
-			return
-		}
-
-		// Calculate totals
-		var totalBalance, totalExpenditure float64
-		pendingRequests := 0
-		categoryAmounts := make(map[int]float64)
-		monthlyExpenditures := make(map[string]MonthlyExpenditure)
-
-		for _, pc := range pettyCashList {
-			totalBalance += pc.CurrentBalance
-		}
-
-		for _, req := range requests {
-			if req.Status == "approved" {
-				totalExpenditure += req.Amount
-				categoryAmounts[req.CategoryID] += req.Amount
-
-				// Monthly breakdown
-				month := req.CreatedAt.Format("2006-01")
-				monthly := monthlyExpenditures[month]
-				monthly.Month = month
-				monthly.Amount += req.Amount
-				monthly.Requests++
-				monthlyExpenditures[month] = monthly
-			}
-			if req.Status == "pending" {
-				pendingRequests++
-			}
-		}
-
-		// Build category breakdown
-		categoryBreakdown := make([]CategorySummary, 0)
-		for catID, amount := range categoryAmounts {
-			category, err := requestService.GetCategory(catID, c)
-			if err != nil {
-				continue
-			}
-			categoryBreakdown = append(categoryBreakdown, CategorySummary{
-				CategoryID:   catID,
-				CategoryName: category.Name,
-				Amount:       amount,
-				Percentage:   (amount / totalExpenditure) * 100,
-			})
-		}
-
-		// Convert monthly map to slice
-		monthlyList := make([]MonthlyExpenditure, 0)
-		for _, monthly := range monthlyExpenditures {
-			monthlyList = append(monthlyList, monthly)
-		}
-
-		response := PettyCashSummaryResponse{
-			TotalBalance:        totalBalance,
-			TotalExpenditure:    totalExpenditure,
-			PendingRequests:     pendingRequests,
-			CategoryBreakdown:   categoryBreakdown,
-			MonthlyExpenditures: monthlyList,
-		}
-
-		c.JSON(http.StatusOK, response)
-	}
-}
-
-// @Summary Get petty cash expenditures
-// @Description Get detailed list of petty cash expenditures
-// @Tags PettyCash
-// @Produce json
-// @Security BearerAuth
-// @Param X-Tenant-ID header string true "Tenant ID"
-// @Param start_date query string false "Start date (YYYY-MM-DD)"
-// @Param end_date query string false "End date (YYYY-MM-DD)"
-// @Param category_id query int false "Filter by category ID"
-// @Success 200 {object} PettyCashExpenditureResponse
-// @Failure 401 {object} ErrorResponse "Unauthorized"
-// @Failure 403 {object} ErrorResponse "Forbidden"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /petty-cash/expenditure [get]
-func GetPettyCashExpenditures(service *application.PettyCashRequestService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Get query parameters
-		startDate := c.Query("start_date")
-		endDate := c.Query("end_date")
-		categoryID := c.Query("category_id")
-
-		// Get all requests
-		requests, err := service.FindAll(c)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
-			return
-		}
-
-		// Filter and process requests
-		expenditures := make([]ExpenditureDetail, 0)
-		var totalAmount float64
-		var totalTransactions int
-
-		for _, req := range requests {
-			// Apply filters
-			if categoryID != "" {
-				catID, _ := strconv.Atoi(categoryID)
-				if req.CategoryID != catID {
-					continue
-				}
-			}
-
-			if startDate != "" {
-				start, err := time.Parse("2006-01-02", startDate)
-				if err == nil && req.CreatedAt.Before(start) {
-					continue
-				}
-			}
-
-			if endDate != "" {
-				end, err := time.Parse("2006-01-02", endDate)
-				if err == nil && req.CreatedAt.After(end) {
-					continue
-				}
-			}
-
-			// Get category name
-			category, err := service.GetCategory(req.CategoryID, c)
-			categoryName := ""
-			if err == nil {
-				categoryName = category.Name
-			}
-
-			// Get employee name
-			employee, err := service.GetEmployee(req.EmployeeID, c)
-			employeeName := ""
-			if err == nil {
-				employeeName = employee.Name
-			}
-
-			expenditure := ExpenditureDetail{
-				ID:            req.ID,
-				RequestNumber: req.RequestNumber,
-				Date:          req.CreatedAt.Format(time.RFC3339),
-				Amount:        req.Amount,
-				Purpose:       req.Purpose,
-				CategoryName:  categoryName,
-				PaymentMethod: req.PaymentMethod,
-				Status:        req.Status,
-				ReceiptURLs:   req.ReceiptURLs,
-				EmployeeName:  employeeName,
-			}
-
-			expenditures = append(expenditures, expenditure)
-			totalAmount += req.Amount
-			totalTransactions++
-		}
-
-		// Calculate average
-		averageAmount := 0.0
-		if totalTransactions > 0 {
-			averageAmount = totalAmount / float64(totalTransactions)
-		}
-
-		response := PettyCashExpenditureResponse{
-			Expenditures: expenditures,
-			Summary: ExpenditureSummary{
-				TotalAmount:       totalAmount,
-				TotalTransactions: totalTransactions,
-				AverageAmount:     averageAmount,
-			},
-		}
-
-		c.JSON(http.StatusOK, response)
-	}
-}
-
-// @Summary Get petty cash expenditure summary
-// @Description Get summary statistics for petty cash expenditures
-// @Tags PettyCash
-// @Produce json
-// @Security BearerAuth
-// @Param X-Tenant-ID header string true "Tenant ID"
-// @Success 200 {object} ExpenditureSummary
-// @Failure 401 {object} ErrorResponse "Unauthorized"
-// @Failure 403 {object} ErrorResponse "Forbidden"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /petty-cash/expenditure/summary [get]
-func GetPettyCashExpenditureSummary(service *application.PettyCashRequestService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Get all requests
-		requests, err := service.FindAll(c)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
-			return
-		}
-
-		var totalAmount float64
-		var totalTransactions int
-
-		for _, req := range requests {
-			if req.Status == "approved" {
-				totalAmount += req.Amount
-				totalTransactions++
-			}
-		}
-
-		// Calculate average
-		averageAmount := 0.0
-		if totalTransactions > 0 {
-			averageAmount = totalAmount / float64(totalTransactions)
-		}
-
-		summary := ExpenditureSummary{
-			TotalAmount:       totalAmount,
-			TotalTransactions: totalTransactions,
-			AverageAmount:     averageAmount,
 		}
 
 		c.JSON(http.StatusOK, summary)
