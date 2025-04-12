@@ -178,6 +178,12 @@
                         case 'spk-data':
                             await this.loadSPKData();
                             break;
+                        case 'petty-cash':
+                            await this.loadPettyCashGrid();
+                            break;
+                        case 'transaction-category':
+                            await this.loadTransactionCategoriesGrid();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -1592,6 +1598,12 @@
         },
 
         loadCashFlowGrid: async function() {
+
+            // Only dispose if we're loading a new instance
+            if (window.cashFlowPageInstance) {
+                window.cashFlowPageInstance.dispose();
+                window.cashFlowPageInstance = null;
+            }
             return new Promise(async (resolve, reject) => {
                 try {
                     // Load the cash flow component HTML
@@ -1756,6 +1768,120 @@
                     } catch (error) {
                         console.error('Failed to load SPK data component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load SPK data component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadPettyCashGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.pettyCashPageInstance) {
+                window.pettyCashPageInstance.dispose();
+                window.pettyCashPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/petty-cash.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="petty-cash"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the petty-cash.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/petty-cash.js';
+                        script.setAttribute('data-page', 'petty-cash');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the petty cash page instance
+                            if (!window.pettyCashPageInstance) {
+                                window.pettyCashPageInstance = new window.PettyCashPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load petty cash module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load petty cash component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load petty cash component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadTransactionCategoriesGrid: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.transactionCategoryPageInstance) {
+                window.transactionCategoryPageInstance.dispose();
+                window.transactionCategoryPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/transaction-categories.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="transaction-categories"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the transaction-categories.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/transaction-categories.js';
+                        script.setAttribute('data-page', 'transaction-categories');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the transaction categories page instance
+                            if (!window.transactionCategoryPageInstance) {
+                                window.transactionCategoryPageInstance = new window.TransactionCategoryPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load transaction categories module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load transaction categories component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load transaction categories component</div>');
                         reject(error);
                     }
                 });

@@ -23,6 +23,8 @@ import { config } from './config.js';
 import { cashFlowAPI } from './modules/cash-flows.js';
 import { purchaseOrderAPI } from './modules/purchase-orders.js';
 import { workOrderAPI } from './modules/work-orders.js';
+import { pettyCashAPI } from './modules/petty-cash.js';
+import { transactionCategoryAPI } from './modules/transaction-categories.js';
 
 // Initialize the API namespace
 export const vomoAPI = {
@@ -50,6 +52,8 @@ export const vomoAPI = {
     ...cashFlowAPI,
     ...purchaseOrderAPI,
     ...workOrderAPI,
+    ...pettyCashAPI,
+    ...transactionCategoryAPI,
     config,
 };
 
