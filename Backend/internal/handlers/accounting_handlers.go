@@ -114,36 +114,37 @@ type PettyCashDetailResponse struct {
 
 // PettyCashRequestResponse represents the enhanced petty cash request response structure
 type PettyCashRequestResponse struct {
-	ID                  int                    `json:"id"`
-	PettyCashID         int                    `json:"petty_cash_id"`
-	RequestNumber       string                 `json:"request_number"`
-	OfficeID            int                    `json:"office_id"`
-	Office              *PettyCashOfficeInfo   `json:"office,omitempty"`
-	EmployeeID          int                    `json:"employee_id"`
-	ChannelID           *int                   `json:"channel_id,omitempty"`
-	Channel             *PettyCashChannelInfo  `json:"channel,omitempty"`
-	DivisionID          *int                   `json:"division_id,omitempty"`
-	Division            *PettyCashDivisionInfo `json:"division,omitempty"`
-	Amount              float64                `json:"amount"`
-	Purpose             string                 `json:"purpose"`
-	CategoryID          int                    `json:"category_id"`
-	PaymentMethod       *string                `json:"payment_method,omitempty"`
-	ReferenceNumber     *string                `json:"reference_number,omitempty"`
-	BudgetCode          *string                `json:"budget_code,omitempty"`
-	ReceiptURLs         []string               `json:"receipt_urls,omitempty"`
-	Status              string                 `json:"status"`
-	SettlementStatus    string                 `json:"settlement_status"`
-	SettlementDate      *string                `json:"settlement_date,omitempty"`
-	ReimbursementStatus string                 `json:"reimbursement_status"`
-	ReimbursementDate   *string                `json:"reimbursement_date,omitempty"`
-	ApprovedBy          *string                `json:"approved_by,omitempty"`
-	ApprovedAt          *string                `json:"approved_at,omitempty"`
-	CompletedAt         *string                `json:"completed_at,omitempty"`
-	Notes               *string                `json:"notes,omitempty"`
-	CreatedAt           string                 `json:"created_at"`
-	CreatedBy           string                 `json:"created_by"`
-	UpdatedAt           string                 `json:"updated_at"`
-	UpdatedBy           string                 `json:"updated_by"`
+	ID                  int                          `json:"id"`
+	PettyCashID         int                          `json:"petty_cash_id"`
+	RequestNumber       string                       `json:"request_number"`
+	OfficeID            int                          `json:"office_id"`
+	Office              *PettyCashOfficeInfo         `json:"office,omitempty"`
+	EmployeeID          int                          `json:"employee_id"`
+	ChannelID           *int                         `json:"channel_id,omitempty"`
+	Channel             *PettyCashChannelInfo        `json:"channel,omitempty"`
+	DivisionID          *int                         `json:"division_id,omitempty"`
+	Division            *PettyCashDivisionInfo       `json:"division,omitempty"`
+	Amount              float64                      `json:"amount"`
+	Purpose             string                       `json:"purpose"`
+	CategoryID          int                          `json:"category_id"`
+	TransactionCategory *TransactionCategoryResponse `json:"transaction_category,omitempty"`
+	PaymentMethod       *string                      `json:"payment_method,omitempty"`
+	ReferenceNumber     *string                      `json:"reference_number,omitempty"`
+	BudgetCode          *string                      `json:"budget_code,omitempty"`
+	ReceiptURLs         []string                     `json:"receipt_urls,omitempty"`
+	Status              string                       `json:"status"`
+	SettlementStatus    string                       `json:"settlement_status"`
+	SettlementDate      *string                      `json:"settlement_date,omitempty"`
+	ReimbursementStatus string                       `json:"reimbursement_status"`
+	ReimbursementDate   *string                      `json:"reimbursement_date,omitempty"`
+	ApprovedBy          *string                      `json:"approved_by,omitempty"`
+	ApprovedAt          *string                      `json:"approved_at,omitempty"`
+	CompletedAt         *string                      `json:"completed_at,omitempty"`
+	Notes               *string                      `json:"notes,omitempty"`
+	CreatedAt           string                       `json:"created_at"`
+	CreatedBy           string                       `json:"created_by"`
+	UpdatedAt           string                       `json:"updated_at"`
+	UpdatedBy           string                       `json:"updated_by"`
 }
 
 // PettyCashSummaryResponse represents the summary response structure

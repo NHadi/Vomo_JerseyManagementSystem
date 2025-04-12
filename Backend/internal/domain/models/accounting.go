@@ -126,7 +126,7 @@ type PettyCashRequest struct {
 	DivisionID          *int       `gorm:"column:division_id"`
 	Amount              float64    `gorm:"type:decimal(10,2);not null"`
 	Purpose             string     `gorm:"type:text;not null"`
-	CategoryID          int        `gorm:"not null"`
+	CategoryID          int        `gorm:"not null;column:category_id"`
 	PaymentMethod       *string    `gorm:"size:20"`
 	ReferenceNumber     *string    `gorm:"size:100"`
 	BudgetCode          *string    `gorm:"size:50"`

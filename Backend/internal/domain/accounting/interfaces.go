@@ -40,6 +40,10 @@ type PettyCash struct {
 // PettyCashRequest represents the petty cash request domain model
 type PettyCashRequest struct {
 	models.PettyCashRequest
+	Office              *office.Office       `gorm:"foreignKey:OfficeID"`
+	Division            *division.Division   `gorm:"foreignKey:DivisionID"`
+	Channel             *channel.Channel     `gorm:"foreignKey:ChannelID"`
+	TransactionCategory *TransactionCategory `gorm:"foreignKey:CategoryID"`
 }
 
 // WorkOrder represents the work order (SPK) domain model
