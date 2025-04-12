@@ -430,9 +430,11 @@ window.PurchaseOrderPage = class {
             }) : '-';
 
         $('#totalOrders').text(totalOrders);
-        $('#totalAmount').text(new Intl.NumberFormat('en-US', {
+        $('#totalAmount').text(new Intl.NumberFormat('id-ID', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'IDR',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         }).format(totalAmount));
         $('#pendingOrders').text(pendingOrders);
         $('#lastOrder').text(lastOrder);
@@ -469,9 +471,11 @@ window.PurchaseOrderPage = class {
             </span>
         `);
         $('#orderSupplier').text(order.supplier.name);
-        $('#orderTotal').text(new Intl.NumberFormat('en-US', {
+        $('#orderTotal').text(new Intl.NumberFormat('id-ID', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'IDR',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         }).format(order.total_amount));
         $('#orderNotes').text(order.notes || '-');
         
@@ -492,13 +496,17 @@ window.PurchaseOrderPage = class {
                 <tr>
                     <td>${item.item.name}</td>
                     <td>${item.quantity}</td>
-                    <td>${new Intl.NumberFormat('en-US', {
+                    <td>${new Intl.NumberFormat('id-ID', {
                         style: 'currency',
-                        currency: 'USD'
+                        currency: 'IDR',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
                     }).format(item.unit_price)}</td>
-                    <td>${new Intl.NumberFormat('en-US', {
+                    <td>${new Intl.NumberFormat('id-ID', {
                         style: 'currency',
-                        currency: 'USD'
+                        currency: 'IDR',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
                     }).format(total)}</td>
                 </tr>
             `);
@@ -684,9 +692,11 @@ window.PurchaseOrderPage = class {
                     .append(
                         $('<div>')
                             .addClass('order-amount')
-                            .text(new Intl.NumberFormat('en-US', {
+                            .text(new Intl.NumberFormat('id-ID', {
                                 style: 'currency',
-                                currency: 'USD'
+                                currency: 'IDR',
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
                             }).format(order.total_amount))
                     )
             )
@@ -808,13 +818,17 @@ window.PurchaseOrderPage = class {
                                                 return $('<tr>')
                                                     .append($('<td>').text(item.item.name))
                                                     .append($('<td>').text(item.quantity))
-                                                    .append($('<td>').text(new Intl.NumberFormat('en-US', {
+                                                    .append($('<td>').text(new Intl.NumberFormat('id-ID', {
                                                         style: 'currency',
-                                                        currency: 'USD'
+                                                        currency: 'IDR',
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2
                                                     }).format(item.unit_price)))
-                                                    .append($('<td>').text(new Intl.NumberFormat('en-US', {
+                                                    .append($('<td>').text(new Intl.NumberFormat('id-ID', {
                                                         style: 'currency',
-                                                        currency: 'USD'
+                                                        currency: 'IDR',
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2
                                                     }).format(total)));
                                             })
                                         )

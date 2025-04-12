@@ -298,10 +298,10 @@ window.CashFlowPage = class {
                         const type = amount >= 0 ? 'income' : 'expense';
                         $('<div>')
                             .addClass(`transaction-amount ${type}`)
-                            .text(new Intl.NumberFormat('en-US', {
+                            .text(new Intl.NumberFormat('id-ID', {
                                 style: 'currency',
-                                currency: 'USD',
-                                minimumFractionDigits: 2
+                                currency: 'IDR',
+                                minimumFractionDigits: 0
                             }).format(amount))
                             .appendTo(container);
                     }
@@ -401,9 +401,10 @@ window.CashFlowPage = class {
                         precision: 2
                     },
                     customizeText: (data) => {
-                        return new Intl.NumberFormat('en-US', {
+                        return new Intl.NumberFormat('id-ID', {
                             style: 'currency',
-                            currency: 'USD'
+                            currency: 'IDR',
+                            minimumFractionDigits: 0
                         }).format(data.value);
                     }
                 }],
@@ -415,9 +416,10 @@ window.CashFlowPage = class {
                         precision: 2
                     },
                     customizeText: (data) => {
-                        return new Intl.NumberFormat('en-US', {
+                        return new Intl.NumberFormat('id-ID', {
                             style: 'currency',
-                            currency: 'USD'
+                            currency: 'IDR',
+                            minimumFractionDigits: 0
                         }).format(data.value);
                     }
                 }]
@@ -454,19 +456,22 @@ window.CashFlowPage = class {
                 day: 'numeric'
             }) : '-';
 
-        $('#totalIncome').text(new Intl.NumberFormat('en-US', {
+        $('#totalIncome').text(new Intl.NumberFormat('id-ID', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'IDR',
+            minimumFractionDigits: 0
         }).format(totalIncome));
         
-        $('#totalExpenses').text(new Intl.NumberFormat('en-US', {
+        $('#totalExpenses').text(new Intl.NumberFormat('id-ID', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'IDR',
+            minimumFractionDigits: 0
         }).format(totalExpenses));
         
-        $('#netBalance').text(new Intl.NumberFormat('en-US', {
+        $('#netBalance').text(new Intl.NumberFormat('id-ID', {
             style: 'currency',
-            currency: 'USD'
+            currency: 'IDR',
+            minimumFractionDigits: 0
         }).format(netBalance));
         
         $('#lastTransaction').text(lastTransaction);
@@ -500,7 +505,11 @@ window.CashFlowPage = class {
 
         // Update fields
         $('#transactionDate').text(formattedDate);
-        $('#transactionAmount').text(transaction.amount.toLocaleString());
+        $('#transactionAmount').text(new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(transaction.amount));
         $('#transactionType').html(`
             <span class="badge badge-${typeClass}">
                 ${type.charAt(0).toUpperCase() + type.slice(1)}
@@ -609,9 +618,9 @@ window.CashFlowPage = class {
                     .append(
                         $('<div>')
                             .addClass('transaction-amount')
-                            .text(new Intl.NumberFormat('en-US', {
+                            .text(new Intl.NumberFormat('id-ID', {
                                 style: 'currency',
-                                currency: 'USD'
+                                currency: 'IDR'
                             }).format(transaction.amount))
                     )
             )

@@ -175,6 +175,9 @@
                         case 'purchase-list':
                             await this.loadPurchaseOrder();
                             break;
+                        case 'spk-data':
+                            await this.loadSPKData();
+                            break;
                         default:
                             try {
                                 await this.loadDefaultContent('/' + path);
@@ -1696,6 +1699,63 @@
                     } catch (error) {
                         console.error('Failed to load purchase order component:', error);
                         $('#main-content').html('<div class="alert alert-danger">Failed to load purchase order component</div>');
+                        reject(error);
+                    }
+                });
+            });
+        },
+
+        loadSPKData: async function() {
+            // Only dispose if we're loading a new instance
+            if (window.spkPageInstance) {
+                window.spkPageInstance.dispose();
+                window.spkPageInstance = null;
+            }
+
+            return new Promise((resolve, reject) => {
+                $('#main-content').load('components/spk-data.html', async () => {
+                    try {
+                        // Wait for DevExtreme to load
+                        await new Promise(resolve => {
+                            const checkDevExtreme = () => {
+                                if (typeof DevExpress !== 'undefined') {
+                                    resolve();
+                                } else {
+                                    setTimeout(checkDevExtreme, 100);
+                                }
+                            };
+                            checkDevExtreme();
+                        });
+
+                        // Remove any existing script
+                        const existingScript = document.querySelector('script[data-page="spk-data"]');
+                        if (existingScript) {
+                            existingScript.remove();
+                        }
+
+                        // Create a script element with type="module" to load the spk-data.js module
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = './assets/js/pages/spk-data.js';
+                        script.setAttribute('data-page', 'spk-data');
+                        
+                        // Handle script load/error
+                        script.onload = () => {
+                            // Initialize the SPK page instance
+                            if (!window.spkPageInstance) {
+                                window.spkPageInstance = new window.SPKPage();
+                            }
+                            resolve();
+                        };
+                        script.onerror = (error) => {
+                            console.error('Failed to load SPK data module:', error);
+                            reject(error);
+                        };
+                        
+                        document.body.appendChild(script);
+                    } catch (error) {
+                        console.error('Failed to load SPK data component:', error);
+                        $('#main-content').html('<div class="alert alert-danger">Failed to load SPK data component</div>');
                         reject(error);
                     }
                 });
