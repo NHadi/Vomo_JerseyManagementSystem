@@ -4,19 +4,28 @@ import (
 	"context"
 	"vomo/internal/domain/accounting"
 	"vomo/internal/domain/audit"
+	"vomo/internal/domain/channel"
+	"vomo/internal/domain/division"
+	"vomo/internal/domain/office"
 )
 
 // PettyCashService handles business logic for petty cash operations
 type PettyCashService struct {
-	repo     accounting.PettyCashRepository
-	auditSvc *audit.Service
+	repo         accounting.PettyCashRepository
+	auditSvc     *audit.Service
+	officeRepo   office.Repository
+	divisionRepo division.Repository
+	channelRepo  channel.Repository
 }
 
 // NewPettyCashService creates a new petty cash service instance
-func NewPettyCashService(repo accounting.PettyCashRepository, auditSvc *audit.Service) *PettyCashService {
+func NewPettyCashService(repo accounting.PettyCashRepository, auditSvc *audit.Service, officeRepo office.Repository, divisionRepo division.Repository, channelRepo channel.Repository) *PettyCashService {
 	return &PettyCashService{
-		repo:     repo,
-		auditSvc: auditSvc,
+		repo:         repo,
+		auditSvc:     auditSvc,
+		officeRepo:   officeRepo,
+		divisionRepo: divisionRepo,
+		channelRepo:  channelRepo,
 	}
 }
 

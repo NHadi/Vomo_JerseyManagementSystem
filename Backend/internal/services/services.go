@@ -50,6 +50,7 @@ type Services struct {
 	StockOpnameService     *application.StockOpnameService
 	StockMovementService   *application.StockMovementService
 	SupplierService        *application.SupplierService
+	ChannelService         *application.ChannelService
 
 	// Accounting Services
 	TransactionCategoryService *application.TransactionCategoryService
@@ -83,6 +84,7 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 	stockOpnameRepo := postgres.NewStockOpnameRepository(db)
 	stockMovementRepo := postgres.NewStockMovementRepository(db)
 	supplierRepo := postgres.NewSupplierRepository(db)
+	channelRepo := postgres.NewChannelRepository(db)
 
 	// Initialize accounting repositories
 	transactionCategoryRepo := postgres.NewTransactionCategoryRepository(db)
@@ -116,13 +118,14 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 	stockOpnameService := application.NewStockOpnameService(stockOpnameRepo, auditService)
 	stockMovementService := application.NewStockMovementService(stockMovementRepo, auditService)
 	supplierService := application.NewSupplierService(supplierRepo, auditService)
+	channelService := application.NewChannelService(channelRepo, auditService)
 
 	// Initialize accounting services
 	transactionCategoryService := application.NewTransactionCategoryService(transactionCategoryRepo, auditService)
 	cashFlowService := application.NewCashFlowService(cashFlowRepo, auditService)
 	purchaseOrderService := application.NewPurchaseOrderService(purchaseOrderRepo, supplierService, itemService, auditService)
-	pettyCashService := application.NewPettyCashService(pettyCashRepo, auditService)
-	pettyCashRequestService := application.NewPettyCashRequestService(pettyCashRequestRepo, auditService)
+	pettyCashService := application.NewPettyCashService(pettyCashRepo, auditService, officeRepo, divisionRepo, channelRepo)
+	pettyCashRequestService := application.NewPettyCashRequestService(pettyCashRequestRepo, auditService, transactionCategoryRepo, employeeRepo)
 	workOrderService := application.NewWorkOrderService(workOrderRepo, auditService)
 
 	return &Services{
@@ -147,6 +150,7 @@ func NewServices(db *gorm.DB, cfg *config.Config) *Services {
 		StockOpnameService:     stockOpnameService,
 		StockMovementService:   stockMovementService,
 		SupplierService:        supplierService,
+		ChannelService:         channelService,
 
 		// Accounting Services
 		TransactionCategoryService: transactionCategoryService,

@@ -61,16 +61,48 @@ func SetupAccountingRoutes(router *gin.RouterGroup, services *services.Services)
 		workOrders.DELETE("/:id/items/:itemId", handlers.DeleteWorkOrderItem(services.WorkOrderService))
 	}
 
-	// Petty Cash
+	// Petty Cash Management (Kas Kecil)
 	pettyCash := router.Group("/petty-cash")
 	{
+		// Master Petty Cash (Kas Kecil)
 		pettyCash.POST("", handlers.CreatePettyCash(services.PettyCashService))
 		pettyCash.GET("/:id", handlers.GetPettyCash(services.PettyCashService))
 		pettyCash.GET("", handlers.GetAllPettyCash(services.PettyCashService))
 		pettyCash.PUT("/:id", handlers.UpdatePettyCash(services.PettyCashService))
 		pettyCash.DELETE("/:id", handlers.DeletePettyCash(services.PettyCashService))
-	}
 
+		// Summary/Recapitulation (Rekapitulasi)
+		pettyCash.GET("/summary", handlers.GetPettyCashSummary(services.PettyCashService, services.PettyCashRequestService))
+
+		// Transactions (Transaksi)
+		transactions := pettyCash.Group("/transactions")
+		{
+			transactions.POST("", handlers.CreatePettyCashRequest(services.PettyCashRequestService))
+			transactions.GET("/:id", handlers.GetPettyCashRequest(services.PettyCashRequestService))
+			transactions.GET("", handlers.GetAllPettyCashRequests(services.PettyCashRequestService))
+			transactions.PUT("/:id", handlers.UpdatePettyCashRequest(services.PettyCashRequestService))
+			transactions.DELETE("/:id", handlers.DeletePettyCashRequest(services.PettyCashRequestService))
+			transactions.POST("/:id/approve", handlers.ApprovePettyCashRequest(services.PettyCashRequestService))
+			transactions.POST("/:id/reject", handlers.RejectPettyCashRequest(services.PettyCashRequestService))
+		}
+
+		// Categories (Kategori Transaksi)
+		categories := pettyCash.Group("/categories")
+		{
+			categories.POST("", handlers.CreateTransactionCategory(services.TransactionCategoryService))
+			categories.GET("/:id", handlers.GetTransactionCategory(services.TransactionCategoryService))
+			categories.GET("", handlers.GetAllTransactionCategories(services.TransactionCategoryService))
+			categories.PUT("/:id", handlers.UpdateTransactionCategory(services.TransactionCategoryService))
+			categories.DELETE("/:id", handlers.DeleteTransactionCategory(services.TransactionCategoryService))
+		}
+
+		// Expenditure (Pengeluaran)
+		expenditure := pettyCash.Group("/expenditure")
+		{
+			expenditure.GET("", handlers.GetPettyCashExpenditures(services.PettyCashRequestService))
+			expenditure.GET("/summary", handlers.GetPettyCashExpenditureSummary(services.PettyCashRequestService))
+		}
+	}
 	// Petty Cash Requests
 	pettyCashRequests := router.Group("/petty-cash-requests")
 	{

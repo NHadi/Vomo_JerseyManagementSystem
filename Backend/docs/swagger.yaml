@@ -30,20 +30,35 @@ definitions:
     type: object
   accounting.PettyCash:
     properties:
-      amount:
+      alertThreshold:
         type: number
-      balance:
+      balanceUpdatedAt:
+        type: string
+      budgetLimit:
         type: number
+      budgetPeriod:
+        type: string
+      channelID:
+        type: integer
       createdAt:
         type: string
       createdBy:
         type: string
+      currentBalance:
+        type: number
+      divisionID:
+        type: integer
       id:
         type: integer
+      initialBalance:
+        type: number
       officeID:
         type: integer
+      periodEndDate:
+        type: string
+      periodStartDate:
+        type: string
       status:
-        description: active, inactive
         type: string
       tenantID:
         type: integer
@@ -56,22 +71,57 @@ definitions:
     properties:
       amount:
         type: number
+      approvedAt:
+        type: string
+      approvedBy:
+        type: string
+      budgetCode:
+        type: string
+      categoryID:
+        type: integer
+      channelID:
+        type: integer
+      completedAt:
+        type: string
       createdAt:
         type: string
       createdBy:
         type: string
+      divisionID:
+        type: integer
+      employeeID:
+        type: integer
       id:
         type: integer
+      notes:
+        type: string
       officeID:
         type: integer
+      paymentMethod:
+        type: string
+      pettyCashID:
+        type: integer
       purpose:
+        type: string
+      receiptURLs:
+        items:
+          type: string
+        type: array
+      referenceNumber:
+        type: string
+      reimbursementDate:
+        type: string
+      reimbursementStatus:
         type: string
       rejectionReason:
         type: string
       requestNumber:
         type: string
+      settlementDate:
+        type: string
+      settlementStatus:
+        type: string
       status:
-        description: pending, approved, rejected
         type: string
       tenantID:
         type: integer
@@ -276,6 +326,17 @@ definitions:
       name:
         example: Soccer Jersey
         type: string
+    type: object
+  handlers.CategorySummary:
+    properties:
+      amount:
+        type: number
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      percentage:
+        type: number
     type: object
   handlers.CompleteWorkOrderRequest:
     properties:
@@ -951,6 +1012,40 @@ definitions:
         example: Invalid request parameters
         type: string
     type: object
+  handlers.ExpenditureDetail:
+    properties:
+      amount:
+        type: number
+      category_name:
+        type: string
+      date:
+        type: string
+      employee_name:
+        type: string
+      id:
+        type: integer
+      payment_method:
+        type: string
+      purpose:
+        type: string
+      receipt_urls:
+        items:
+          type: string
+        type: array
+      request_number:
+        type: string
+      status:
+        type: string
+    type: object
+  handlers.ExpenditureSummary:
+    properties:
+      average_amount:
+        type: number
+      total_amount:
+        type: number
+      total_transactions:
+        type: integer
+    type: object
   handlers.ImageInfo:
     properties:
       id:
@@ -1067,6 +1162,16 @@ definitions:
         example: /dashboard
         type: string
     type: object
+  handlers.MonthlyExpenditure:
+    properties:
+      amount:
+        type: number
+      month:
+        description: YYYY-MM format
+        type: string
+      requests:
+        type: integer
+    type: object
   handlers.OfficeInfo:
     properties:
       address:
@@ -1126,6 +1231,48 @@ definitions:
       zone_id:
         example: 1
         type: integer
+    type: object
+  handlers.OrderInfo:
+    properties:
+      customer_email:
+        type: string
+      customer_phone:
+        type: string
+      delivery_address:
+        type: string
+      expected_delivery_date:
+        type: string
+      id:
+        type: integer
+      order_items:
+        items:
+          $ref: '#/definitions/handlers.OrderItemInfo'
+        type: array
+      order_number:
+        type: string
+      payment_status:
+        type: string
+      status:
+        type: string
+      total_amount:
+        type: number
+    type: object
+  handlers.OrderItemInfo:
+    properties:
+      color:
+        type: string
+      final_subtotal:
+        type: number
+      id:
+        type: integer
+      product_name:
+        type: string
+      production_status:
+        type: string
+      quantity:
+        type: integer
+      size:
+        type: string
     type: object
   handlers.OrderItemResponse:
     description: Order item response model
@@ -1331,6 +1478,32 @@ definitions:
       updated_by:
         example: admin
         type: string
+    type: object
+  handlers.PettyCashExpenditureResponse:
+    properties:
+      expenditures:
+        items:
+          $ref: '#/definitions/handlers.ExpenditureDetail'
+        type: array
+      summary:
+        $ref: '#/definitions/handlers.ExpenditureSummary'
+    type: object
+  handlers.PettyCashSummaryResponse:
+    properties:
+      category_breakdown:
+        items:
+          $ref: '#/definitions/handlers.CategorySummary'
+        type: array
+      monthly_expenditures:
+        items:
+          $ref: '#/definitions/handlers.MonthlyExpenditure'
+        type: array
+      pending_requests:
+        type: integer
+      total_balance:
+        type: number
+      total_expenditure:
+        type: number
     type: object
   handlers.ProductCategoryResponse:
     description: Product category response model
@@ -2474,63 +2647,50 @@ definitions:
   handlers.WorkOrderResponse:
     properties:
       actual_cost:
-        example: 950
         type: number
       assigned_to:
-        example: 1
-        type: integer
+        allOf:
+        - $ref: '#/definitions/handlers.EmployeeInfo'
+        description: Expanded employee details
       completion_notes:
-        example: Completed on time
         type: string
       created_at:
-        example: "2024-03-24T21:41:49Z"
         type: string
       created_by:
-        example: admin
         type: string
       customer_name:
-        example: John Doe
         type: string
       description:
-        example: Production of 100 jerseys
         type: string
       end_date:
-        example: "2024-03-26T21:41:49Z"
         type: string
       estimated_cost:
-        example: 1000
         type: number
       id:
-        example: 1
         type: integer
       items:
         items:
           $ref: '#/definitions/handlers.WorkOrderItemInfo'
         type: array
-      order_id:
-        example: 1
-        type: integer
+      order:
+        allOf:
+        - $ref: '#/definitions/handlers.OrderInfo'
+        description: Expanded order details
       spk_number:
-        example: SPK-2024-001
         type: string
       start_date:
-        example: "2024-03-24T21:41:49Z"
         type: string
       status:
-        example: draft
         type: string
       tasks:
         items:
           $ref: '#/definitions/handlers.WorkOrderTaskItem'
         type: array
       updated_at:
-        example: "2024-03-24T21:41:49Z"
         type: string
       updated_by:
-        example: admin
         type: string
       work_type:
-        example: production
         type: string
     type: object
   handlers.WorkOrderTaskInput:
@@ -6173,6 +6333,117 @@ paths:
       security:
       - BearerAuth: []
       summary: Update a petty cash record
+      tags:
+      - PettyCash
+  /petty-cash/expenditure:
+    get:
+      description: Get detailed list of petty cash expenditures
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      - description: Filter by category ID
+        in: query
+        name: category_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PettyCashExpenditureResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get petty cash expenditures
+      tags:
+      - PettyCash
+  /petty-cash/expenditure/summary:
+    get:
+      description: Get summary statistics for petty cash expenditures
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ExpenditureSummary'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get petty cash expenditure summary
+      tags:
+      - PettyCash
+  /petty-cash/summary:
+    get:
+      description: Get summary and statistics for petty cash management
+      parameters:
+      - description: Tenant ID
+        in: header
+        name: X-Tenant-ID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PettyCashSummaryResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get petty cash summary
       tags:
       - PettyCash
   /product-categories:

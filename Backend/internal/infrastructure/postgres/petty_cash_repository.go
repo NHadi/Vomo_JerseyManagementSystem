@@ -29,6 +29,9 @@ func (r *PettyCashRepository) FindByID(id int, ctx context.Context) (*accounting
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
 	result := r.db.WithContext(ctx).
 		Where("id = ? AND tenant_id = ?", id, userCtx.TenantID).
+		Preload("Office").
+		Preload("Division").
+		Preload("Channel").
 		First(&pettyCash)
 	return &pettyCash, result.Error
 }
@@ -38,6 +41,9 @@ func (r *PettyCashRepository) FindAll(ctx context.Context) ([]accounting.PettyCa
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
 	result := r.db.WithContext(ctx).
 		Where("tenant_id = ?", userCtx.TenantID).
+		Preload("Office").
+		Preload("Division").
+		Preload("Channel").
 		Find(&pettyCashes)
 	return pettyCashes, result.Error
 }
@@ -63,6 +69,9 @@ func (r *PettyCashRepository) FindByOffice(officeID int, ctx context.Context) (*
 	userCtx := ctx.Value(appcontext.UserContextKey).(*appcontext.UserContext)
 	result := r.db.WithContext(ctx).
 		Where("office_id = ? AND tenant_id = ? AND status = ?", officeID, userCtx.TenantID, "active").
+		Preload("Office").
+		Preload("Division").
+		Preload("Channel").
 		First(&pettyCash)
 	return &pettyCash, result.Error
 }

@@ -5149,6 +5149,180 @@ const docTemplate = `{
                 }
             }
         },
+        "/petty-cash/expenditure": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get detailed list of petty cash expenditures",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PettyCash"
+                ],
+                "summary": "Get petty cash expenditures",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "X-Tenant-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by category ID",
+                        "name": "category_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PettyCashExpenditureResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/petty-cash/expenditure/summary": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get summary statistics for petty cash expenditures",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PettyCash"
+                ],
+                "summary": "Get petty cash expenditure summary",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "X-Tenant-ID",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ExpenditureSummary"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/petty-cash/summary": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get summary and statistics for petty cash management",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PettyCash"
+                ],
+                "summary": "Get petty cash summary",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant ID",
+                        "name": "X-Tenant-ID",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PettyCashSummaryResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/petty-cash/{id}": {
             "get": {
                 "security": [
@@ -11745,11 +11919,20 @@ const docTemplate = `{
         "accounting.PettyCash": {
             "type": "object",
             "properties": {
-                "amount": {
+                "alertThreshold": {
                     "type": "number"
                 },
-                "balance": {
+                "balanceUpdatedAt": {
+                    "type": "string"
+                },
+                "budgetLimit": {
                     "type": "number"
+                },
+                "budgetPeriod": {
+                    "type": "string"
+                },
+                "channelID": {
+                    "type": "integer"
                 },
                 "createdAt": {
                     "type": "string"
@@ -11757,14 +11940,28 @@ const docTemplate = `{
                 "createdBy": {
                     "type": "string"
                 },
+                "currentBalance": {
+                    "type": "number"
+                },
+                "divisionID": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
+                },
+                "initialBalance": {
+                    "type": "number"
                 },
                 "officeID": {
                     "type": "integer"
                 },
+                "periodEndDate": {
+                    "type": "string"
+                },
+                "periodStartDate": {
+                    "type": "string"
+                },
                 "status": {
-                    "description": "active, inactive",
                     "type": "string"
                 },
                 "tenantID": {
@@ -11784,19 +11981,67 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
+                "approvedAt": {
+                    "type": "string"
+                },
+                "approvedBy": {
+                    "type": "string"
+                },
+                "budgetCode": {
+                    "type": "string"
+                },
+                "categoryID": {
+                    "type": "integer"
+                },
+                "channelID": {
+                    "type": "integer"
+                },
+                "completedAt": {
+                    "type": "string"
+                },
                 "createdAt": {
                     "type": "string"
                 },
                 "createdBy": {
                     "type": "string"
                 },
+                "divisionID": {
+                    "type": "integer"
+                },
+                "employeeID": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
                 },
                 "officeID": {
                     "type": "integer"
                 },
+                "paymentMethod": {
+                    "type": "string"
+                },
+                "pettyCashID": {
+                    "type": "integer"
+                },
                 "purpose": {
+                    "type": "string"
+                },
+                "receiptURLs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "referenceNumber": {
+                    "type": "string"
+                },
+                "reimbursementDate": {
+                    "type": "string"
+                },
+                "reimbursementStatus": {
                     "type": "string"
                 },
                 "rejectionReason": {
@@ -11805,8 +12050,13 @@ const docTemplate = `{
                 "requestNumber": {
                     "type": "string"
                 },
+                "settlementDate": {
+                    "type": "string"
+                },
+                "settlementStatus": {
+                    "type": "string"
+                },
                 "status": {
-                    "description": "pending, approved, rejected",
                     "type": "string"
                 },
                 "tenantID": {
@@ -12102,6 +12352,23 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "Soccer Jersey"
+                }
+            }
+        },
+        "handlers.CategorySummary": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "category_name": {
+                    "type": "string"
+                },
+                "percentage": {
+                    "type": "number"
                 }
             }
         },
@@ -13019,6 +13286,58 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.ExpenditureDetail": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category_name": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "employee_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "payment_method": {
+                    "type": "string"
+                },
+                "purpose": {
+                    "type": "string"
+                },
+                "receipt_urls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "request_number": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.ExpenditureSummary": {
+            "type": "object",
+            "properties": {
+                "average_amount": {
+                    "type": "number"
+                },
+                "total_amount": {
+                    "type": "number"
+                },
+                "total_transactions": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.ImageInfo": {
             "type": "object",
             "properties": {
@@ -13181,6 +13500,21 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.MonthlyExpenditure": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "month": {
+                    "description": "YYYY-MM format",
+                    "type": "string"
+                },
+                "requests": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.OfficeInfo": {
             "type": "object",
             "properties": {
@@ -13260,6 +13594,70 @@ const docTemplate = `{
                 "zone_id": {
                     "type": "integer",
                     "example": 1
+                }
+            }
+        },
+        "handlers.OrderInfo": {
+            "type": "object",
+            "properties": {
+                "customer_email": {
+                    "type": "string"
+                },
+                "customer_phone": {
+                    "type": "string"
+                },
+                "delivery_address": {
+                    "type": "string"
+                },
+                "expected_delivery_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "order_items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.OrderItemInfo"
+                    }
+                },
+                "order_number": {
+                    "type": "string"
+                },
+                "payment_status": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "total_amount": {
+                    "type": "number"
+                }
+            }
+        },
+        "handlers.OrderItemInfo": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "final_subtotal": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "product_name": {
+                    "type": "string"
+                },
+                "production_status": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "string"
                 }
             }
         },
@@ -13538,6 +13936,46 @@ const docTemplate = `{
                 "updated_by": {
                     "type": "string",
                     "example": "admin"
+                }
+            }
+        },
+        "handlers.PettyCashExpenditureResponse": {
+            "type": "object",
+            "properties": {
+                "expenditures": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.ExpenditureDetail"
+                    }
+                },
+                "summary": {
+                    "$ref": "#/definitions/handlers.ExpenditureSummary"
+                }
+            }
+        },
+        "handlers.PettyCashSummaryResponse": {
+            "type": "object",
+            "properties": {
+                "category_breakdown": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.CategorySummary"
+                    }
+                },
+                "monthly_expenditures": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.MonthlyExpenditure"
+                    }
+                },
+                "pending_requests": {
+                    "type": "integer"
+                },
+                "total_balance": {
+                    "type": "number"
+                },
+                "total_expenditure": {
+                    "type": "number"
                 }
             }
         },
@@ -15104,44 +15542,39 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "actual_cost": {
-                    "type": "number",
-                    "example": 950
+                    "type": "number"
                 },
                 "assigned_to": {
-                    "type": "integer",
-                    "example": 1
+                    "description": "Expanded employee details",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/handlers.EmployeeInfo"
+                        }
+                    ]
                 },
                 "completion_notes": {
-                    "type": "string",
-                    "example": "Completed on time"
+                    "type": "string"
                 },
                 "created_at": {
-                    "type": "string",
-                    "example": "2024-03-24T21:41:49Z"
+                    "type": "string"
                 },
                 "created_by": {
-                    "type": "string",
-                    "example": "admin"
+                    "type": "string"
                 },
                 "customer_name": {
-                    "type": "string",
-                    "example": "John Doe"
+                    "type": "string"
                 },
                 "description": {
-                    "type": "string",
-                    "example": "Production of 100 jerseys"
+                    "type": "string"
                 },
                 "end_date": {
-                    "type": "string",
-                    "example": "2024-03-26T21:41:49Z"
+                    "type": "string"
                 },
                 "estimated_cost": {
-                    "type": "number",
-                    "example": 1000
+                    "type": "number"
                 },
                 "id": {
-                    "type": "integer",
-                    "example": 1
+                    "type": "integer"
                 },
                 "items": {
                     "type": "array",
@@ -15149,21 +15582,22 @@ const docTemplate = `{
                         "$ref": "#/definitions/handlers.WorkOrderItemInfo"
                     }
                 },
-                "order_id": {
-                    "type": "integer",
-                    "example": 1
+                "order": {
+                    "description": "Expanded order details",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/handlers.OrderInfo"
+                        }
+                    ]
                 },
                 "spk_number": {
-                    "type": "string",
-                    "example": "SPK-2024-001"
+                    "type": "string"
                 },
                 "start_date": {
-                    "type": "string",
-                    "example": "2024-03-24T21:41:49Z"
+                    "type": "string"
                 },
                 "status": {
-                    "type": "string",
-                    "example": "draft"
+                    "type": "string"
                 },
                 "tasks": {
                     "type": "array",
@@ -15172,16 +15606,13 @@ const docTemplate = `{
                     }
                 },
                 "updated_at": {
-                    "type": "string",
-                    "example": "2024-03-24T21:41:49Z"
+                    "type": "string"
                 },
                 "updated_by": {
-                    "type": "string",
-                    "example": "admin"
+                    "type": "string"
                 },
                 "work_type": {
-                    "type": "string",
-                    "example": "production"
+                    "type": "string"
                 }
             }
         },

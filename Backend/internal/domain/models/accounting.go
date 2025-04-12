@@ -90,16 +90,24 @@ func (PurchaseOrderItem) TableName() string {
 
 // PettyCash represents the base petty cash model
 type PettyCash struct {
-	ID        int       `gorm:"primaryKey"`
-	OfficeID  int       `gorm:"not null"`
-	Amount    float64   `gorm:"type:decimal(10,2);not null"`
-	Balance   float64   `gorm:"type:decimal(10,2);not null"`
-	Status    string    `gorm:"size:20;not null;default:'active'"` // active, inactive
-	TenantID  int       `gorm:"not null"`
-	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	CreatedBy string    `gorm:"size:255;not null"`
-	UpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedBy string    `gorm:"size:255;not null"`
+	ID               int       `gorm:"primaryKey"`
+	OfficeID         int       `gorm:"not null"`
+	PeriodStartDate  time.Time `gorm:"not null"`
+	PeriodEndDate    time.Time `gorm:"not null"`
+	InitialBalance   float64   `gorm:"type:decimal(10,2);not null"`
+	CurrentBalance   float64   `gorm:"type:decimal(10,2);not null"`
+	ChannelID        *int      `gorm:"column:channel_id"`
+	DivisionID       *int      `gorm:"column:division_id"`
+	BudgetLimit      *float64  `gorm:"type:decimal(10,2)"`
+	BudgetPeriod     *string   `gorm:"size:20"`
+	AlertThreshold   *float64  `gorm:"type:decimal(10,2)"`
+	Status           string    `gorm:"size:20;not null;default:'active'"`
+	BalanceUpdatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	TenantID         int       `gorm:"not null"`
+	CreatedAt        time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	CreatedBy        string    `gorm:"size:255;not null"`
+	UpdatedAt        time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedBy        string    `gorm:"size:255;not null"`
 }
 
 // TableName specifies the table name for the PettyCash model
@@ -109,18 +117,35 @@ func (PettyCash) TableName() string {
 
 // PettyCashRequest represents the base petty cash request model
 type PettyCashRequest struct {
-	ID              int       `gorm:"primaryKey"`
-	RequestNumber   string    `gorm:"size:50;not null;unique"`
-	OfficeID        int       `gorm:"not null"`
-	Amount          float64   `gorm:"type:decimal(10,2);not null"`
-	Purpose         string    `gorm:"type:text;not null"`
-	Status          string    `gorm:"size:20;not null;default:'pending'"` // pending, approved, rejected
-	RejectionReason string    `gorm:"type:text"`
-	TenantID        int       `gorm:"not null"`
-	CreatedAt       time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	CreatedBy       string    `gorm:"size:255;not null"`
-	UpdatedAt       time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedBy       string    `gorm:"size:255;not null"`
+	ID                  int        `gorm:"primaryKey"`
+	PettyCashID         int        `gorm:"not null"`
+	RequestNumber       string     `gorm:"size:50;not null;unique"`
+	OfficeID            int        `gorm:"not null"`
+	EmployeeID          int        `gorm:"not null"`
+	ChannelID           *int       `gorm:"column:channel_id"`
+	DivisionID          *int       `gorm:"column:division_id"`
+	Amount              float64    `gorm:"type:decimal(10,2);not null"`
+	Purpose             string     `gorm:"type:text;not null"`
+	CategoryID          int        `gorm:"not null"`
+	PaymentMethod       *string    `gorm:"size:20"`
+	ReferenceNumber     *string    `gorm:"size:100"`
+	BudgetCode          *string    `gorm:"size:50"`
+	ReceiptURLs         []string   `gorm:"type:text[]"`
+	Status              string     `gorm:"size:20;not null;default:'pending'"`
+	SettlementStatus    string     `gorm:"size:20;not null;default:'pending'"`
+	SettlementDate      *time.Time `gorm:"type:timestamp with time zone"`
+	ReimbursementStatus string     `gorm:"size:20;not null;default:'not_required'"`
+	ReimbursementDate   *time.Time `gorm:"type:timestamp with time zone"`
+	ApprovedBy          *string    `gorm:"size:255"`
+	ApprovedAt          *time.Time `gorm:"type:timestamp with time zone"`
+	CompletedAt         *time.Time `gorm:"type:timestamp with time zone"`
+	Notes               *string    `gorm:"type:text"`
+	RejectionReason     *string    `gorm:"type:text"`
+	TenantID            int        `gorm:"not null"`
+	CreatedAt           time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
+	CreatedBy           string     `gorm:"size:255;not null"`
+	UpdatedAt           time.Time  `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedBy           string     `gorm:"size:255;not null"`
 }
 
 // TableName specifies the table name for the PettyCashRequest model
@@ -130,26 +155,26 @@ func (PettyCashRequest) TableName() string {
 
 // WorkOrder (SPK - Surat Perintah Kerja) represents the base work order model
 type WorkOrder struct {
-	ID              int             `gorm:"primaryKey"`
-	SPKNumber       string          `gorm:"size:50;not null;unique"`
-	OrderID         int             `gorm:"not null"`
-	Order           order.Order     `gorm:"foreignKey:OrderID"`
-	CustomerName    string          `gorm:"size:100;not null"`
-	WorkType        string          `gorm:"size:50;not null"` // e.g., production, service, maintenance
-	Description     string          `gorm:"type:text;not null"`
-	StartDate       time.Time       `gorm:"not null"`
-	EndDate         time.Time       `gorm:"not null"`
-	Status          string          `gorm:"size:20;not null;default:'draft'"` // draft, in_progress, completed, cancelled
-	AssignedTo      int             `gorm:"not null"`                         // Employee ID
+	ID              int               `gorm:"primaryKey"`
+	SPKNumber       string            `gorm:"size:50;not null;unique"`
+	OrderID         int               `gorm:"not null"`
+	Order           order.Order       `gorm:"foreignKey:OrderID"`
+	CustomerName    string            `gorm:"size:100;not null"`
+	WorkType        string            `gorm:"size:50;not null"` // e.g., production, service, maintenance
+	Description     string            `gorm:"type:text;not null"`
+	StartDate       time.Time         `gorm:"not null"`
+	EndDate         time.Time         `gorm:"not null"`
+	Status          string            `gorm:"size:20;not null;default:'draft'"` // draft, in_progress, completed, cancelled
+	AssignedTo      int               `gorm:"not null"`                         // Employee ID
 	Employee        employee.Employee `gorm:"foreignKey:AssignedTo"`
-	EstimatedCost   float64         `gorm:"type:decimal(12,2);not null"`
-	ActualCost      float64         `gorm:"type:decimal(12,2)"`
-	CompletionNotes string          `gorm:"type:text"`
-	TenantID        int             `gorm:"not null"`
-	CreatedAt       time.Time       `gorm:"default:CURRENT_TIMESTAMP"`
-	CreatedBy       string          `gorm:"size:255;not null"`
-	UpdatedAt       time.Time       `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedBy       string          `gorm:"size:255;not null"`
+	EstimatedCost   float64           `gorm:"type:decimal(12,2);not null"`
+	ActualCost      float64           `gorm:"type:decimal(12,2)"`
+	CompletionNotes string            `gorm:"type:text"`
+	TenantID        int               `gorm:"not null"`
+	CreatedAt       time.Time         `gorm:"default:CURRENT_TIMESTAMP"`
+	CreatedBy       string            `gorm:"size:255;not null"`
+	UpdatedAt       time.Time         `gorm:"default:CURRENT_TIMESTAMP"`
+	UpdatedBy       string            `gorm:"size:255;not null"`
 }
 
 // TableName specifies the table name for the WorkOrder model

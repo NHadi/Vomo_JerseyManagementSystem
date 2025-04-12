@@ -16,7 +16,17 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+ALTER TABLE IF EXISTS ONLY public.work_orders DROP CONSTRAINT IF EXISTS work_orders_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.work_orders DROP CONSTRAINT IF EXISTS work_orders_order_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.work_orders DROP CONSTRAINT IF EXISTS work_orders_assigned_to_fkey;
+ALTER TABLE IF EXISTS ONLY public.work_order_tasks DROP CONSTRAINT IF EXISTS work_order_tasks_work_order_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.work_order_tasks DROP CONSTRAINT IF EXISTS work_order_tasks_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.work_order_tasks DROP CONSTRAINT IF EXISTS work_order_tasks_assigned_to_fkey;
+ALTER TABLE IF EXISTS ONLY public.work_order_items DROP CONSTRAINT IF EXISTS work_order_items_work_order_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.work_order_items DROP CONSTRAINT IF EXISTS work_order_items_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.work_order_items DROP CONSTRAINT IF EXISTS work_order_items_item_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.transaction_categories DROP CONSTRAINT IF EXISTS transaction_categories_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.task_history DROP CONSTRAINT IF EXISTS task_history_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.task_history DROP CONSTRAINT IF EXISTS task_history_task_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.task_history DROP CONSTRAINT IF EXISTS task_history_employee_id_fkey;
@@ -24,10 +34,19 @@ ALTER TABLE IF EXISTS ONLY public.stock_opname DROP CONSTRAINT IF EXISTS stock_o
 ALTER TABLE IF EXISTS ONLY public.stock_opname_detail DROP CONSTRAINT IF EXISTS stock_opname_detail_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.stock_opname_detail DROP CONSTRAINT IF EXISTS stock_opname_detail_stock_opname_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.stock_opname_detail DROP CONSTRAINT IF EXISTS stock_opname_detail_item_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.sales_payments DROP CONSTRAINT IF EXISTS sales_payments_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.sales_payments DROP CONSTRAINT IF EXISTS sales_payments_invoice_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.sales_invoices DROP CONSTRAINT IF EXISTS sales_invoices_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.sales_invoices DROP CONSTRAINT IF EXISTS sales_invoices_order_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.role_permissions DROP CONSTRAINT IF EXISTS role_permissions_role_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.role_permissions DROP CONSTRAINT IF EXISTS role_permissions_permission_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.role_menus DROP CONSTRAINT IF EXISTS role_menus_role_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.role_menus DROP CONSTRAINT IF EXISTS role_menus_menu_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.purchase_orders DROP CONSTRAINT IF EXISTS purchase_orders_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.purchase_orders DROP CONSTRAINT IF EXISTS purchase_orders_supplier_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.purchase_order_items DROP CONSTRAINT IF EXISTS purchase_order_items_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.purchase_order_items DROP CONSTRAINT IF EXISTS purchase_order_items_purchase_order_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.purchase_order_items DROP CONSTRAINT IF EXISTS purchase_order_items_item_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.production_tasks DROP CONSTRAINT IF EXISTS production_tasks_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.production_tasks DROP CONSTRAINT IF EXISTS production_tasks_order_item_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.production_tasks DROP CONSTRAINT IF EXISTS production_tasks_employee_id_fkey;
@@ -59,9 +78,36 @@ ALTER TABLE IF EXISTS ONLY public.master_employee DROP CONSTRAINT IF EXISTS mast
 ALTER TABLE IF EXISTS ONLY public.master_division DROP CONSTRAINT IF EXISTS master_division_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.item_stock_movement DROP CONSTRAINT IF EXISTS item_stock_movement_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.item_stock_movement DROP CONSTRAINT IF EXISTS item_stock_movement_item_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.petty_cash DROP CONSTRAINT IF EXISTS fk_petty_cash_tenant;
+ALTER TABLE IF EXISTS ONLY public.petty_cash_requests DROP CONSTRAINT IF EXISTS fk_petty_cash_requests_tenant;
+ALTER TABLE IF EXISTS ONLY public.petty_cash_requests DROP CONSTRAINT IF EXISTS fk_petty_cash_requests_petty_cash;
+ALTER TABLE IF EXISTS ONLY public.petty_cash_requests DROP CONSTRAINT IF EXISTS fk_petty_cash_requests_office;
+ALTER TABLE IF EXISTS ONLY public.petty_cash_requests DROP CONSTRAINT IF EXISTS fk_petty_cash_requests_employee;
+ALTER TABLE IF EXISTS ONLY public.petty_cash_requests DROP CONSTRAINT IF EXISTS fk_petty_cash_requests_division;
+ALTER TABLE IF EXISTS ONLY public.petty_cash_requests DROP CONSTRAINT IF EXISTS fk_petty_cash_requests_channel;
+ALTER TABLE IF EXISTS ONLY public.petty_cash_requests DROP CONSTRAINT IF EXISTS fk_petty_cash_requests_category;
+ALTER TABLE IF EXISTS ONLY public.petty_cash DROP CONSTRAINT IF EXISTS fk_petty_cash_office;
+ALTER TABLE IF EXISTS ONLY public.petty_cash DROP CONSTRAINT IF EXISTS fk_petty_cash_division;
+ALTER TABLE IF EXISTS ONLY public.petty_cash DROP CONSTRAINT IF EXISTS fk_petty_cash_channel;
+ALTER TABLE IF EXISTS ONLY public.cash_flow DROP CONSTRAINT IF EXISTS cash_flow_tenant_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.cash_flow DROP CONSTRAINT IF EXISTS cash_flow_payment_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.cash_flow DROP CONSTRAINT IF EXISTS cash_flow_office_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.cash_flow DROP CONSTRAINT IF EXISTS cash_flow_category_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.backup DROP CONSTRAINT IF EXISTS backup_tenant_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.audit_trail DROP CONSTRAINT IF EXISTS audit_trail_tenant_id_fkey;
+DROP TRIGGER IF EXISTS tr_update_petty_cash_balance ON public.petty_cash_requests;
 DROP INDEX IF EXISTS public.idx_zone_tenant;
+DROP INDEX IF EXISTS public.idx_work_orders_tenant;
+DROP INDEX IF EXISTS public.idx_work_orders_status;
+DROP INDEX IF EXISTS public.idx_work_orders_order_id;
+DROP INDEX IF EXISTS public.idx_work_orders_assigned_to;
+DROP INDEX IF EXISTS public.idx_work_order_tasks_work_order;
+DROP INDEX IF EXISTS public.idx_work_order_tasks_tenant;
+DROP INDEX IF EXISTS public.idx_work_order_tasks_status;
+DROP INDEX IF EXISTS public.idx_work_order_tasks_assigned_to;
+DROP INDEX IF EXISTS public.idx_work_order_items_work_order;
+DROP INDEX IF EXISTS public.idx_work_order_items_tenant;
+DROP INDEX IF EXISTS public.idx_work_order_items_item;
 DROP INDEX IF EXISTS public.idx_users_tenant;
 DROP INDEX IF EXISTS public.idx_task_history_tenant;
 DROP INDEX IF EXISTS public.idx_task_history_task;
@@ -72,8 +118,22 @@ DROP INDEX IF EXISTS public.idx_stock_opname_detail_tenant;
 DROP INDEX IF EXISTS public.idx_stock_opname_detail_opname;
 DROP INDEX IF EXISTS public.idx_stock_opname_detail_item;
 DROP INDEX IF EXISTS public.idx_stock_opname_date;
+DROP INDEX IF EXISTS public.idx_sales_payments_tenant;
+DROP INDEX IF EXISTS public.idx_sales_payments_invoice;
+DROP INDEX IF EXISTS public.idx_sales_payments_date;
+DROP INDEX IF EXISTS public.idx_sales_invoices_tenant;
+DROP INDEX IF EXISTS public.idx_sales_invoices_status;
+DROP INDEX IF EXISTS public.idx_sales_invoices_order;
+DROP INDEX IF EXISTS public.idx_sales_invoices_number;
 DROP INDEX IF EXISTS public.idx_role_tenant;
 DROP INDEX IF EXISTS public.idx_region_tenant;
+DROP INDEX IF EXISTS public.idx_purchase_orders_tenant;
+DROP INDEX IF EXISTS public.idx_purchase_orders_supplier;
+DROP INDEX IF EXISTS public.idx_purchase_orders_status;
+DROP INDEX IF EXISTS public.idx_purchase_orders_number;
+DROP INDEX IF EXISTS public.idx_purchase_order_items_tenant;
+DROP INDEX IF EXISTS public.idx_purchase_order_items_po;
+DROP INDEX IF EXISTS public.idx_purchase_order_items_item;
 DROP INDEX IF EXISTS public.idx_production_tasks_type;
 DROP INDEX IF EXISTS public.idx_production_tasks_tenant;
 DROP INDEX IF EXISTS public.idx_production_tasks_status;
@@ -87,6 +147,14 @@ DROP INDEX IF EXISTS public.idx_product_code;
 DROP INDEX IF EXISTS public.idx_product_category_tenant;
 DROP INDEX IF EXISTS public.idx_product_category_code;
 DROP INDEX IF EXISTS public.idx_product_category;
+DROP INDEX IF EXISTS public.idx_petty_cash_requests_petty_cash;
+DROP INDEX IF EXISTS public.idx_petty_cash_requests_office;
+DROP INDEX IF EXISTS public.idx_petty_cash_requests_employee;
+DROP INDEX IF EXISTS public.idx_petty_cash_requests_division;
+DROP INDEX IF EXISTS public.idx_petty_cash_requests_channel;
+DROP INDEX IF EXISTS public.idx_petty_cash_office;
+DROP INDEX IF EXISTS public.idx_petty_cash_division;
+DROP INDEX IF EXISTS public.idx_petty_cash_channel;
 DROP INDEX IF EXISTS public.idx_permission_tenant;
 DROP INDEX IF EXISTS public.idx_permission_code;
 DROP INDEX IF EXISTS public.idx_payments_tenant;
@@ -114,23 +182,44 @@ DROP INDEX IF EXISTS public.idx_item_stock_movement_reference;
 DROP INDEX IF EXISTS public.idx_item_stock_movement_item;
 DROP INDEX IF EXISTS public.idx_employee_tenant;
 DROP INDEX IF EXISTS public.idx_division_tenant;
+DROP INDEX IF EXISTS public.idx_cash_flow_type;
+DROP INDEX IF EXISTS public.idx_cash_flow_tenant;
+DROP INDEX IF EXISTS public.idx_cash_flow_payment;
+DROP INDEX IF EXISTS public.idx_cash_flow_date;
+DROP INDEX IF EXISTS public.idx_cash_flow_category;
 DROP INDEX IF EXISTS public.idx_backup_tenant;
 DROP INDEX IF EXISTS public.idx_backup_created_at;
 DROP INDEX IF EXISTS public.idx_audit_trail_tenant;
 DROP INDEX IF EXISTS public.idx_audit_trail_entity;
 DROP INDEX IF EXISTS public.idx_audit_trail_created_at;
+ALTER TABLE IF EXISTS ONLY public.work_orders DROP CONSTRAINT IF EXISTS work_orders_spk_number_key;
+ALTER TABLE IF EXISTS ONLY public.work_orders DROP CONSTRAINT IF EXISTS work_orders_pkey;
+ALTER TABLE IF EXISTS ONLY public.work_order_tasks DROP CONSTRAINT IF EXISTS work_order_tasks_pkey;
+ALTER TABLE IF EXISTS ONLY public.work_order_items DROP CONSTRAINT IF EXISTS work_order_items_pkey;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_pkey;
 ALTER TABLE IF EXISTS ONLY public.users DROP CONSTRAINT IF EXISTS users_email_key;
+ALTER TABLE IF EXISTS ONLY public.master_channel DROP CONSTRAINT IF EXISTS uq_master_channel_code;
+ALTER TABLE IF EXISTS ONLY public.transaction_categories DROP CONSTRAINT IF EXISTS transaction_categories_pkey;
+ALTER TABLE IF EXISTS ONLY public.transaction_categories DROP CONSTRAINT IF EXISTS transaction_categories_code_tenant_id_key;
 ALTER TABLE IF EXISTS ONLY public.task_history DROP CONSTRAINT IF EXISTS task_history_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_opname DROP CONSTRAINT IF EXISTS stock_opname_pkey;
 ALTER TABLE IF EXISTS ONLY public.stock_opname DROP CONSTRAINT IF EXISTS stock_opname_opname_number_tenant_id_key;
 ALTER TABLE IF EXISTS ONLY public.stock_opname_detail DROP CONSTRAINT IF EXISTS stock_opname_detail_pkey;
+ALTER TABLE IF EXISTS ONLY public.sales_payments DROP CONSTRAINT IF EXISTS sales_payments_pkey;
+ALTER TABLE IF EXISTS ONLY public.sales_invoices DROP CONSTRAINT IF EXISTS sales_invoices_pkey;
+ALTER TABLE IF EXISTS ONLY public.sales_invoices DROP CONSTRAINT IF EXISTS sales_invoices_invoice_number_tenant_id_key;
 ALTER TABLE IF EXISTS ONLY public.role_permissions DROP CONSTRAINT IF EXISTS role_permissions_role_id_permission_id_key;
 ALTER TABLE IF EXISTS ONLY public.role_permissions DROP CONSTRAINT IF EXISTS role_permissions_pkey;
 ALTER TABLE IF EXISTS ONLY public.role_menus DROP CONSTRAINT IF EXISTS role_menus_role_id_menu_id_key;
 ALTER TABLE IF EXISTS ONLY public.role_menus DROP CONSTRAINT IF EXISTS role_menus_pkey;
+ALTER TABLE IF EXISTS ONLY public.purchase_orders DROP CONSTRAINT IF EXISTS purchase_orders_po_number_tenant_id_key;
+ALTER TABLE IF EXISTS ONLY public.purchase_orders DROP CONSTRAINT IF EXISTS purchase_orders_pkey;
+ALTER TABLE IF EXISTS ONLY public.purchase_order_items DROP CONSTRAINT IF EXISTS purchase_order_items_pkey;
 ALTER TABLE IF EXISTS ONLY public.production_tasks DROP CONSTRAINT IF EXISTS production_tasks_pkey;
 ALTER TABLE IF EXISTS ONLY public.product_images DROP CONSTRAINT IF EXISTS product_images_pkey;
+ALTER TABLE IF EXISTS ONLY public.petty_cash_requests DROP CONSTRAINT IF EXISTS pk_petty_cash_requests;
+ALTER TABLE IF EXISTS ONLY public.petty_cash DROP CONSTRAINT IF EXISTS pk_petty_cash;
+ALTER TABLE IF EXISTS ONLY public.master_channel DROP CONSTRAINT IF EXISTS pk_master_channel;
 ALTER TABLE IF EXISTS ONLY public.payments DROP CONSTRAINT IF EXISTS payments_pkey;
 ALTER TABLE IF EXISTS ONLY public.orders DROP CONSTRAINT IF EXISTS orders_pkey;
 ALTER TABLE IF EXISTS ONLY public.orders DROP CONSTRAINT IF EXISTS orders_order_number_key;
@@ -159,13 +248,24 @@ ALTER TABLE IF EXISTS ONLY public.master_employee DROP CONSTRAINT IF EXISTS mast
 ALTER TABLE IF EXISTS ONLY public.master_employee DROP CONSTRAINT IF EXISTS master_employee_email_key;
 ALTER TABLE IF EXISTS ONLY public.master_division DROP CONSTRAINT IF EXISTS master_division_pkey;
 ALTER TABLE IF EXISTS ONLY public.item_stock_movement DROP CONSTRAINT IF EXISTS item_stock_movement_pkey;
+ALTER TABLE IF EXISTS ONLY public.cash_flow DROP CONSTRAINT IF EXISTS cash_flow_pkey;
 ALTER TABLE IF EXISTS ONLY public.backup DROP CONSTRAINT IF EXISTS backup_pkey;
 ALTER TABLE IF EXISTS ONLY public.audit_trail DROP CONSTRAINT IF EXISTS audit_trail_pkey;
+ALTER TABLE IF EXISTS public.work_orders ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.work_order_tasks ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.work_order_items ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.transaction_categories ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.task_history ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.stock_opname_detail ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.stock_opname ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.sales_payments ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.sales_invoices ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.purchase_orders ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.purchase_order_items ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.production_tasks ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.product_images ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.petty_cash_requests ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.petty_cash ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.payments ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.orders ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.order_items ALTER COLUMN id DROP DEFAULT;
@@ -174,24 +274,46 @@ ALTER TABLE IF EXISTS public.master_supplier ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.master_office ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.master_menu ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.master_item ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.master_channel ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.item_stock_movement ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.cash_flow ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.backup ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.audit_trail ALTER COLUMN id DROP DEFAULT;
+DROP SEQUENCE IF EXISTS public.work_orders_id_seq;
+DROP TABLE IF EXISTS public.work_orders;
+DROP SEQUENCE IF EXISTS public.work_order_tasks_id_seq;
+DROP TABLE IF EXISTS public.work_order_tasks;
+DROP SEQUENCE IF EXISTS public.work_order_items_id_seq;
+DROP TABLE IF EXISTS public.work_order_items;
 DROP TABLE IF EXISTS public.users;
+DROP SEQUENCE IF EXISTS public.transaction_categories_id_seq;
+DROP TABLE IF EXISTS public.transaction_categories;
 DROP SEQUENCE IF EXISTS public.task_history_id_seq;
 DROP TABLE IF EXISTS public.task_history;
 DROP SEQUENCE IF EXISTS public.stock_opname_id_seq;
 DROP SEQUENCE IF EXISTS public.stock_opname_detail_id_seq;
 DROP TABLE IF EXISTS public.stock_opname_detail;
 DROP TABLE IF EXISTS public.stock_opname;
+DROP SEQUENCE IF EXISTS public.sales_payments_id_seq;
+DROP TABLE IF EXISTS public.sales_payments;
+DROP SEQUENCE IF EXISTS public.sales_invoices_id_seq;
+DROP TABLE IF EXISTS public.sales_invoices;
 DROP TABLE IF EXISTS public.role_permissions;
 DROP SEQUENCE IF EXISTS public.role_permissions_id_seq;
 DROP TABLE IF EXISTS public.role_menus;
 DROP SEQUENCE IF EXISTS public.role_menus_id_seq;
+DROP SEQUENCE IF EXISTS public.purchase_orders_id_seq;
+DROP TABLE IF EXISTS public.purchase_orders;
+DROP SEQUENCE IF EXISTS public.purchase_order_items_id_seq;
+DROP TABLE IF EXISTS public.purchase_order_items;
 DROP SEQUENCE IF EXISTS public.production_tasks_id_seq;
 DROP TABLE IF EXISTS public.production_tasks;
 DROP SEQUENCE IF EXISTS public.product_images_id_seq;
 DROP TABLE IF EXISTS public.product_images;
+DROP SEQUENCE IF EXISTS public.petty_cash_requests_id_seq;
+DROP TABLE IF EXISTS public.petty_cash_requests;
+DROP SEQUENCE IF EXISTS public.petty_cash_id_seq;
+DROP TABLE IF EXISTS public.petty_cash;
 DROP SEQUENCE IF EXISTS public.payments_id_seq;
 DROP TABLE IF EXISTS public.payments;
 DROP SEQUENCE IF EXISTS public.orders_id_seq;
@@ -226,12 +348,17 @@ DROP TABLE IF EXISTS public.master_employee;
 DROP SEQUENCE IF EXISTS public.master_employee_id_seq;
 DROP TABLE IF EXISTS public.master_division;
 DROP SEQUENCE IF EXISTS public.master_division_id_seq;
+DROP SEQUENCE IF EXISTS public.master_channel_id_seq;
+DROP TABLE IF EXISTS public.master_channel;
 DROP SEQUENCE IF EXISTS public.item_stock_movement_id_seq;
 DROP TABLE IF EXISTS public.item_stock_movement;
+DROP SEQUENCE IF EXISTS public.cash_flow_id_seq;
+DROP TABLE IF EXISTS public.cash_flow;
 DROP SEQUENCE IF EXISTS public.backup_id_seq;
 DROP TABLE IF EXISTS public.backup;
 DROP SEQUENCE IF EXISTS public.audit_trail_id_seq;
 DROP TABLE IF EXISTS public.audit_trail;
+DROP FUNCTION IF EXISTS public.update_petty_cash_balance();
 DROP EXTENSION IF EXISTS "uuid-ossp";
 --
 -- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
@@ -245,6 +372,25 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: update_petty_cash_balance(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.update_petty_cash_balance() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NEW.status = 'completed' AND OLD.status != 'completed' THEN
+        UPDATE public.petty_cash
+        SET current_balance = current_balance - NEW.amount,
+            balance_updated_at = CURRENT_TIMESTAMP
+        WHERE id = NEW.petty_cash_id;
+    END IF;
+    RETURN NEW;
+END;
+$$;
 
 
 SET default_tablespace = '';
@@ -325,6 +471,53 @@ ALTER SEQUENCE public.backup_id_seq OWNED BY public.backup.id;
 
 
 --
+-- Name: cash_flow; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.cash_flow (
+    id integer NOT NULL,
+    transaction_date date NOT NULL,
+    transaction_type character varying(20) NOT NULL,
+    category_id integer NOT NULL,
+    amount numeric(12,2) NOT NULL,
+    description text,
+    reference_number character varying(50),
+    reference_type character varying(50),
+    reference_id integer,
+    payment_id integer,
+    office_id integer,
+    status character varying(20) DEFAULT 'completed'::character varying,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT cash_flow_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[]))),
+    CONSTRAINT cash_flow_transaction_type_check CHECK (((transaction_type)::text = ANY ((ARRAY['income'::character varying, 'expense'::character varying])::text[])))
+);
+
+
+--
+-- Name: cash_flow_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.cash_flow_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: cash_flow_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.cash_flow_id_seq OWNED BY public.cash_flow.id;
+
+
+--
 -- Name: item_stock_movement; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -364,6 +557,53 @@ CREATE SEQUENCE public.item_stock_movement_id_seq
 --
 
 ALTER SEQUENCE public.item_stock_movement_id_seq OWNED BY public.item_stock_movement.id;
+
+
+--
+-- Name: master_channel; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.master_channel (
+    id integer NOT NULL,
+    code character varying(50) NOT NULL,
+    name character varying(100) NOT NULL,
+    type character varying(20) NOT NULL,
+    description text,
+    is_active boolean DEFAULT true,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT master_channel_type_check CHECK (((type)::text = ANY ((ARRAY['physical_store'::character varying, 'online_marketplace'::character varying, 'website'::character varying, 'wholesale'::character varying, 'factory_outlet'::character varying, 'distributor'::character varying])::text[])))
+);
+
+
+--
+-- Name: TABLE master_channel; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.master_channel IS 'Stores different sales and distribution channels for omnichannel operations';
+
+
+--
+-- Name: master_channel_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.master_channel_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: master_channel_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.master_channel_id_seq OWNED BY public.master_channel.id;
 
 
 --
@@ -977,6 +1217,128 @@ ALTER SEQUENCE public.payments_id_seq OWNED BY public.payments.id;
 
 
 --
+-- Name: petty_cash; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.petty_cash (
+    id integer NOT NULL,
+    office_id integer NOT NULL,
+    period_start_date date NOT NULL,
+    period_end_date date NOT NULL,
+    initial_balance numeric(10,2) NOT NULL,
+    current_balance numeric(10,2) NOT NULL,
+    channel_id integer,
+    division_id integer,
+    budget_limit numeric(10,2),
+    budget_period character varying(20),
+    alert_threshold numeric(10,2),
+    status character varying(20) DEFAULT 'active'::character varying,
+    balance_updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT petty_cash_budget_period_check CHECK (((budget_period IS NULL) OR ((budget_period)::text = ANY ((ARRAY['daily'::character varying, 'weekly'::character varying, 'monthly'::character varying, 'quarterly'::character varying, 'yearly'::character varying])::text[])))),
+    CONSTRAINT petty_cash_status_check CHECK (((status)::text = ANY (ARRAY[('active'::character varying)::text, ('closed'::character varying)::text])))
+);
+
+
+--
+-- Name: TABLE petty_cash; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.petty_cash IS 'Petty cash management table with omnichannel support';
+
+
+--
+-- Name: petty_cash_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.petty_cash_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: petty_cash_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.petty_cash_id_seq OWNED BY public.petty_cash.id;
+
+
+--
+-- Name: petty_cash_requests; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.petty_cash_requests (
+    id integer NOT NULL,
+    petty_cash_id integer NOT NULL,
+    request_number character varying(50) NOT NULL,
+    office_id integer NOT NULL,
+    employee_id integer NOT NULL,
+    channel_id integer,
+    division_id integer,
+    amount numeric(10,2) NOT NULL,
+    purpose text NOT NULL,
+    category_id integer NOT NULL,
+    payment_method character varying(20),
+    reference_number character varying(100),
+    budget_code character varying(50),
+    receipt_urls text[],
+    status character varying(20) DEFAULT 'pending'::character varying,
+    settlement_status character varying(20) DEFAULT 'pending'::character varying,
+    settlement_date timestamp with time zone,
+    reimbursement_status character varying(20) DEFAULT 'not_required'::character varying,
+    reimbursement_date timestamp with time zone,
+    approved_by character varying(255),
+    approved_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    notes text,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT petty_cash_requests_payment_method_check CHECK (((payment_method IS NULL) OR ((payment_method)::text = ANY ((ARRAY['cash'::character varying, 'bank_transfer'::character varying, 'digital_wallet'::character varying, 'other'::character varying])::text[])))),
+    CONSTRAINT petty_cash_requests_reimbursement_status_check CHECK (((reimbursement_status)::text = ANY ((ARRAY['not_required'::character varying, 'pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'completed'::character varying])::text[]))),
+    CONSTRAINT petty_cash_requests_settlement_status_check CHECK (((settlement_status)::text = ANY (ARRAY[('pending'::character varying)::text, ('settled'::character varying)::text, ('cancelled'::character varying)::text]))),
+    CONSTRAINT petty_cash_requests_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text, ('rejected'::character varying)::text, ('completed'::character varying)::text])))
+);
+
+
+--
+-- Name: TABLE petty_cash_requests; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.petty_cash_requests IS 'Petty cash request table with enhanced tracking and channel support';
+
+
+--
+-- Name: petty_cash_requests_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.petty_cash_requests_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: petty_cash_requests_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.petty_cash_requests_id_seq OWNED BY public.petty_cash_requests.id;
+
+
+--
 -- Name: product_images; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1057,6 +1419,91 @@ ALTER SEQUENCE public.production_tasks_id_seq OWNED BY public.production_tasks.i
 
 
 --
+-- Name: purchase_order_items; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.purchase_order_items (
+    id integer NOT NULL,
+    purchase_order_id integer NOT NULL,
+    item_id integer NOT NULL,
+    quantity integer NOT NULL,
+    unit_price numeric(10,2) NOT NULL,
+    subtotal numeric(10,2) NOT NULL,
+    received_quantity integer DEFAULT 0,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT purchase_order_items_quantity_check CHECK ((quantity > 0))
+);
+
+
+--
+-- Name: purchase_order_items_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.purchase_order_items_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: purchase_order_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.purchase_order_items_id_seq OWNED BY public.purchase_order_items.id;
+
+
+--
+-- Name: purchase_orders; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.purchase_orders (
+    id integer NOT NULL,
+    po_number character varying(50) NOT NULL,
+    supplier_id integer NOT NULL,
+    order_date date NOT NULL,
+    delivery_date date,
+    subtotal numeric(12,2) NOT NULL,
+    tax_amount numeric(12,2) DEFAULT 0,
+    total_amount numeric(12,2) NOT NULL,
+    status character varying(20) DEFAULT 'pending'::character varying,
+    notes text,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT purchase_orders_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'approved'::character varying, 'received'::character varying, 'cancelled'::character varying])::text[])))
+);
+
+
+--
+-- Name: purchase_orders_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.purchase_orders_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: purchase_orders_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.purchase_orders_id_seq OWNED BY public.purchase_orders.id;
+
+
+--
 -- Name: role_menus_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -1107,6 +1554,91 @@ CREATE TABLE public.role_permissions (
     updated_by character varying(255) NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
+
+
+--
+-- Name: sales_invoices; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sales_invoices (
+    id integer NOT NULL,
+    invoice_number character varying(50) NOT NULL,
+    order_id integer NOT NULL,
+    invoice_date date NOT NULL,
+    due_date date NOT NULL,
+    subtotal numeric(12,2) NOT NULL,
+    tax_amount numeric(12,2) DEFAULT 0,
+    total_amount numeric(12,2) NOT NULL,
+    paid_amount numeric(12,2) DEFAULT 0,
+    status character varying(20) DEFAULT 'unpaid'::character varying,
+    notes text,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT sales_invoices_status_check CHECK (((status)::text = ANY ((ARRAY['unpaid'::character varying, 'partial'::character varying, 'paid'::character varying, 'cancelled'::character varying])::text[])))
+);
+
+
+--
+-- Name: sales_invoices_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sales_invoices_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sales_invoices_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.sales_invoices_id_seq OWNED BY public.sales_invoices.id;
+
+
+--
+-- Name: sales_payments; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sales_payments (
+    id integer NOT NULL,
+    invoice_id integer NOT NULL,
+    payment_date date NOT NULL,
+    amount numeric(12,2) NOT NULL,
+    payment_method character varying(50) NOT NULL,
+    reference_number character varying(100),
+    notes text,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL
+);
+
+
+--
+-- Name: sales_payments_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.sales_payments_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: sales_payments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.sales_payments_id_seq OWNED BY public.sales_payments.id;
 
 
 --
@@ -1226,6 +1758,46 @@ ALTER SEQUENCE public.task_history_id_seq OWNED BY public.task_history.id;
 
 
 --
+-- Name: transaction_categories; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.transaction_categories (
+    id integer NOT NULL,
+    code character varying(50) NOT NULL,
+    name character varying(100) NOT NULL,
+    type character varying(20) NOT NULL,
+    description text,
+    is_active boolean DEFAULT true,
+    tenant_id integer NOT NULL,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT transaction_categories_type_check CHECK (((type)::text = ANY ((ARRAY['income'::character varying, 'expense'::character varying])::text[])))
+);
+
+
+--
+-- Name: transaction_categories_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.transaction_categories_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: transaction_categories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.transaction_categories_id_seq OWNED BY public.transaction_categories.id;
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1244,6 +1816,136 @@ CREATE TABLE public.users (
 
 
 --
+-- Name: work_order_items; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.work_order_items (
+    id integer NOT NULL,
+    work_order_id integer NOT NULL,
+    item_id integer NOT NULL,
+    description text,
+    quantity integer NOT NULL,
+    unit_price numeric(10,2) NOT NULL,
+    total_price numeric(12,2) NOT NULL,
+    tenant_id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL
+);
+
+
+--
+-- Name: work_order_items_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.work_order_items_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: work_order_items_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.work_order_items_id_seq OWNED BY public.work_order_items.id;
+
+
+--
+-- Name: work_order_tasks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.work_order_tasks (
+    id integer NOT NULL,
+    work_order_id integer NOT NULL,
+    task_name character varying(100) NOT NULL,
+    description text,
+    assigned_to integer NOT NULL,
+    start_date timestamp without time zone NOT NULL,
+    end_date timestamp without time zone NOT NULL,
+    status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
+    notes text,
+    tenant_id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT valid_task_status CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying])::text[])))
+);
+
+
+--
+-- Name: work_order_tasks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.work_order_tasks_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: work_order_tasks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.work_order_tasks_id_seq OWNED BY public.work_order_tasks.id;
+
+
+--
+-- Name: work_orders; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.work_orders (
+    id integer NOT NULL,
+    spk_number character varying(50) NOT NULL,
+    order_id integer NOT NULL,
+    customer_name character varying(100) NOT NULL,
+    work_type character varying(50) NOT NULL,
+    description text NOT NULL,
+    start_date timestamp without time zone NOT NULL,
+    end_date timestamp without time zone NOT NULL,
+    status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
+    assigned_to integer NOT NULL,
+    estimated_cost numeric(12,2) NOT NULL,
+    actual_cost numeric(12,2),
+    completion_notes text,
+    tenant_id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    created_by character varying(255) NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_by character varying(255) NOT NULL,
+    CONSTRAINT valid_work_order_status CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'in_progress'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[])))
+);
+
+
+--
+-- Name: work_orders_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.work_orders_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: work_orders_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.work_orders_id_seq OWNED BY public.work_orders.id;
+
+
+--
 -- Name: audit_trail id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1258,10 +1960,24 @@ ALTER TABLE ONLY public.backup ALTER COLUMN id SET DEFAULT nextval('public.backu
 
 
 --
+-- Name: cash_flow id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cash_flow ALTER COLUMN id SET DEFAULT nextval('public.cash_flow_id_seq'::regclass);
+
+
+--
 -- Name: item_stock_movement id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.item_stock_movement ALTER COLUMN id SET DEFAULT nextval('public.item_stock_movement_id_seq'::regclass);
+
+
+--
+-- Name: master_channel id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.master_channel ALTER COLUMN id SET DEFAULT nextval('public.master_channel_id_seq'::regclass);
 
 
 --
@@ -1321,6 +2037,20 @@ ALTER TABLE ONLY public.payments ALTER COLUMN id SET DEFAULT nextval('public.pay
 
 
 --
+-- Name: petty_cash id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash ALTER COLUMN id SET DEFAULT nextval('public.petty_cash_id_seq'::regclass);
+
+
+--
+-- Name: petty_cash_requests id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash_requests ALTER COLUMN id SET DEFAULT nextval('public.petty_cash_requests_id_seq'::regclass);
+
+
+--
 -- Name: product_images id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1332,6 +2062,34 @@ ALTER TABLE ONLY public.product_images ALTER COLUMN id SET DEFAULT nextval('publ
 --
 
 ALTER TABLE ONLY public.production_tasks ALTER COLUMN id SET DEFAULT nextval('public.production_tasks_id_seq'::regclass);
+
+
+--
+-- Name: purchase_order_items id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.purchase_order_items ALTER COLUMN id SET DEFAULT nextval('public.purchase_order_items_id_seq'::regclass);
+
+
+--
+-- Name: purchase_orders id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.purchase_orders ALTER COLUMN id SET DEFAULT nextval('public.purchase_orders_id_seq'::regclass);
+
+
+--
+-- Name: sales_invoices id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sales_invoices ALTER COLUMN id SET DEFAULT nextval('public.sales_invoices_id_seq'::regclass);
+
+
+--
+-- Name: sales_payments id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sales_payments ALTER COLUMN id SET DEFAULT nextval('public.sales_payments_id_seq'::regclass);
 
 
 --
@@ -1353,6 +2111,34 @@ ALTER TABLE ONLY public.stock_opname_detail ALTER COLUMN id SET DEFAULT nextval(
 --
 
 ALTER TABLE ONLY public.task_history ALTER COLUMN id SET DEFAULT nextval('public.task_history_id_seq'::regclass);
+
+
+--
+-- Name: transaction_categories id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction_categories ALTER COLUMN id SET DEFAULT nextval('public.transaction_categories_id_seq'::regclass);
+
+
+--
+-- Name: work_order_items id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_order_items ALTER COLUMN id SET DEFAULT nextval('public.work_order_items_id_seq'::regclass);
+
+
+--
+-- Name: work_order_tasks id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_order_tasks ALTER COLUMN id SET DEFAULT nextval('public.work_order_tasks_id_seq'::regclass);
+
+
+--
+-- Name: work_orders id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_orders ALTER COLUMN id SET DEFAULT nextval('public.work_orders_id_seq'::regclass);
 
 
 --
@@ -1432,6 +2218,25 @@ COPY public.audit_trail (id, entity_type, entity_id, action, old_values, new_val
 70	product_category	8	delete	{"id": 8, "name": "test test", "tenant_id": 1, "created_at": "0001-01-01T00:00:00Z"}	{"created_at": "0001-01-01T00:00:00Z"}	1	admin	2025-04-01 15:50:36.810221	\N	2025-04-01 08:50:36.811017
 71	user	0	delete	{"id": "918ec695-573d-45c6-b408-e732a5b79bcf", "tenant_id": 1, "created_at": "2025-04-01T16:30:34.09158+07:00", "created_by": "admin"}	{"created_at": "0001-01-01T00:00:00Z"}	1	admin	2025-04-01 16:33:18.837229	\N	2025-04-01 09:33:18.83781
 72	user	0	create	{"created_at": "0001-01-01T00:00:00Z"}	{"id": "a31debd8-ef47-4b2a-bb08-e7ca49fbbd88", "tenant_id": 1, "created_at": "2025-04-01T16:33:30.538388+07:00", "created_by": "admin"}	1	admin	2025-04-01 16:33:30.548839	\N	2025-04-01 09:33:30.549636
+73	menu	46	create	{"created_at": "0001-01-01T00:00:00Z"}	{"id": 46, "url": "/stock-movement", "icon": "ni ni-archive-2", "name": "Stock Movement", "parent_id": 4, "tenant_id": 1, "created_at": "2025-04-06T15:01:51.654123Z", "created_by": "admin"}	1	admin	2025-04-06 22:01:51.673036	\N	2025-04-06 15:01:51.675308
+74	menu	46	update	{"id": 46, "url": "/stock-movement", "icon": "ni ni-archive-2", "name": "Stock Movement", "parent_id": 4, "tenant_id": 1, "created_at": "2025-04-06T15:01:51.654123Z", "created_by": "admin"}	{"id": 46, "url": "/stock-movement", "icon": "ni ni-archive-2", "name": "Stock Movement", "parent_id": 4, "tenant_id": 1, "created_at": "2025-04-06T15:01:51.654123Z", "created_by": "admin"}	1	admin	2025-04-06 22:14:25.264546	\N	2025-04-06 15:14:25.265927
+75	menu	47	create	{"created_at": "0001-01-01T00:00:00Z"}	{"id": 47, "url": "/makloon", "icon": "ni ni-circle-08", "name": "Makloon", "parent_id": 2, "tenant_id": 1, "created_at": "2025-04-06T15:54:36.553501Z", "created_by": "admin"}	1	admin	2025-04-06 22:54:36.574634	\N	2025-04-06 15:54:36.576502
+76	menu	48	create	{"created_at": "0001-01-01T00:00:00Z"}	{"id": 48, "icon": "ni ni-money-coins", "name": "Artificial Intelligence", "tenant_id": 1, "created_at": "2025-04-07T08:11:44.671447Z", "created_by": "admin"}	1	admin	2025-04-07 15:11:44.703606	\N	2025-04-07 08:11:44.709898
+77	menu	49	create	{"created_at": "0001-01-01T00:00:00Z"}	{"id": 49, "url": "/model-builder", "icon": "ni ni-settings", "name": "Model Builder", "tenant_id": 1, "created_at": "2025-04-07T08:12:18.661025Z", "created_by": "admin"}	1	admin	2025-04-07 15:12:18.668389	\N	2025-04-07 08:12:18.671267
+78	order	3	update	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	1	admin	2025-04-10 17:28:22.215436	\N	2025-04-10 10:28:22.217994
+79	order	3	update	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	1	admin	2025-04-10 17:29:17.602371	\N	2025-04-10 10:29:17.602765
+80	order	3	update	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	1	admin	2025-04-10 17:32:59.471487	\N	2025-04-10 10:32:59.473802
+81	order	3	update	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	1	admin	2025-04-10 17:35:21.621948	\N	2025-04-10 10:35:21.623492
+82	order	3	update	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	1	admin	2025-04-10 17:49:34.117517	\N	2025-04-10 10:49:34.119078
+83	order	3	update	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	1	admin	2025-04-10 17:54:04.991328	\N	2025-04-10 10:54:04.985916
+84	order	3	update	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	1	admin	2025-04-10 17:55:57.495845	\N	2025-04-10 10:55:57.495669
+85	order	3	update	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	1	admin	2025-04-10 17:58:17.80635	\N	2025-04-10 10:58:17.807478
+86	order	3	update	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	{"id": 3, "tenant_id": 1, "created_at": "2025-04-01T17:27:52.945804+07:00", "created_by": "system"}	1	admin	2025-04-10 17:58:47.001842	\N	2025-04-10 10:58:47.003219
+87	item	14	create	{"created_at": "0001-01-01T00:00:00Z"}	{"id": 14, "name": "Testing product", "tenant_id": 1, "created_at": "2025-04-10T23:33:31.480275+07:00", "created_by": "admin"}	1	admin	2025-04-10 23:33:31.625626	\N	2025-04-10 16:33:31.647777
+88	item	14	update	{"id": 14, "name": "Testing product", "tenant_id": 1, "created_at": "2025-04-10T23:33:31.480275+07:00", "created_by": "admin"}	{"id": 14, "name": "Testing product test", "tenant_id": 1, "created_at": "2025-04-10T23:33:31.480275+07:00", "created_by": "admin"}	1	admin	2025-04-10 23:48:30.838644	\N	2025-04-10 16:48:30.839479
+89	item	14	update	{"id": 14, "name": "Testing product test", "tenant_id": 1, "created_at": "2025-04-10T23:33:31.480275+07:00", "created_by": "admin"}	{"id": 14, "name": "Testing product test asdasd", "tenant_id": 1, "created_at": "2025-04-10T23:33:31.480275+07:00", "created_by": "admin"}	1	admin	2025-04-10 23:53:33.186897	\N	2025-04-10 16:53:33.187486
+90	item	15	create	{"created_at": "0001-01-01T00:00:00Z"}	{"id": 15, "name": "teasdas", "tenant_id": 1, "created_at": "2025-04-11T00:12:02.566894+07:00", "created_by": "admin"}	1	admin	2025-04-11 00:12:02.584584	\N	2025-04-10 17:12:02.586192
+91	item	15	update	{"id": 15, "name": "teasdas", "tenant_id": 1, "created_at": "2025-04-11T00:12:02.566894+07:00", "created_by": "admin"}	{"id": 15, "name": "teasdas asdads", "tenant_id": 1, "created_at": "2025-04-11T00:12:02.566894+07:00", "created_by": "admin"}	1	admin	2025-04-11 00:12:17.738345	\N	2025-04-10 17:12:17.740061
 \.
 
 
@@ -1445,6 +2250,19 @@ COPY public.backup (id, file_name, size, created_at, created_by, tenant_id, upda
 36	db_backup_2025-03-30_14-57-45_2521a6e4.dump	64238	2025-03-30 07:57:46.54205	developer	1	\N	developer
 38	db_backup_2025-04-01_16-49-30_0c9ed976.dump	65964	2025-04-01 09:49:30.400806	developer	1	\N	developer
 39	db_backup_2025-04-06_20-05-29_10e99f9f.dump	118062	2025-04-06 13:05:30.496587	developer	1	\N	developer
+40	db_backup_2025-04-12_20-42-27_1d8a47b8.dump	178583	2025-04-12 13:42:28.609772	developer	1	\N	developer
+41	db_backup_2025-04-12_21-32-48_145d0d9e.dump	187845	2025-04-12 14:32:48.895791	developer	1	\N	developer
+\.
+
+
+--
+-- Data for Name: cash_flow; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.cash_flow (id, transaction_date, transaction_type, category_id, amount, description, reference_number, reference_type, reference_id, payment_id, office_id, status, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	2024-04-01	income	1	899.87	Order payment received	TRX-2024-001-DP	\N	\N	1	17	completed	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+2	2024-04-02	income	1	449.94	Order payment received	TRX-2024-001-PP1	\N	\N	2	17	completed	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+3	2024-04-03	expense	4	-500.00	Electricity bill payment	REF-UTIL-001	\N	\N	\N	17	completed	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
 \.
 
 
@@ -1459,6 +2277,33 @@ COPY public.item_stock_movement (id, item_id, movement_type, reference_type, ref
 4	2	out	production	1	-40	1160	Production order #PRD-2024-001	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
 5	1	adjustment	stock_opname	1	-20	1430	Stock opname adjustment SO-2024-001	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
 6	3	adjustment	stock_opname	1	-5	595	Stock opname adjustment SO-2024-001	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+\.
+
+
+--
+-- Data for Name: master_channel; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.master_channel (id, code, name, type, description, is_active, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	TOKOPEDIA	Tokopedia Store	online_marketplace	Jersey Industry Official Store di Tokopedia	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+2	SHOPEE	Shopee Store	online_marketplace	Jersey Industry Official Store di Shopee	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+3	WEBSITE	Jersey Industry Website	website	www.jerseyindustry.com	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+4	NCMO-STORE	North City Main Store	physical_store	Toko di North City Main Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+5	NCBO-STORE	North City Branch Store	physical_store	Toko di North City Branch Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+6	NRMO-STORE	North Rural Main Store	physical_store	Toko di North Rural Main Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+7	NRBO-STORE	North Rural Branch Store	physical_store	Toko di North Rural Branch Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+8	SCMO-STORE	South City Main Store	physical_store	Toko di South City Main Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+9	SCBO-STORE	South City Branch Store	physical_store	Toko di South City Branch Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+10	SRMO-STORE	South Rural Main Store	physical_store	Toko di South Rural Main Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+11	SRBO-STORE	South Rural Branch Store	physical_store	Toko di South Rural Branch Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+12	ECMO-STORE	East City Main Store	physical_store	Toko di East City Main Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+13	ECBO-STORE	East City Branch Store	physical_store	Toko di East City Branch Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+14	ERMO-STORE	East Rural Main Store	physical_store	Toko di East Rural Main Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+15	ERBO-STORE	East Rural Branch Store	physical_store	Toko di East Rural Branch Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+16	WCMO-STORE	West City Main Store	physical_store	Toko di West City Main Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+17	WCBO-STORE	West City Branch Store	physical_store	Toko di West City Branch Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+18	WRMO-STORE	West Rural Main Store	physical_store	Toko di West Rural Main Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+19	WRBO-STORE	West Rural Branch Store	physical_store	Toko di West Rural Branch Office	t	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
 \.
 
 
@@ -1532,6 +2377,8 @@ COPY public.master_item (id, code, name, description, unit, min_stock, max_stock
 11	PRT-001	Heat Transfer Vinyl White	White vinyl for number printing	rolls	10	50	15	printing	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
 12	PRT-002	Heat Transfer Vinyl Black	Black vinyl for number printing	rolls	10	50	15	printing	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
 13	PRT-003	Sublimation Ink Cyan	Cyan ink for sublimation printing	liters	5	20	8	printing	t	1	2025-04-06 10:44:03.215723+00	system	2025-04-06 10:44:03.215723+00	system
+14	ABC-123	Testing product test asdasd	asdads	liters	1	5	\N	\N	t	1	2025-04-10 16:33:31.480275+00	admin	2025-04-10 16:53:33.181992+00	admin
+15	ABC-003	teasdas asdads	assd	pieces	1	8	\N	\N	t	1	2025-04-10 17:12:02.566894+00	admin	2025-04-10 17:12:17.729754+00	admin
 \.
 
 
@@ -1563,8 +2410,6 @@ COPY public.master_menu (id, name, url, icon, parent_id, sort, created_at, updat
 21	Payment Detail	/payment-detail	ni ni-bullet-list-67	3	5	2025-03-22 08:00:31.935588	2025-03-22 08:00:31.935588	1	system	system
 22	Task	/task	ni ni-calendar-grid-58	3	6	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
 23	Task History	/task-history	ni ni-time-alarm	3	7	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
-25	Stock Name	/stock-name	ni ni-tag	4	2	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
-26	Master Supplier	/master-supplier	ni ni-delivery-fast	4	3	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
 27	Cash Flow	/cash-flow	ni ni-money-coins	5	1	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
 28	Purchase List	/purchase-list	ni ni-cart	5	2	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
 29	Payment List	/payment-list	ni ni-credit-card	5	3	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
@@ -1577,6 +2422,12 @@ COPY public.master_menu (id, name, url, icon, parent_id, sort, created_at, updat
 41	Audit Trail	/audit	ni ni-archive-2	40	1	2025-03-23 08:11:39.560894	2025-03-23 16:43:21.539038	1	admin	admin
 42	Backup Management	/backup	ni ni-money-coins	40	2	2025-03-26 16:36:35.692878	2025-03-26 16:36:35.692878	1	system	system
 24	Master Item	/item	ni ni-box-2	4	1	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
+25	Stock Opname	/stock-opname	ni ni-tag	4	2	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
+46	Stock Movement	/stock-movement	ni ni-archive-2	4	3	2025-04-06 15:01:51.654123	2025-04-06 22:14:25.254253	1	admin	admin
+26	Master Supplier	/supplier	ni ni-delivery-fast	4	4	2025-03-22 08:05:37.869698	2025-03-22 08:05:37.869698	1	system	system
+47	Makloon	/makloon	ni ni-circle-08	2	8	2025-04-06 15:54:36.553501	2025-04-06 15:54:36.553501	1	admin	admin
+48	Artificial Intelligence		ni ni-money-coins	\N	7	2025-04-07 08:11:44.671447	2025-04-07 08:11:44.671447	1	admin	admin
+49	Model Builder	/model-builder	ni ni-settings	48	1	2025-04-07 08:12:18.661025	2025-04-07 08:12:18.661025	1	admin	admin
 \.
 
 
@@ -1752,7 +2603,7 @@ COPY public.order_items (id, order_id, product_id, quantity, size, color, unit_p
 --
 
 COPY public.orders (id, order_number, customer_name, customer_email, customer_phone, delivery_address, office_id, subtotal, discount_amount, total_amount, status, payment_status, expected_delivery_date, notes, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
-3	ORD-2024-001	Manchester United FC	order@manutd.com	+44-123-456-7890	123 Sir Matt Busby Way, Manchester M16 0RA, UK	17	1749.65	137.47	1612.18	in_production	partial	2025-04-08	Team order for new season	1	2025-04-01 10:27:52.945804+00	system	2025-04-01 10:27:52.945804+00	system
+3	ORD-2024-001	Manchester United FC	order@manutd.com	+6281284093225	123 Sir Matt Busby Way, Manchester M16 0RA, UK	17	1749.65	137.47	1612.18	in_production	partial	2025-04-08	Team order for new season	1	2025-04-01 10:27:52.945804+00	system	2025-04-10 10:58:46.976996+00	admin
 \.
 
 
@@ -1767,15 +2618,37 @@ COPY public.payments (id, order_id, amount, payment_method, payment_date, refere
 
 
 --
+-- Data for Name: petty_cash; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.petty_cash (id, office_id, period_start_date, period_end_date, initial_balance, current_balance, channel_id, division_id, budget_limit, budget_period, alert_threshold, status, balance_updated_at, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	17	2024-04-01	2024-04-30	10000000.00	10000000.00	4	1	10000000.00	monthly	2000000.00	active	2025-04-12 14:29:43.332384+00	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+2	17	2024-04-01	2024-04-30	5000000.00	5000000.00	1	2	5000000.00	monthly	1000000.00	active	2025-04-12 14:29:43.332384+00	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+3	17	2024-04-01	2024-04-30	15000000.00	15000000.00	\N	3	15000000.00	monthly	3000000.00	active	2025-04-12 14:29:43.332384+00	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+\.
+
+
+--
+-- Data for Name: petty_cash_requests; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.petty_cash_requests (id, petty_cash_id, request_number, office_id, employee_id, channel_id, division_id, amount, purpose, category_id, payment_method, reference_number, budget_code, receipt_urls, status, settlement_status, settlement_date, reimbursement_status, reimbursement_date, approved_by, approved_at, completed_at, notes, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	1	PCR-2024-001	17	1	4	1	500000.00	Pembelian supplies toko North City Main	1	cash	INV-2024-001	STORE-SUPPLIES	\N	pending	pending	\N	not_required	\N	\N	\N	\N	\N	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+2	2	PCR-2024-002	17	2	1	2	1500000.00	Product photography untuk listing Tokopedia	2	bank_transfer	INV-2024-002	TOPED-MARKETING	\N	pending	pending	\N	not_required	\N	\N	\N	\N	\N	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+3	3	PCR-2024-003	17	3	\N	3	2000000.00	Emergency purchase benang jahit	3	cash	INV-2024-003	PROD-MATERIALS	\N	pending	pending	\N	not_required	\N	\N	\N	\N	\N	1	2025-04-12 14:29:43.332384+00	admin	2025-04-12 14:29:43.332384+00	admin
+\.
+
+
+--
 -- Data for Name: product_images; Type: TABLE DATA; Schema: public; Owner: -
 --
 
 COPY public.product_images (id, product_id, image_url, sort_order, is_primary, created_at, created_by, updated_at, updated_by, tenant_id) FROM stdin;
-6	1	/uploads/products/1743319424832942700_1.png	0	f	2025-03-30 07:23:44.836285+00	admin	2025-03-30 07:23:44.836285+00	admin	1
-7	1	/uploads/products/1743319439386728500_1.png	0	f	2025-03-30 07:23:59.388736+00	admin	2025-03-30 07:23:59.388736+00	admin	1
 8	2	/uploads/products/1743319783567784400_2.png	0	f	2025-03-30 07:29:43.570773+00	admin	2025-03-30 07:29:43.570773+00	admin	1
 11	4	/uploads/products/1743320186461926700_4.png	0	f	2025-03-30 07:36:26.465237+00	admin	2025-03-30 07:36:26.465237+00	admin	1
 12	4	/uploads/products/1743320453223313500_4.png	0	f	2025-03-30 07:40:53.225517+00	admin	2025-03-30 07:40:53.225517+00	admin	1
+6	1	/uploads/products/1743319424832942700_1.png	0	f	2025-03-30 07:23:44.836285+00	admin	2025-03-30 07:23:44.836285+00	admin	1
+7	1	/uploads/products/1743319439386728500_1.png	0	f	2025-03-30 07:23:59.388736+00	admin	2025-03-30 07:23:59.388736+00	admin	1
 \.
 
 
@@ -1798,6 +2671,27 @@ COPY public.production_tasks (id, order_item_id, task_type, sequence_number, emp
 12	4	pressing	5	16	pending	\N	\N	\N	1	2025-04-01 10:30:22.109029+00	system	2025-04-01 10:30:22.109029+00	system
 13	4	finishing	6	25	pending	\N	\N	\N	1	2025-04-01 10:30:22.109029+00	system	2025-04-01 10:30:22.109029+00	system
 14	4	quality_check	7	27	pending	\N	\N	\N	1	2025-04-01 10:30:22.109029+00	system	2025-04-01 10:30:22.109029+00	system
+\.
+
+
+--
+-- Data for Name: purchase_order_items; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.purchase_order_items (id, purchase_order_id, item_id, quantity, unit_price, subtotal, received_quantity, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	1	1	100	30.00	3000.00	0	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+2	1	2	50	40.00	2000.00	0	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+3	2	3	60	50.00	3000.00	0	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+\.
+
+
+--
+-- Data for Name: purchase_orders; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.purchase_orders (id, po_number, supplier_id, order_date, delivery_date, subtotal, tax_amount, total_amount, status, notes, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	PO-2024-001	1	2024-04-01	2024-04-08	5000.00	500.00	5500.00	approved	\N	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+2	PO-2024-002	2	2024-04-02	2024-04-09	3000.00	300.00	3300.00	pending	\N	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
 \.
 
 
@@ -1839,6 +2733,10 @@ COPY public.role_menus (id, role_id, menu_id, created_at, created_by, updated_by
 71	2	41	2025-03-23 08:13:03.43411	system	system
 72	2	40	2025-03-23 08:14:14.063347	system	system
 73	2	42	2025-03-26 16:37:41.986296	system	system
+74	1	46	2025-04-06 15:05:27.822436	system	system
+75	1	47	2025-04-06 15:55:33.350542	system	system
+77	2	48	2025-04-07 08:14:29.598363	system	system
+76	2	49	2025-04-07 08:14:17.173359	system	system
 \.
 
 
@@ -1878,6 +2776,25 @@ COPY public.role_permissions (id, role_id, permission_id, created_at, created_by
 33	1	37	2025-03-23 17:49:34.448035	system	system	2025-03-23 17:49:34.448035
 43	2	38	2025-03-24 23:48:37.872075	admin	admin	2025-03-24 23:48:37.872075
 44	2	17	2025-03-24 23:48:37.87498	admin	admin	2025-03-24 23:48:37.87498
+\.
+
+
+--
+-- Data for Name: sales_invoices; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.sales_invoices (id, invoice_number, order_id, invoice_date, due_date, subtotal, tax_amount, total_amount, paid_amount, status, notes, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	INV-2024-001	3	2024-04-01	2024-04-15	1612.18	0.00	1612.18	0.00	partial	\N	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+\.
+
+
+--
+-- Data for Name: sales_payments; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.sales_payments (id, invoice_id, payment_date, amount, payment_method, reference_number, notes, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	1	2024-04-01	899.87	bank_transfer	TRX-2024-001-DP	\N	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+2	1	2024-04-02	449.94	bank_transfer	TRX-2024-001-PP1	\N	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
 \.
 
 
@@ -1922,6 +2839,19 @@ COPY public.task_history (id, task_id, employee_id, status_change, comment, tena
 
 
 --
+-- Data for Name: transaction_categories; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.transaction_categories (id, code, name, type, description, is_active, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	INC-SALES	Sales Income	income	Income from product sales	t	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+2	INC-OTHER	Other Income	income	Other sources of income	t	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+3	EXP-MAT	Material Purchase	expense	Expenses for raw materials	t	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+4	EXP-UTIL	Utilities	expense	Utility expenses	t	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+5	EXP-SAL	Salaries	expense	Employee salaries	t	1	2025-04-11 03:21:51.63462+00	system	2025-04-11 03:21:51.63462+00	system
+\.
+
+
+--
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -1933,17 +2863,55 @@ a31debd8-ef47-4b2a-bb08-e7ca49fbbd88	admin2	admin2@vomo.com	$2a$10$rStpWqylI8QAF
 
 
 --
+-- Data for Name: work_order_items; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.work_order_items (id, work_order_id, item_id, description, quantity, unit_price, total_price, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	1	1	Polyester Mesh Fabric for jerseys	100	15.00	1500.00	1	2025-04-11 10:05:34.306599	system	2025-04-11 10:05:34.306599	system
+2	1	2	Dri-Fit Material for inner lining	50	10.00	500.00	1	2025-04-11 10:05:34.306599	system	2025-04-11 10:05:34.306599	system
+\.
+
+
+--
+-- Data for Name: work_order_tasks; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.work_order_tasks (id, work_order_id, task_name, description, assigned_to, start_date, end_date, status, notes, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	1	Material Preparation	Prepare and inspect all required materials	13	2025-04-01 08:00:00	2025-04-01 17:00:00	completed	\N	1	2025-04-11 10:05:34.306599	system	2025-04-11 10:05:34.306599	system
+2	1	Cutting Process	Cut materials according to size specifications	19	2025-04-02 08:00:00	2025-04-02 17:00:00	in_progress	\N	1	2025-04-11 10:05:34.306599	system	2025-04-11 10:05:34.306599	system
+3	1	Sewing Process	Sew jersey components together	22	2025-04-03 08:00:00	2025-04-04 17:00:00	pending	\N	1	2025-04-11 10:05:34.306599	system	2025-04-11 10:05:34.306599	system
+4	1	Quality Check	Final quality inspection	25	2025-04-05 08:00:00	2025-04-05 17:00:00	pending	\N	1	2025-04-11 10:05:34.306599	system	2025-04-11 10:05:34.306599	system
+\.
+
+
+--
+-- Data for Name: work_orders; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.work_orders (id, spk_number, order_id, customer_name, work_type, description, start_date, end_date, status, assigned_to, estimated_cost, actual_cost, completion_notes, tenant_id, created_at, created_by, updated_at, updated_by) FROM stdin;
+1	SPK-2024-001	3	Manchester United FC	production	Team jersey production for new season - 35 jerseys total	2025-04-01 08:00:00	2025-04-08 17:00:00	in_progress	7	2000.00	\N	\N	1	2025-04-11 10:05:34.306599	system	2025-04-11 10:05:34.306599	system
+\.
+
+
+--
 -- Name: audit_trail_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.audit_trail_id_seq', 72, true);
+SELECT pg_catalog.setval('public.audit_trail_id_seq', 91, true);
 
 
 --
 -- Name: backup_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.backup_id_seq', 39, true);
+SELECT pg_catalog.setval('public.backup_id_seq', 41, true);
+
+
+--
+-- Name: cash_flow_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.cash_flow_id_seq', 3, true);
 
 
 --
@@ -1951,6 +2919,13 @@ SELECT pg_catalog.setval('public.backup_id_seq', 39, true);
 --
 
 SELECT pg_catalog.setval('public.item_stock_movement_id_seq', 6, true);
+
+
+--
+-- Name: master_channel_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.master_channel_id_seq', 19, true);
 
 
 --
@@ -1971,14 +2946,14 @@ SELECT pg_catalog.setval('public.master_employee_id_seq', 36, true);
 -- Name: master_item_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.master_item_id_seq', 13, true);
+SELECT pg_catalog.setval('public.master_item_id_seq', 15, true);
 
 
 --
 -- Name: master_menu_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.master_menu_id_seq', 45, true);
+SELECT pg_catalog.setval('public.master_menu_id_seq', 49, true);
 
 
 --
@@ -2073,6 +3048,20 @@ SELECT pg_catalog.setval('public.payments_id_seq', 2, true);
 
 
 --
+-- Name: petty_cash_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.petty_cash_id_seq', 3, true);
+
+
+--
+-- Name: petty_cash_requests_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.petty_cash_requests_id_seq', 3, true);
+
+
+--
 -- Name: product_images_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
@@ -2087,17 +3076,45 @@ SELECT pg_catalog.setval('public.production_tasks_id_seq', 14, true);
 
 
 --
+-- Name: purchase_order_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.purchase_order_items_id_seq', 3, true);
+
+
+--
+-- Name: purchase_orders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.purchase_orders_id_seq', 2, true);
+
+
+--
 -- Name: role_menus_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.role_menus_id_seq', 73, true);
+SELECT pg_catalog.setval('public.role_menus_id_seq', 77, true);
 
 
 --
 -- Name: role_permissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.role_permissions_id_seq', 70, true);
+SELECT pg_catalog.setval('public.role_permissions_id_seq', 71, true);
+
+
+--
+-- Name: sales_invoices_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.sales_invoices_id_seq', 1, true);
+
+
+--
+-- Name: sales_payments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.sales_payments_id_seq', 2, true);
 
 
 --
@@ -2122,6 +3139,34 @@ SELECT pg_catalog.setval('public.task_history_id_seq', 8, true);
 
 
 --
+-- Name: transaction_categories_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.transaction_categories_id_seq', 5, true);
+
+
+--
+-- Name: work_order_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.work_order_items_id_seq', 2, true);
+
+
+--
+-- Name: work_order_tasks_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.work_order_tasks_id_seq', 4, true);
+
+
+--
+-- Name: work_orders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.work_orders_id_seq', 1, true);
+
+
+--
 -- Name: audit_trail audit_trail_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2135,6 +3180,14 @@ ALTER TABLE ONLY public.audit_trail
 
 ALTER TABLE ONLY public.backup
     ADD CONSTRAINT backup_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: cash_flow cash_flow_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cash_flow
+    ADD CONSTRAINT cash_flow_pkey PRIMARY KEY (id);
 
 
 --
@@ -2362,6 +3415,30 @@ ALTER TABLE ONLY public.payments
 
 
 --
+-- Name: master_channel pk_master_channel; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.master_channel
+    ADD CONSTRAINT pk_master_channel PRIMARY KEY (id);
+
+
+--
+-- Name: petty_cash pk_petty_cash; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash
+    ADD CONSTRAINT pk_petty_cash PRIMARY KEY (id);
+
+
+--
+-- Name: petty_cash_requests pk_petty_cash_requests; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash_requests
+    ADD CONSTRAINT pk_petty_cash_requests PRIMARY KEY (id);
+
+
+--
 -- Name: product_images product_images_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2375,6 +3452,30 @@ ALTER TABLE ONLY public.product_images
 
 ALTER TABLE ONLY public.production_tasks
     ADD CONSTRAINT production_tasks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: purchase_order_items purchase_order_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.purchase_order_items
+    ADD CONSTRAINT purchase_order_items_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: purchase_orders purchase_orders_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.purchase_orders
+    ADD CONSTRAINT purchase_orders_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: purchase_orders purchase_orders_po_number_tenant_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.purchase_orders
+    ADD CONSTRAINT purchase_orders_po_number_tenant_id_key UNIQUE (po_number, tenant_id);
 
 
 --
@@ -2410,6 +3511,30 @@ ALTER TABLE ONLY public.role_permissions
 
 
 --
+-- Name: sales_invoices sales_invoices_invoice_number_tenant_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sales_invoices
+    ADD CONSTRAINT sales_invoices_invoice_number_tenant_id_key UNIQUE (invoice_number, tenant_id);
+
+
+--
+-- Name: sales_invoices sales_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sales_invoices
+    ADD CONSTRAINT sales_invoices_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sales_payments sales_payments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sales_payments
+    ADD CONSTRAINT sales_payments_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: stock_opname_detail stock_opname_detail_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2442,6 +3567,30 @@ ALTER TABLE ONLY public.task_history
 
 
 --
+-- Name: transaction_categories transaction_categories_code_tenant_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction_categories
+    ADD CONSTRAINT transaction_categories_code_tenant_id_key UNIQUE (code, tenant_id);
+
+
+--
+-- Name: transaction_categories transaction_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction_categories
+    ADD CONSTRAINT transaction_categories_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: master_channel uq_master_channel_code; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.master_channel
+    ADD CONSTRAINT uq_master_channel_code UNIQUE (code, tenant_id);
+
+
+--
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2455,6 +3604,38 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: work_order_items work_order_items_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_order_items
+    ADD CONSTRAINT work_order_items_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: work_order_tasks work_order_tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_order_tasks
+    ADD CONSTRAINT work_order_tasks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: work_orders work_orders_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_orders
+    ADD CONSTRAINT work_orders_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: work_orders work_orders_spk_number_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_orders
+    ADD CONSTRAINT work_orders_spk_number_key UNIQUE (spk_number);
 
 
 --
@@ -2490,6 +3671,41 @@ CREATE INDEX idx_backup_created_at ON public.backup USING btree (created_at);
 --
 
 CREATE INDEX idx_backup_tenant ON public.backup USING btree (tenant_id);
+
+
+--
+-- Name: idx_cash_flow_category; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_cash_flow_category ON public.cash_flow USING btree (category_id);
+
+
+--
+-- Name: idx_cash_flow_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_cash_flow_date ON public.cash_flow USING btree (transaction_date);
+
+
+--
+-- Name: idx_cash_flow_payment; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_cash_flow_payment ON public.cash_flow USING btree (payment_id);
+
+
+--
+-- Name: idx_cash_flow_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_cash_flow_tenant ON public.cash_flow USING btree (tenant_id);
+
+
+--
+-- Name: idx_cash_flow_type; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_cash_flow_type ON public.cash_flow USING btree (transaction_type);
 
 
 --
@@ -2682,6 +3898,62 @@ CREATE INDEX idx_permission_tenant ON public.master_permission USING btree (tena
 
 
 --
+-- Name: idx_petty_cash_channel; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_petty_cash_channel ON public.petty_cash USING btree (channel_id);
+
+
+--
+-- Name: idx_petty_cash_division; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_petty_cash_division ON public.petty_cash USING btree (division_id);
+
+
+--
+-- Name: idx_petty_cash_office; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_petty_cash_office ON public.petty_cash USING btree (office_id);
+
+
+--
+-- Name: idx_petty_cash_requests_channel; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_petty_cash_requests_channel ON public.petty_cash_requests USING btree (channel_id);
+
+
+--
+-- Name: idx_petty_cash_requests_division; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_petty_cash_requests_division ON public.petty_cash_requests USING btree (division_id);
+
+
+--
+-- Name: idx_petty_cash_requests_employee; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_petty_cash_requests_employee ON public.petty_cash_requests USING btree (employee_id);
+
+
+--
+-- Name: idx_petty_cash_requests_office; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_petty_cash_requests_office ON public.petty_cash_requests USING btree (office_id);
+
+
+--
+-- Name: idx_petty_cash_requests_petty_cash; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_petty_cash_requests_petty_cash ON public.petty_cash_requests USING btree (petty_cash_id);
+
+
+--
 -- Name: idx_product_category; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2773,6 +4045,55 @@ CREATE INDEX idx_production_tasks_type ON public.production_tasks USING btree (t
 
 
 --
+-- Name: idx_purchase_order_items_item; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_purchase_order_items_item ON public.purchase_order_items USING btree (item_id);
+
+
+--
+-- Name: idx_purchase_order_items_po; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_purchase_order_items_po ON public.purchase_order_items USING btree (purchase_order_id);
+
+
+--
+-- Name: idx_purchase_order_items_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_purchase_order_items_tenant ON public.purchase_order_items USING btree (tenant_id);
+
+
+--
+-- Name: idx_purchase_orders_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_purchase_orders_number ON public.purchase_orders USING btree (po_number);
+
+
+--
+-- Name: idx_purchase_orders_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_purchase_orders_status ON public.purchase_orders USING btree (status);
+
+
+--
+-- Name: idx_purchase_orders_supplier; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_purchase_orders_supplier ON public.purchase_orders USING btree (supplier_id);
+
+
+--
+-- Name: idx_purchase_orders_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_purchase_orders_tenant ON public.purchase_orders USING btree (tenant_id);
+
+
+--
 -- Name: idx_region_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2784,6 +4105,55 @@ CREATE INDEX idx_region_tenant ON public.master_region USING btree (tenant_id);
 --
 
 CREATE INDEX idx_role_tenant ON public.master_role USING btree (tenant_id);
+
+
+--
+-- Name: idx_sales_invoices_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sales_invoices_number ON public.sales_invoices USING btree (invoice_number);
+
+
+--
+-- Name: idx_sales_invoices_order; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sales_invoices_order ON public.sales_invoices USING btree (order_id);
+
+
+--
+-- Name: idx_sales_invoices_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sales_invoices_status ON public.sales_invoices USING btree (status);
+
+
+--
+-- Name: idx_sales_invoices_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sales_invoices_tenant ON public.sales_invoices USING btree (tenant_id);
+
+
+--
+-- Name: idx_sales_payments_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sales_payments_date ON public.sales_payments USING btree (payment_date);
+
+
+--
+-- Name: idx_sales_payments_invoice; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sales_payments_invoice ON public.sales_payments USING btree (invoice_id);
+
+
+--
+-- Name: idx_sales_payments_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sales_payments_tenant ON public.sales_payments USING btree (tenant_id);
 
 
 --
@@ -2857,10 +4227,94 @@ CREATE INDEX idx_users_tenant ON public.users USING btree (tenant_id);
 
 
 --
+-- Name: idx_work_order_items_item; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_work_order_items_item ON public.work_order_items USING btree (item_id);
+
+
+--
+-- Name: idx_work_order_items_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_work_order_items_tenant ON public.work_order_items USING btree (tenant_id);
+
+
+--
+-- Name: idx_work_order_items_work_order; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_work_order_items_work_order ON public.work_order_items USING btree (work_order_id);
+
+
+--
+-- Name: idx_work_order_tasks_assigned_to; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_work_order_tasks_assigned_to ON public.work_order_tasks USING btree (assigned_to);
+
+
+--
+-- Name: idx_work_order_tasks_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_work_order_tasks_status ON public.work_order_tasks USING btree (status);
+
+
+--
+-- Name: idx_work_order_tasks_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_work_order_tasks_tenant ON public.work_order_tasks USING btree (tenant_id);
+
+
+--
+-- Name: idx_work_order_tasks_work_order; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_work_order_tasks_work_order ON public.work_order_tasks USING btree (work_order_id);
+
+
+--
+-- Name: idx_work_orders_assigned_to; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_work_orders_assigned_to ON public.work_orders USING btree (assigned_to);
+
+
+--
+-- Name: idx_work_orders_order_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_work_orders_order_id ON public.work_orders USING btree (order_id);
+
+
+--
+-- Name: idx_work_orders_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_work_orders_status ON public.work_orders USING btree (status);
+
+
+--
+-- Name: idx_work_orders_tenant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_work_orders_tenant ON public.work_orders USING btree (tenant_id);
+
+
+--
 -- Name: idx_zone_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_zone_tenant ON public.master_zone USING btree (tenant_id);
+
+
+--
+-- Name: petty_cash_requests tr_update_petty_cash_balance; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER tr_update_petty_cash_balance AFTER UPDATE ON public.petty_cash_requests FOR EACH ROW EXECUTE FUNCTION public.update_petty_cash_balance();
 
 
 --
@@ -2877,6 +4331,126 @@ ALTER TABLE ONLY public.audit_trail
 
 ALTER TABLE ONLY public.backup
     ADD CONSTRAINT backup_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
+-- Name: cash_flow cash_flow_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cash_flow
+    ADD CONSTRAINT cash_flow_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.transaction_categories(id);
+
+
+--
+-- Name: cash_flow cash_flow_office_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cash_flow
+    ADD CONSTRAINT cash_flow_office_id_fkey FOREIGN KEY (office_id) REFERENCES public.master_office(id);
+
+
+--
+-- Name: cash_flow cash_flow_payment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cash_flow
+    ADD CONSTRAINT cash_flow_payment_id_fkey FOREIGN KEY (payment_id) REFERENCES public.payments(id);
+
+
+--
+-- Name: cash_flow cash_flow_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.cash_flow
+    ADD CONSTRAINT cash_flow_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
+-- Name: petty_cash fk_petty_cash_channel; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash
+    ADD CONSTRAINT fk_petty_cash_channel FOREIGN KEY (channel_id) REFERENCES public.master_channel(id);
+
+
+--
+-- Name: petty_cash fk_petty_cash_division; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash
+    ADD CONSTRAINT fk_petty_cash_division FOREIGN KEY (division_id) REFERENCES public.master_division(id);
+
+
+--
+-- Name: petty_cash fk_petty_cash_office; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash
+    ADD CONSTRAINT fk_petty_cash_office FOREIGN KEY (office_id) REFERENCES public.master_office(id);
+
+
+--
+-- Name: petty_cash_requests fk_petty_cash_requests_category; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash_requests
+    ADD CONSTRAINT fk_petty_cash_requests_category FOREIGN KEY (category_id) REFERENCES public.transaction_categories(id);
+
+
+--
+-- Name: petty_cash_requests fk_petty_cash_requests_channel; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash_requests
+    ADD CONSTRAINT fk_petty_cash_requests_channel FOREIGN KEY (channel_id) REFERENCES public.master_channel(id);
+
+
+--
+-- Name: petty_cash_requests fk_petty_cash_requests_division; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash_requests
+    ADD CONSTRAINT fk_petty_cash_requests_division FOREIGN KEY (division_id) REFERENCES public.master_division(id);
+
+
+--
+-- Name: petty_cash_requests fk_petty_cash_requests_employee; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash_requests
+    ADD CONSTRAINT fk_petty_cash_requests_employee FOREIGN KEY (employee_id) REFERENCES public.master_employee(id);
+
+
+--
+-- Name: petty_cash_requests fk_petty_cash_requests_office; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash_requests
+    ADD CONSTRAINT fk_petty_cash_requests_office FOREIGN KEY (office_id) REFERENCES public.master_office(id);
+
+
+--
+-- Name: petty_cash_requests fk_petty_cash_requests_petty_cash; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash_requests
+    ADD CONSTRAINT fk_petty_cash_requests_petty_cash FOREIGN KEY (petty_cash_id) REFERENCES public.petty_cash(id);
+
+
+--
+-- Name: petty_cash_requests fk_petty_cash_requests_tenant; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash_requests
+    ADD CONSTRAINT fk_petty_cash_requests_tenant FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
+-- Name: petty_cash fk_petty_cash_tenant; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.petty_cash
+    ADD CONSTRAINT fk_petty_cash_tenant FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
 
 
 --
@@ -3128,6 +4702,46 @@ ALTER TABLE ONLY public.production_tasks
 
 
 --
+-- Name: purchase_order_items purchase_order_items_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.purchase_order_items
+    ADD CONSTRAINT purchase_order_items_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.master_item(id);
+
+
+--
+-- Name: purchase_order_items purchase_order_items_purchase_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.purchase_order_items
+    ADD CONSTRAINT purchase_order_items_purchase_order_id_fkey FOREIGN KEY (purchase_order_id) REFERENCES public.purchase_orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: purchase_order_items purchase_order_items_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.purchase_order_items
+    ADD CONSTRAINT purchase_order_items_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
+-- Name: purchase_orders purchase_orders_supplier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.purchase_orders
+    ADD CONSTRAINT purchase_orders_supplier_id_fkey FOREIGN KEY (supplier_id) REFERENCES public.master_supplier(id);
+
+
+--
+-- Name: purchase_orders purchase_orders_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.purchase_orders
+    ADD CONSTRAINT purchase_orders_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
 -- Name: role_menus role_menus_menu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3157,6 +4771,38 @@ ALTER TABLE ONLY public.role_permissions
 
 ALTER TABLE ONLY public.role_permissions
     ADD CONSTRAINT role_permissions_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.master_role(id);
+
+
+--
+-- Name: sales_invoices sales_invoices_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sales_invoices
+    ADD CONSTRAINT sales_invoices_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
+
+
+--
+-- Name: sales_invoices sales_invoices_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sales_invoices
+    ADD CONSTRAINT sales_invoices_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
+-- Name: sales_payments sales_payments_invoice_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sales_payments
+    ADD CONSTRAINT sales_payments_invoice_id_fkey FOREIGN KEY (invoice_id) REFERENCES public.sales_invoices(id);
+
+
+--
+-- Name: sales_payments sales_payments_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sales_payments
+    ADD CONSTRAINT sales_payments_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
 
 
 --
@@ -3216,11 +4862,91 @@ ALTER TABLE ONLY public.task_history
 
 
 --
+-- Name: transaction_categories transaction_categories_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.transaction_categories
+    ADD CONSTRAINT transaction_categories_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
 -- Name: users users_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
+-- Name: work_order_items work_order_items_item_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_order_items
+    ADD CONSTRAINT work_order_items_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.master_item(id);
+
+
+--
+-- Name: work_order_items work_order_items_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_order_items
+    ADD CONSTRAINT work_order_items_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
+-- Name: work_order_items work_order_items_work_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_order_items
+    ADD CONSTRAINT work_order_items_work_order_id_fkey FOREIGN KEY (work_order_id) REFERENCES public.work_orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: work_order_tasks work_order_tasks_assigned_to_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_order_tasks
+    ADD CONSTRAINT work_order_tasks_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.master_employee(id);
+
+
+--
+-- Name: work_order_tasks work_order_tasks_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_order_tasks
+    ADD CONSTRAINT work_order_tasks_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
+
+
+--
+-- Name: work_order_tasks work_order_tasks_work_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_order_tasks
+    ADD CONSTRAINT work_order_tasks_work_order_id_fkey FOREIGN KEY (work_order_id) REFERENCES public.work_orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: work_orders work_orders_assigned_to_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_orders
+    ADD CONSTRAINT work_orders_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.master_employee(id);
+
+
+--
+-- Name: work_orders work_orders_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_orders
+    ADD CONSTRAINT work_orders_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
+
+
+--
+-- Name: work_orders work_orders_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.work_orders
+    ADD CONSTRAINT work_orders_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.master_tenant(id);
 
 
 --

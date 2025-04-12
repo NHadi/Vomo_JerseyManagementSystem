@@ -4,19 +4,25 @@ import (
 	"context"
 	"vomo/internal/domain/accounting"
 	"vomo/internal/domain/audit"
+	"vomo/internal/domain/employee"
+	"vomo/internal/domain/repositories"
 )
 
 // PettyCashRequestService handles business logic for petty cash request operations
 type PettyCashRequestService struct {
-	repo     accounting.PettyCashRequestRepository
-	auditSvc *audit.Service
+	repo         accounting.PettyCashRequestRepository
+	auditSvc     *audit.Service
+	categoryRepo accounting.TransactionCategoryRepository
+	employeeRepo repositories.EmployeeRepository
 }
 
 // NewPettyCashRequestService creates a new petty cash request service instance
-func NewPettyCashRequestService(repo accounting.PettyCashRequestRepository, auditSvc *audit.Service) *PettyCashRequestService {
+func NewPettyCashRequestService(repo accounting.PettyCashRequestRepository, auditSvc *audit.Service, categoryRepo accounting.TransactionCategoryRepository, employeeRepo repositories.EmployeeRepository) *PettyCashRequestService {
 	return &PettyCashRequestService{
-		repo:     repo,
-		auditSvc: auditSvc,
+		repo:         repo,
+		auditSvc:     auditSvc,
+		categoryRepo: categoryRepo,
+		employeeRepo: employeeRepo,
 	}
 }
 
@@ -104,7 +110,7 @@ func (s *PettyCashRequestService) Reject(id int, reason string, ctx context.Cont
 
 	oldStatus := request.Status
 	request.Status = "rejected"
-	request.RejectionReason = reason
+	request.RejectionReason = &reason
 
 	if err := s.repo.Update(request, ctx); err != nil {
 		return err
@@ -112,4 +118,14 @@ func (s *PettyCashRequestService) Reject(id int, reason string, ctx context.Cont
 
 	// Log the status change
 	return s.auditSvc.LogChange("petty_cash_request", id, "status_change", oldStatus, request.Status, ctx)
+}
+
+// GetCategory retrieves a transaction category by ID
+func (s *PettyCashRequestService) GetCategory(id int, ctx context.Context) (*accounting.TransactionCategory, error) {
+	return s.categoryRepo.FindByID(id, ctx)
+}
+
+// GetEmployee retrieves an employee by ID
+func (s *PettyCashRequestService) GetEmployee(id int, ctx context.Context) (*employee.Employee, error) {
+	return s.employeeRepo.FindByID(id, ctx)
 }

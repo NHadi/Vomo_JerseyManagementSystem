@@ -2,7 +2,10 @@ package accounting
 
 import (
 	"context"
+	"vomo/internal/domain/channel"
+	"vomo/internal/domain/division"
 	"vomo/internal/domain/models"
+	"vomo/internal/domain/office"
 )
 
 // TransactionCategory represents the transaction category domain model
@@ -29,6 +32,9 @@ type PurchaseOrderItem struct {
 // PettyCash represents the petty cash domain model
 type PettyCash struct {
 	models.PettyCash
+	Office   *office.Office
+	Division *division.Division
+	Channel  *channel.Channel
 }
 
 // PettyCashRequest represents the petty cash request domain model
