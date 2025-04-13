@@ -32,3 +32,4 @@ _ReSharper*/
 packages/
 #Environment variables
 .env
+node_modules
