@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log"
 	"os"
 	"strconv"
 	"sync"
@@ -35,10 +36,22 @@ func GetConfig() *Config {
 }
 
 func LoadConfig() (*Config, error) {
-	err := godotenv.Load()
+	// Try to load .env file, but don't fail if it doesn't exist
+	_ = godotenv.Load()
+
+	// Get current working directory for debugging
+	wd, err := os.Getwd()
 	if err != nil {
-		return nil, err
+		log.Printf("Error getting working directory: %v", err)
+	} else {
+		log.Printf("Current working directory: %s", wd)
 	}
+
+	// Log environment variables for debugging
+	log.Printf("POSTGRES_HOST: %s", os.Getenv("POSTGRES_HOST"))
+	log.Printf("POSTGRES_PORT: %s", os.Getenv("POSTGRES_PORT"))
+	log.Printf("POSTGRES_DB: %s", os.Getenv("POSTGRES_DB"))
+	log.Printf("POSTGRES_USER: %s", os.Getenv("POSTGRES_USER"))
 
 	return &Config{
 		DBHost:           getEnv("POSTGRES_HOST", "localhost"),

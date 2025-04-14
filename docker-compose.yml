@@ -1,10 +1,9 @@
 version: '3.8'
 
 services:
+  # Infrastructure services
   postgres:
-    build:
-      context: .
-      dockerfile: Dockerfile.postgres
+    image: postgres:15-alpine
     container_name: postgres_db
     restart: always
     ports:
@@ -28,9 +27,11 @@ services:
       timeout: 5s
       retries: 5
     command: postgres -c max_connections=200 -c shared_buffers=256MB -c effective_cache_size=768MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=7864kB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=5242kB -c min_wal_size=1GB -c max_wal_size=4GB
+    networks:
+      - app-network
 
   pgadmin:
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:7.1
     container_name: pgadmin
     restart: always
     ports:
@@ -40,6 +41,8 @@ services:
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     depends_on:
       - postgres
+    networks:
+      - app-network
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.9.0
@@ -54,7 +57,7 @@ services:
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
-      - elastic
+      - app-network
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.9.0
@@ -68,7 +71,71 @@ services:
     depends_on:
       - elasticsearch
     networks:
-      - elastic
+      - app-network
+
+  eshop:
+    build:
+      context: ./zentra-eshop
+      dockerfile: Dockerfile
+    image: nurulhadii/zentra-eshop:latest
+    container_name: zentra-eshop
+    restart: always
+    ports:
+      - "3001:3001"
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Backend service
+  backend:
+    build:
+      context: ./zentra-api
+      dockerfile: Dockerfile
+    image: nurulhadii/zentra-api:latest
+    container_name: zentra-api
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - GIN_MODE=release
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - SERVER_PORT=8080
+    volumes:
+      - ./zentra-api/uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # Frontend service
+  frontend:
+    build:
+      context: ./zentra-ui
+      dockerfile: Dockerfile
+    image: nurulhadii/zentra-ui:latest
+    container_name: zentra-ui
+    restart: always
+    ports:
+      - "8090:8090"
+    environment:
+      - NODE_ENV=production
+      - API_URL=http://backend:8080/api
+    depends_on:
+      - backend
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
@@ -77,5 +144,5 @@ volumes:
     driver: local
 
 networks:
-  elastic:
+  app-network:
     driver: bridge
